@@ -46,21 +46,10 @@ export default function BuyCoinsPage() {
 
   const submitTopupMutation = useMutation({
     mutationFn: async (data: { packageId: number; slipUrl: string }) => {
-      const formData = new FormData();
-      formData.append('packageId', data.packageId.toString());
-      // For file upload - add the slip file here in real implementation
-      const res = await fetch('/api/coins/topups', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({ packageId: data.packageId }),
+      const res = await apiRequest('POST', '/api/coins/topups', {
+        packageId: data.packageId,
+        slipUrl: data.slipUrl
       });
-      if (!res.ok) {
-        const errorText = await res.text();
-        throw new Error(errorText || res.statusText);
-      }
       return res.json();
     },
     onSuccess: () => {

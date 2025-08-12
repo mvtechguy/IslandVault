@@ -371,16 +371,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Coin system
-  app.post("/api/coins/topups", isAuthenticated, upload.single('slip'), async (req, res) => {
+  app.post("/api/coins/topups", isAuthenticated, async (req, res) => {
     try {
-      if (!req.file) {
-        return res.status(400).json({ message: "Bank slip file is required" });
-      }
-
-      const { packageId } = req.body;
+      const { packageId, slipUrl } = req.body;
       
       if (!packageId) {
         return res.status(400).json({ message: "Package selection is required" });
+      }
+
+      if (!slipUrl) {
+        return res.status(400).json({ message: "Bank slip file is required" });
       }
 
       // Get the selected package
@@ -391,13 +391,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid package selected" });
       }
 
-      // Upload slip to object storage
+      // Convert the uploaded URL to object path
       const objectStorageService = new ObjectStorageService();
-      const uploadURL = await objectStorageService.getObjectEntityUploadURL();
-      
-      // For now, we'll store the file info and let the admin approve
-      // In a real implementation, you'd upload to the object storage here
-      const slipPath = `/objects/slips/${Date.now()}_${req.file.originalname}`;
+      const slipPath = objectStorageService.normalizeObjectEntityPath(slipUrl);
 
       const topup = await storage.createCoinTopup({
         userId: req.user!.id,
