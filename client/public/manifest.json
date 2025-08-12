@@ -1,0 +1,71 @@
+{
+  "name": "Kaiveni - Maldivian Partner Finder",
+  "short_name": "Kaiveni",
+  "description": "Find your perfect match in the Maldives. The trusted partner finder exclusively for Maldivians.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FAFAFA",
+  "theme_color": "#A8E6CF",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "en",
+  "icons": [
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgdmlld0JveD0iMCAwIDE5MiAxOTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxOTIiIGhlaWdodD0iMTkyIiByeD0iNDAiIGZpbGw9InVybCgjZ3JhZGllbnQwX2xpbmVhcl8xXzEpIi8+CjxwYXRoIGQ9Ik05NiA2NEM4OC4yNjggNjQgODIgNzAuMjY4IDgyIDc4Qzg1LjMxNCA3OCA4OCA4MC42ODYgODggODRDODggODcuMzE0IDkwLjY4NiA5MCA5NCA5MEMxMDEuNzMyIDkwIDEwOCA4My43MzIgMTA4IDc2QzEwOCA2OS4zNzMgMTAyLjYyNyA2NCA5NiA2NFoiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik05NiAxMjhDODguMjY4IDEyOCA4MiAxMjEuNzMyIDgyIDExNEM4MiAxMDYuMjY4IDg4LjI2OCAxMDAgOTYgMTAwQzEwMy43MzIgMTAwIDExMCAxMDYuMjY4IDExMCAxMTRDMTEwIDEyMS43MzIgMTAzLjczMiAxMjggOTYgMTI4WiIgZmlsbD0id2hpdGUiLz4KPGRlZnM+CjxsaW5lYXJHcmFkaWVudCBpZD0iZ3JhZGllbnQwX2xpbmVhcl8xXzEiIHgxPSIwIiB5MT0iMCIgeDI9IjE5MiIgeTI9IjE5MiIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgo8c3RvcCBzdG9wLWNvbG9yPSIjQThFNkNGIi8+CjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iI0FFRDZMMSI+PC9zdG9wPgo8L2xpbmVhckdyYWRpZW50Pgo8L2RlZnM+Cjwvc3ZnPgo=",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgdmlld0JveD0iMCAwIDUxMiA1MTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI1MTIiIGhlaWdodD0iNTEyIiByeD0iMTA0IiBmaWxsPSJ1cmwoI2dyYWRpZW50MF9saW5lYXJfMV8xKSIvPgo8cGF0aCBkPSJNMjU2IDE3MkMyMzUuMDY5IDE3MiAyMTggMTg4LjA2OSAyMTggMjA5QzIyNy42MzggMjA5IDIzNSAyMTYuMzYyIDIzNSAyMjZDMjM1IDIzNS42MzggMjQyLjM2MiAyNDMgMjUyIDI0M0MyNzIuOTMxIDI0MyAyOTAgMjI2LjkzMSAyOTAgMjA2QzI5MCAxODUuMDY5IDI3Mi45MzEgMTcyIDI1NiAxNzJaIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNMjU2IDM0NEMyMzUuMDY5IDM0NCAyMTggMzI3LjkzMSAyMTggMzA3QzIxOCAyODYuMDY5IDIzNS4wNjkgMjcwIDI1NiAyNzBDMjc2LjkzMSAyNzAgMjk0IDI4Ni4wNjkgMjk0IDMwN0MyOTQgMzI3LjkzMSAyNzYuOTMxIDM0NCAyNTYgMzQ0WiIgZmlsbD0id2hpdGUiLz4KPGRlZnM+CjxsaW5lYXJHcmFkaWVudCBpZD0iZ3JhZGllbnQwX2xpbmVhcl8xXzEiIHgxPSIwIiB5MT0iMCIgeDI9IjUxMiIgeTI9IjUxMiIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgo8c3RvcCBzdG9wLWNvbG9yPSIjQThFNkNGIi8+CjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iI0FFRDZMMSI+PC9zdG9wPgo8L2xpbmVhckdyYWRpZW50Pgo8L2RlZnM+Cjwvc3ZnPgo=",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["social", "lifestyle", "dating"],
+  "screenshots": [
+    {
+      "src": "/screenshot-wide.jpg",
+      "type": "image/jpeg",
+      "sizes": "1280x720",
+      "form_factor": "wide"
+    },
+    {
+      "src": "/screenshot-narrow.jpg", 
+      "type": "image/jpeg",
+      "sizes": "750x1334",
+      "form_factor": "narrow"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Browse Partners",
+      "short_name": "Browse",
+      "description": "Browse available partners",
+      "url": "/browse",
+      "icons": [
+        {
+          "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0ibTEyIDhsLTYuNzUgNiA2Ljc1IDZWOFoiIGZpbGw9IiNBOEU2Q0YiLz4KPC9zdmc+",
+          "sizes": "24x24",
+          "type": "image/svg+xml"
+        }
+      ]
+    },
+    {
+      "name": "Buy Coins",
+      "short_name": "Coins",
+      "description": "Top up your coin balance",
+      "url": "/coins",
+      "icons": [
+        {
+          "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iOSIgZmlsbD0iI0Y1OUU0MiIvPgo8L3N2Zz4K",
+          "sizes": "24x24",
+          "type": "image/svg+xml"
+        }
+      ]
+    }
+  ],
+  "prefer_related_applications": false,
+  "related_applications": []
+}
