@@ -148,14 +148,36 @@ export const posts = pgTable("posts", {
   title: varchar("title", { length: 120 }),
   description: text("description").notNull(),
   images: json("images"), // Array of image paths (up to 5)
-  preferences: json("preferences"),
+  preferences: json("preferences"), // Detailed partner preferences
+  aboutYourself: text("about_yourself"), // What user wants to say about themselves
+  lookingFor: text("looking_for"), // What they're specifically looking for
+  lifestyle: json("lifestyle"), // Hobbies, interests, lifestyle info
+  relationshipType: varchar("relationship_type", { length: 50 }), // marriage, serious, casual, friendship
   status: postStatusEnum("status").default("PENDING"),
+  isPinned: boolean("is_pinned").default(false), // Pin post feature
+  pinnedUntil: timestamp("pinned_until"), // When pin expires
+  pinnedAt: timestamp("pinned_at"), // When it was pinned
+  likes: integer("likes").default(0), // Post likes count
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
   updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`),
   deletedAt: timestamp("deleted_at")
 }, (table) => ({
   postUserIdIdx: index("post_user_id_idx").on(table.userId),
-  postStatusIdx: index("post_status_idx").on(table.status)
+  postStatusIdx: index("post_status_idx").on(table.status),
+  postPinnedIdx: index("post_pinned_idx").on(table.isPinned, table.pinnedUntil),
+  postCreatedIdx: index("post_created_idx").on(table.createdAt)
+}));
+
+// Post likes table
+export const postLikes = pgTable("post_likes", {
+  id: serial("id").primaryKey(),
+  postId: integer("post_id").notNull().references(() => posts.id),
+  userId: integer("user_id").notNull().references(() => users.id),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`)
+}, (table) => ({
+  uniqueLike: index("unique_like").on(table.postId, table.userId),
+  likePostIdx: index("like_post_idx").on(table.postId),
+  likeUserIdx: index("like_user_idx").on(table.userId)
 }));
 
 // Connection requests table
@@ -317,7 +339,12 @@ export const insertUserSchema = createInsertSchema(users).pick({
 export const insertPostSchema = createInsertSchema(posts).pick({
   title: true,
   description: true,
-  preferences: true
+  images: true,
+  preferences: true,
+  aboutYourself: true,
+  lookingFor: true,
+  lifestyle: true,
+  relationshipType: true
 });
 
 export const insertCoinTopupSchema = createInsertSchema(coinTopups).pick({
@@ -353,6 +380,7 @@ export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type Post = typeof posts.$inferSelect;
 export type InsertPost = z.infer<typeof insertPostSchema>;
+export type PostLike = typeof postLikes.$inferSelect;
 export type ConnectionRequest = typeof connectionRequests.$inferSelect;
 export type InsertConnectionRequest = z.infer<typeof insertConnectionRequestSchema>;
 export type CoinTopup = typeof coinTopups.$inferSelect;

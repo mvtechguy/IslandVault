@@ -48,13 +48,13 @@ export default function HomePage() {
   const [showFilters, setShowFilters] = useState(false);
   const [postImages, setPostImages] = useState<string[]>([]);
 
-  // Fetch posts
+  // Fetch posts (pinned posts only for home page)
   const { data: postsData, isLoading: postsLoading } = useQuery<{
     posts: any[];
     total: number;
     hasMore: boolean;
   }>({
-    queryKey: ["/api/posts"],
+    queryKey: ["/api/posts?pinned=true"],
     queryFn: getQueryFn({ on401: "throw" }),
   });
 
@@ -208,7 +208,7 @@ export default function HomePage() {
         {/* Quick Filters */}
         <div className="mt-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold">Discover Partners</h2>
+            <h2 className="text-lg font-semibold">Pinned Posts</h2>
             <Button
               variant="ghost"
               size="sm"

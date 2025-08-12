@@ -211,7 +211,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const limit = parseInt(req.query.limit as string) || 20;
       const offset = parseInt(req.query.offset as string) || 0;
-      const filters = req.query;
+      const showOnlyPinned = req.query.pinned === 'true';
+      const filters = { ...req.query, showOnlyPinned };
 
       const result = await storage.getApprovedPosts(limit, offset, filters);
       
@@ -385,6 +386,169 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting post:", error);
       res.status(500).json({ message: "Failed to delete post" });
+    }
+  });
+
+  // Get single post with details
+  app.get("/api/posts/:id", async (req, res) => {
+    try {
+      const postId = parseInt(req.params.id);
+      if (isNaN(postId)) {
+        return res.status(400).json({ message: "Invalid post ID" });
+      }
+
+      const post = await storage.getPost(postId);
+      if (!post || post.status !== 'APPROVED' || post.deletedAt) {
+        return res.status(404).json({ message: "Post not found" });
+      }
+
+      const user = await storage.getUser(post.userId);
+      const postWithUser = {
+        ...post,
+        user: user ? { 
+          id: user.id,
+          fullName: user.fullName,
+          island: user.island,
+          atoll: user.atoll,
+          profilePhotoPath: user.profilePhotoPath,
+          shortBio: user.shortBio,
+          dateOfBirth: user.dateOfBirth,
+          job: user.job,
+          education: user.education
+        } : null
+      };
+
+      res.json(postWithUser);
+    } catch (error) {
+      console.error("Error fetching post:", error);
+      res.status(500).json({ message: "Failed to fetch post" });
+    }
+  });
+
+  // Like/Unlike post
+  app.post("/api/posts/:id/like", isAuthenticated, async (req, res) => {
+    try {
+      const postId = parseInt(req.params.id);
+      if (isNaN(postId)) {
+        return res.status(400).json({ message: "Invalid post ID" });
+      }
+
+      const post = await storage.getPost(postId);
+      if (!post) {
+        return res.status(404).json({ message: "Post not found" });
+      }
+
+      const hasLiked = await storage.hasUserLikedPost(postId, req.user!.id);
+      
+      if (hasLiked) {
+        await storage.unlikePost(postId, req.user!.id);
+        res.json({ message: "Post unliked", liked: false });
+      } else {
+        await storage.likePost(postId, req.user!.id);
+        res.json({ message: "Post liked", liked: true });
+      }
+    } catch (error) {
+      console.error("Error liking/unliking post:", error);
+      res.status(500).json({ message: "Failed to update post like" });
+    }
+  });
+
+  // Search posts with filters
+  app.get("/api/posts/search", async (req, res) => {
+    try {
+      const query = req.query.q as string || '';
+      const limit = parseInt(req.query.limit as string) || 20;
+      const offset = parseInt(req.query.offset as string) || 0;
+      
+      const filters = {
+        atoll: req.query.atoll as string,
+        island: req.query.island as string,
+        gender: req.query.gender as string,
+        ageMin: req.query.ageMin ? parseInt(req.query.ageMin as string) : undefined,
+        ageMax: req.query.ageMax ? parseInt(req.query.ageMax as string) : undefined,
+        relationshipType: req.query.relationshipType as string
+      };
+
+      const result = await storage.searchPosts(query, filters, limit, offset);
+      
+      // Get user details for each post
+      const postsWithUsers = await Promise.all(
+        result.posts.map(async (post) => {
+          const user = await storage.getUser(post.userId);
+          return {
+            ...post,
+            user: user ? { 
+              id: user.id,
+              fullName: user.fullName,
+              island: user.island,
+              atoll: user.atoll,
+              profilePhotoPath: user.profilePhotoPath,
+              shortBio: user.shortBio,
+              dateOfBirth: user.dateOfBirth
+            } : null
+          };
+        })
+      );
+
+      res.json({
+        posts: postsWithUsers,
+        total: result.total,
+        hasMore: result.total > offset + result.posts.length
+      });
+    } catch (error) {
+      console.error("Error searching posts:", error);
+      res.status(500).json({ message: "Failed to search posts" });
+    }
+  });
+
+  // Request post pin (costs 3 extra coins)
+  app.post("/api/posts/:id/request-pin", isAuthenticated, async (req, res) => {
+    try {
+      const postId = parseInt(req.params.id);
+      if (isNaN(postId)) {
+        return res.status(400).json({ message: "Invalid post ID" });
+      }
+
+      const post = await storage.getPost(postId);
+      if (!post) {
+        return res.status(404).json({ message: "Post not found" });
+      }
+
+      if (post.userId !== req.user!.id) {
+        return res.status(403).json({ message: "You can only request pinning for your own posts" });
+      }
+
+      if (post.isPinned) {
+        return res.status(400).json({ message: "Post is already pinned" });
+      }
+
+      const user = await storage.getUser(req.user!.id);
+      if (!user || (user.coins || 0) < 3) {
+        return res.status(400).json({ message: "Insufficient coins. You need 3 coins to request post pinning." });
+      }
+
+      // Deduct coins and create notification for admin
+      await storage.updateUserCoins(req.user!.id, -3);
+      await storage.addCoinLedgerEntry({
+        userId: req.user!.id,
+        delta: -3,
+        reason: 'OTHER',
+        refTable: 'posts',
+        refId: postId,
+        description: 'Requested post pin'
+      });
+
+      await storage.createNotification({
+        userId: 1, // Admin notification
+        type: 'POST_PIN_REQUEST',
+        data: { postId, userId: req.user!.id, title: post.title },
+        seen: false
+      });
+
+      res.json({ message: "Pin request submitted successfully. Admin will review your request." });
+    } catch (error) {
+      console.error("Error requesting post pin:", error);
+      res.status(500).json({ message: "Failed to request post pin" });
     }
   });
 
@@ -1836,6 +2000,79 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching visitor stats:", error);
       res.status(500).json({ message: "Failed to fetch visitor statistics" });
+    }
+  });
+
+  // ================== ADMIN POST PIN MANAGEMENT ==================
+  
+  // Admin pin post endpoint
+  app.post("/api/admin/posts/:id/pin", isAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { days = 7 } = req.body;
+      
+      const post = await storage.getPost(id);
+      if (!post) {
+        return res.status(404).json({ message: "Post not found" });
+      }
+
+      const updatedPost = await storage.pinPost(id, days);
+
+      await storage.createNotification({
+        userId: post.userId,
+        type: 'POST_PINNED',
+        data: { title: post.title, days },
+        seen: false
+      });
+
+      await storage.createAudit({
+        adminId: req.user.id,
+        action: 'POST_PINNED',
+        entity: 'posts',
+        entityId: id,
+        meta: { days },
+        ip: req.ip || null
+      });
+
+      res.json(updatedPost);
+    } catch (error) {
+      console.error("Error pinning post:", error);
+      res.status(500).json({ message: "Failed to pin post" });
+    }
+  });
+
+  // Admin unpin post endpoint
+  app.post("/api/admin/posts/:id/unpin", isAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      
+      const post = await storage.getPost(id);
+      if (!post) {
+        return res.status(404).json({ message: "Post not found" });
+      }
+
+      const updatedPost = await storage.unpinPost(id);
+
+      await storage.createNotification({
+        userId: post.userId,
+        type: 'POST_UNPINNED',
+        data: { title: post.title },
+        seen: false
+      });
+
+      await storage.createAudit({
+        adminId: req.user.id,
+        action: 'POST_UNPINNED',
+        entity: 'posts',
+        entityId: id,
+        meta: {},
+        ip: req.ip || null
+      });
+
+      res.json(updatedPost);
+    } catch (error) {
+      console.error("Error unpinning post:", error);
+      res.status(500).json({ message: "Failed to unpin post" });
     }
   });
 

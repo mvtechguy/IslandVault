@@ -22,12 +22,14 @@ import {
   ChatBlock,
   ChatReport,
   Visitor,
-  InsertVisitor
+  InsertVisitor,
+  PostLike
 } from "@shared/schema";
 import { db } from "./db";
 import { 
   users, 
   posts, 
+  postLikes,
   connectionRequests, 
   coinTopups, 
   coinPackages,
@@ -62,6 +64,17 @@ export interface IStorage {
   createPost(post: InsertPost & { userId: number }): Promise<Post>;
   updatePost(id: number, post: Partial<Post>): Promise<Post | undefined>;
   getPostsForAdmin(status?: string, limit?: number, offset?: number): Promise<{ posts: Post[], total: number }>;
+  
+  // Post Likes
+  likePost(postId: number, userId: number): Promise<void>;
+  unlikePost(postId: number, userId: number): Promise<void>;
+  hasUserLikedPost(postId: number, userId: number): Promise<boolean>;
+  getPostLikes(postId: number): Promise<PostLike[]>;
+  
+  // Post Management
+  pinPost(postId: number, days?: number): Promise<Post | undefined>;
+  unpinPost(postId: number): Promise<Post | undefined>;
+  searchPosts(query: string, filters?: any, limit?: number, offset?: number): Promise<{ posts: Post[], total: number }>;
   
   // Connection Requests
   getConnectionRequest(id: number): Promise<ConnectionRequest | undefined>;
@@ -921,6 +934,151 @@ export class DatabaseStorage implements IStorage {
       thisWeek: Number(weekResult?.count || 0),
       thisMonth: Number(monthResult?.count || 0),
       thisYear: Number(yearResult?.count || 0)
+    };
+  }
+
+  // Post Like Methods
+  async likePost(postId: number, userId: number): Promise<void> {
+    try {
+      await db.insert(postLikes).values({ postId, userId });
+      // Update the likes count on the post
+      await db
+        .update(posts)
+        .set({ likes: sql`${posts.likes} + 1` })
+        .where(eq(posts.id, postId));
+    } catch (error) {
+      // Ignore duplicate key errors (user already liked)
+      if (!error.message?.includes('duplicate')) {
+        throw error;
+      }
+    }
+  }
+
+  async unlikePost(postId: number, userId: number): Promise<void> {
+    const result = await db
+      .delete(postLikes)
+      .where(and(eq(postLikes.postId, postId), eq(postLikes.userId, userId)))
+      .returning();
+    
+    if (result.length > 0) {
+      // Update the likes count on the post
+      await db
+        .update(posts)
+        .set({ likes: sql`${posts.likes} - 1` })
+        .where(eq(posts.id, postId));
+    }
+  }
+
+  async hasUserLikedPost(postId: number, userId: number): Promise<boolean> {
+    const [like] = await db
+      .select()
+      .from(postLikes)
+      .where(and(eq(postLikes.postId, postId), eq(postLikes.userId, userId)));
+    return !!like;
+  }
+
+  async getPostLikes(postId: number): Promise<PostLike[]> {
+    return await db
+      .select()
+      .from(postLikes)
+      .where(eq(postLikes.postId, postId))
+      .orderBy(desc(postLikes.createdAt));
+  }
+
+  // Post Management Methods
+  async pinPost(postId: number, days: number = 7): Promise<Post | undefined> {
+    const pinnedUntil = new Date();
+    pinnedUntil.setDate(pinnedUntil.getDate() + days);
+    
+    const [post] = await db
+      .update(posts)
+      .set({ 
+        isPinned: true, 
+        pinnedAt: new Date(), 
+        pinnedUntil 
+      })
+      .where(eq(posts.id, postId))
+      .returning();
+    return post || undefined;
+  }
+
+  async unpinPost(postId: number): Promise<Post | undefined> {
+    const [post] = await db
+      .update(posts)
+      .set({ 
+        isPinned: false, 
+        pinnedAt: null, 
+        pinnedUntil: null 
+      })
+      .where(eq(posts.id, postId))
+      .returning();
+    return post || undefined;
+  }
+
+  async searchPosts(query: string, filters?: any, limit = 20, offset = 0): Promise<{ posts: Post[], total: number }> {
+    let conditions = [eq(posts.status, 'APPROVED'), isNull(posts.deletedAt)];
+
+    // Add search conditions
+    if (query) {
+      conditions.push(
+        or(
+          sql`${posts.title} ILIKE ${`%${query}%`}`,
+          sql`${posts.description} ILIKE ${`%${query}%`}`,
+          sql`${posts.aboutYourself} ILIKE ${`%${query}%`}`,
+          sql`${posts.lookingFor} ILIKE ${`%${query}%`}`
+        )
+      );
+    }
+
+    // Add filters
+    if (filters?.relationshipType) {
+      conditions.push(eq(posts.relationshipType, filters.relationshipType));
+    }
+
+    // User filters (join with users table)
+    let userConditions = [];
+    if (filters?.atoll) {
+      userConditions.push(eq(users.atoll, filters.atoll));
+    }
+    if (filters?.island) {
+      userConditions.push(eq(users.island, filters.island));
+    }
+    if (filters?.gender) {
+      userConditions.push(eq(users.gender, filters.gender));
+    }
+    if (filters?.ageMin || filters?.ageMax) {
+      const now = new Date();
+      if (filters.ageMin) {
+        const maxBirth = new Date(now.getFullYear() - filters.ageMin, now.getMonth(), now.getDate());
+        userConditions.push(sql`${users.dateOfBirth} <= ${maxBirth}`);
+      }
+      if (filters.ageMax) {
+        const minBirth = new Date(now.getFullYear() - filters.ageMax - 1, now.getMonth(), now.getDate());
+        userConditions.push(sql`${users.dateOfBirth} >= ${minBirth}`);
+      }
+    }
+
+    const finalConditions = and(...conditions);
+    const userFilter = userConditions.length > 0 ? and(...userConditions) : undefined;
+
+    const postsList = await db
+      .select()
+      .from(posts)
+      .leftJoin(users, eq(posts.userId, users.id))
+      .where(userFilter ? and(finalConditions, userFilter) : finalConditions)
+      .orderBy(desc(posts.isPinned), desc(posts.createdAt))
+      .limit(limit)
+      .offset(offset);
+
+    const [totalResult] = await db
+      .select({ count: count() })
+      .from(posts)
+      .leftJoin(users, eq(posts.userId, users.id))
+      .where(userFilter ? and(finalConditions, userFilter) : finalConditions);
+
+    return {
+      posts: postsList.map(row => row.posts),
+      total: totalResult?.count || 0
     };
   }
 }

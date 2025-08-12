@@ -1,4 +1,4 @@
-import { Heart, MapPin } from "lucide-react";
+import { Heart, MapPin, MessageCircle, Coins } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/use-auth";
@@ -6,6 +6,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
+import { Link } from "wouter";
+import { calculateAge } from "@/lib/utils";
 
 interface UserCardProps {
   post: {
@@ -15,6 +17,9 @@ interface UserCardProps {
     images?: string[];
     preferences?: any;
     createdAt: string;
+    isPinned?: boolean;
+    likes?: number;
+    relationshipType?: string;
     user: {
       id: number;
       fullName: string;
@@ -34,11 +39,10 @@ export function UserCard({ post }: UserCardProps) {
 
   const connectMutation = useMutation({
     mutationFn: async () => {
-      const res = await apiRequest("POST", "/api/connect", {
+      return await apiRequest("/api/connection-requests", "POST", {
         targetUserId: post.user.id,
         postId: post.id,
       });
-      return res.json();
     },
     onSuccess: () => {
       toast({
@@ -56,16 +60,22 @@ export function UserCard({ post }: UserCardProps) {
     },
   });
 
-  const calculateAge = (dateOfBirth: string) => {
-    const today = new Date();
-    const birthDate = new Date(dateOfBirth);
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
+  const likeMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest(`/api/posts/${post.id}/like`, "POST");
+    },
+    onSuccess: () => {
+      toast({ title: "Post liked!" });
+      queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to like post",
+        variant: "destructive"
+      });
     }
-    return age;
-  };
+  });
 
   const age = calculateAge(post.user.dateOfBirth);
   const timeAgo = formatDistanceToNow(new Date(post.createdAt), { addSuffix: true });
@@ -189,21 +199,49 @@ export function UserCard({ post }: UserCardProps) {
         )}
 
         <div className="border-t border-gray-100 dark:border-gray-700 pt-3">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center space-x-3">
+              {!isOwnPost && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => likeMutation.mutate()}
+                  disabled={likeMutation.isPending}
+                  className="flex items-center space-x-1 text-gray-600 hover:text-rose-600 dark:text-gray-400 dark:hover:text-rose-400 p-1 min-w-fit"
+                >
+                  <Heart className="w-4 h-4" />
+                  <span className="text-sm">{post.likes || 0}</span>
+                </Button>
+              )}
+              
+              <Link href={`/posts/${post.id}`}>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="text-gray-600 hover:text-mint dark:text-gray-400 dark:hover:text-mint text-sm"
+                >
+                  View Details
+                </Button>
+              </Link>
+            </div>
+
             <div className="text-xs text-gray-500 dark:text-gray-400">
               {post.preferences?.notes && (
                 <span>{post.preferences.notes}</span>
               )}
             </div>
+          </div>
+
+          <div className="flex items-center justify-end">
             {canConnect && (
               <Button
                 onClick={() => connectMutation.mutate()}
                 disabled={connectMutation.isPending}
                 className="px-4 py-2 bg-gradient-to-r from-mint to-soft-blue text-white rounded-xl font-medium text-sm hover:shadow-lg transform hover:scale-105 transition-all duration-200 flex items-center space-x-2"
               >
-                <Heart className="w-3 h-3" />
-                <span>Connect</span>
-                <span className="text-xs opacity-75">(5 coins)</span>
+                <MessageCircle className="w-3 h-3" />
+                <span>{connectMutation.isPending ? 'Sending...' : 'Connect'}</span>
+                <span className="text-xs opacity-75">(1 coin)</span>
               </Button>
             )}
             {isOwnPost && (
