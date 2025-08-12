@@ -54,7 +54,7 @@ export default function HomePage() {
     total: number;
     hasMore: boolean;
   }>({
-    queryKey: ["/api/posts", { pinned: true }],
+    queryKey: ["/api/posts?pinned=true"],
     queryFn: getQueryFn({ on401: "throw" }),
   });
 
@@ -96,7 +96,7 @@ export default function HomePage() {
         ageMin: 18,
         ageMax: 50,
         gender: "",
-        religion: "",
+
         notes: "",
       },
     },
@@ -288,7 +288,7 @@ export default function HomePage() {
             <DialogHeader>
               <DialogTitle>Create a New Post</DialogTitle>
             </DialogHeader>
-            <form onSubmit={createPostForm.handleSubmit(onCreatePost)} className="space-y-4">
+            <form onSubmit={createPostForm.handleSubmit(onCreatePost as any)} className="space-y-4">
               <div>
                 <Label htmlFor="title">Title (Optional)</Label>
                 <Input

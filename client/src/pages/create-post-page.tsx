@@ -46,7 +46,7 @@ export default function CreatePostPage() {
 
   const { data: settings } = useQuery<{
     costPost: number;
-    costPin: number;
+    costConnect: number;
   }>({
     queryKey: ["/api/settings"],
   });
@@ -110,7 +110,7 @@ export default function CreatePostPage() {
     createPostMutation.mutate(data);
   };
 
-  const totalCost = (settings?.costPost || 0) + (wantToPinPost ? (settings?.costPin || 3) : 0);
+  const totalCost = (settings?.costPost || 0) + (wantToPinPost ? 3 : 0);
   const canAfford = (coinBalance?.coins || 0) >= totalCost;
 
   return (
@@ -296,7 +296,7 @@ export default function CreatePostPage() {
               {wantToPinPost && (
                 <div className="flex items-center justify-between text-sm">
                   <span>Pin post:</span>
-                  <span>{user?.role === 'ADMIN' || user?.role === 'SUPERADMIN' ? 'Free' : `${settings?.costPin || 3} coins`}</span>
+                  <span>{user?.role === 'ADMIN' || user?.role === 'SUPERADMIN' ? 'Free' : '3 coins'}</span>
                 </div>
               )}
               <div className="border-t border-gray-200 dark:border-gray-600 mt-2 pt-2 flex items-center justify-between font-medium">
