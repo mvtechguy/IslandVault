@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Coins, CreditCard, Upload, Clock, CheckCircle, XCircle, Info } from "lucide-react";
+import { Coins, CreditCard, Upload, Clock, CheckCircle, XCircle, Info, Copy, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -26,9 +26,9 @@ export default function BuyCoinsPage() {
     queryFn: getQueryFn({ on401: "throw" }),
   });
 
-  // Fetch settings for bank details
-  const { data: settings } = useQuery({
-    queryKey: ["/api/settings"],
+  // Fetch bank accounts
+  const { data: bankAccounts } = useQuery({
+    queryKey: ["/api/bank-accounts"],
     queryFn: getQueryFn({ on401: "throw" }),
   });
 
@@ -241,25 +241,75 @@ export default function BuyCoinsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4">
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600 dark:text-gray-400">Bank:</span>
-                    <span className="font-medium">{settings?.bankName || "Bank of Maldives"}</span>
+              <div className="space-y-4">
+                {bankAccounts && bankAccounts.length > 0 ? (
+                  bankAccounts.map((account: any) => (
+                    <div key={account.id} className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 relative">
+                      {account.isPrimary && (
+                        <div className="absolute -top-2 right-4">
+                          <Badge className="bg-mint text-white px-2 py-1 text-xs flex items-center gap-1">
+                            <Star className="w-3 h-3" />
+                            Primary
+                          </Badge>
+                        </div>
+                      )}
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-600 dark:text-gray-400 text-sm">Bank:</span>
+                          <span className="font-medium">{account.bankName}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-600 dark:text-gray-400 text-sm">Account:</span>
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium font-mono">{account.accountNumber}</span>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                navigator.clipboard.writeText(account.accountNumber);
+                                toast({ title: "Account number copied!", variant: "default" });
+                              }}
+                              className="h-6 w-6 p-0 hover:bg-mint/20"
+                            >
+                              <Copy className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-600 dark:text-gray-400 text-sm">Name:</span>
+                          <span className="font-medium">{account.accountName}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-600 dark:text-gray-400 text-sm">Branch:</span>
+                          <span className="font-medium">{account.branchName}</span>
+                        </div>
+                        {account.swiftCode && (
+                          <div className="flex justify-between items-center">
+                            <span className="text-gray-600 dark:text-gray-400 text-sm">SWIFT:</span>
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium font-mono">{account.swiftCode}</span>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  navigator.clipboard.writeText(account.swiftCode);
+                                  toast({ title: "SWIFT code copied!", variant: "default" });
+                                }}
+                                className="h-6 w-6 p-0 hover:bg-mint/20"
+                              >
+                                <Copy className="w-3 h-3" />
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4">
+                    <p className="text-center text-gray-600 dark:text-gray-400">No bank accounts available</p>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600 dark:text-gray-400">Account:</span>
-                    <span className="font-medium">{settings?.bankAccountNumber || "7701234567890"}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600 dark:text-gray-400">Name:</span>
-                    <span className="font-medium">{settings?.bankAccountName || "Kaiveni Pvt Ltd"}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600 dark:text-gray-400">Branch:</span>
-                    <span className="font-medium">{settings?.bankBranch || "Malé Main Branch"}</span>
-                  </div>
-                </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -267,10 +317,28 @@ export default function BuyCoinsPage() {
           {/* Upload Bank Slip */}
           <Card className="mt-6">
             <CardHeader>
-              <CardTitle>Upload Bank Slip</CardTitle>
+              <CardTitle className="flex items-center">
+                <Upload className="w-5 h-5 text-mint mr-2" />
+                Upload Bank Slip
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
+                <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 border border-blue-200 dark:border-blue-800">
+                  <div className="flex items-start gap-3">
+                    <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                    <div className="text-sm">
+                      <p className="font-medium text-blue-900 dark:text-blue-100 mb-1">Upload Instructions:</p>
+                      <ul className="text-blue-800 dark:text-blue-300 space-y-1 text-xs">
+                        <li>• Take a clear photo of your bank transfer slip</li>
+                        <li>• Ensure all details are visible and readable</li>
+                        <li>• Include transaction reference number</li>
+                        <li>• File size should be under 5MB</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
                 <ObjectUploader
                   maxNumberOfFiles={1}
                   maxFileSize={5242880} // 5MB
@@ -278,13 +346,15 @@ export default function BuyCoinsPage() {
                   onComplete={handleUploadComplete}
                   buttonClassName="w-full"
                 >
-                  <div className="flex items-center justify-center p-6 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl hover:border-mint transition-colors">
+                  <div className="flex items-center justify-center p-8 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl hover:border-mint hover:bg-mint/5 transition-all duration-200 cursor-pointer">
                     <div className="text-center">
-                      <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Click to upload or drag and drop
+                      <div className="w-12 h-12 bg-mint/10 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <Upload className="w-6 h-6 text-mint" />
+                      </div>
+                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">
+                        Click to upload bank slip
                       </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
                         JPG, PNG or PDF (max 5MB)
                       </p>
                     </div>
@@ -292,10 +362,10 @@ export default function BuyCoinsPage() {
                 </ObjectUploader>
                 
                 {uploadedSlipUrl && (
-                  <Alert>
-                    <CheckCircle className="w-4 h-4" />
-                    <AlertDescription>
-                      Bank slip uploaded successfully. You can now submit your topup request.
+                  <Alert className="border-green-200 bg-green-50 dark:bg-green-900/20 dark:border-green-800">
+                    <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400" />
+                    <AlertDescription className="text-green-800 dark:text-green-300">
+                      Bank slip uploaded successfully! You can now submit your topup request.
                     </AlertDescription>
                   </Alert>
                 )}

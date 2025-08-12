@@ -205,6 +205,20 @@ export const coinPackages = pgTable("coin_packages", {
   updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
 });
 
+// Bank accounts table
+export const bankAccounts = pgTable("bank_accounts", {
+  id: serial("id").primaryKey(),
+  bankName: varchar("bank_name", { length: 100 }).notNull(),
+  accountNumber: varchar("account_number", { length: 50 }).notNull(),
+  accountName: varchar("account_name", { length: 100 }).notNull(),
+  branchName: varchar("branch_name", { length: 100 }).notNull(),
+  swiftCode: varchar("swift_code", { length: 20 }),
+  isActive: boolean("is_active").default(true),
+  isPrimary: boolean("is_primary").default(false),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
+});
+
 // Coin ledger table
 export const coinLedger = pgTable("coin_ledger", {
   id: serial("id").primaryKey(),
@@ -319,6 +333,16 @@ export const insertCoinPackageSchema = createInsertSchema(coinPackages).pick({
   description: true
 });
 
+export const insertBankAccountSchema = createInsertSchema(bankAccounts).pick({
+  bankName: true,
+  accountNumber: true,
+  accountName: true,
+  branchName: true,
+  swiftCode: true,
+  isActive: true,
+  isPrimary: true
+});
+
 export const insertConnectionRequestSchema = createInsertSchema(connectionRequests).pick({
   targetUserId: true,
   postId: true
@@ -335,6 +359,8 @@ export type CoinTopup = typeof coinTopups.$inferSelect;
 export type InsertCoinTopup = z.infer<typeof insertCoinTopupSchema>;
 export type CoinPackage = typeof coinPackages.$inferSelect;
 export type InsertCoinPackage = z.infer<typeof insertCoinPackageSchema>;
+export type BankAccount = typeof bankAccounts.$inferSelect;
+export type InsertBankAccount = z.infer<typeof insertBankAccountSchema>;
 export type CoinLedgerEntry = typeof coinLedger.$inferSelect;
 export type Settings = typeof settings.$inferSelect;
 export type Notification = typeof notifications.$inferSelect;

@@ -924,6 +924,139 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ================== BANK ACCOUNT MANAGEMENT ==================
+
+  // Admin bank account management
+  app.get("/api/admin/bank-accounts", isAdmin, async (req, res) => {
+    try {
+      const accounts = await storage.getBankAccounts(); // Get all accounts for admin
+      res.json(accounts);
+    } catch (error) {
+      console.error("Error fetching bank accounts for admin:", error);
+      res.status(500).json({ message: "Failed to fetch bank accounts" });
+    }
+  });
+
+  app.post("/api/admin/bank-accounts", isAdmin, async (req, res) => {
+    try {
+      const { bankName, accountNumber, accountName, branchName, swiftCode, isActive, isPrimary } = req.body;
+      
+      const newAccount = await storage.createBankAccount({
+        bankName,
+        accountNumber,
+        accountName,
+        branchName,
+        swiftCode,
+        isActive: isActive !== undefined ? isActive : true,
+        isPrimary: isPrimary !== undefined ? isPrimary : false
+      });
+
+      await storage.createAudit({
+        adminId: req.user!.id,
+        action: 'BANK_ACCOUNT_CREATED',
+        entity: 'bank_accounts',
+        entityId: newAccount.id,
+        meta: { bankName, accountNumber, accountName },
+        ip: req.ip || null
+      });
+
+      res.status(201).json(newAccount);
+    } catch (error) {
+      console.error("Error creating bank account:", error);
+      res.status(500).json({ message: "Failed to create bank account" });
+    }
+  });
+
+  app.put("/api/admin/bank-accounts/:id", isAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { bankName, accountNumber, accountName, branchName, swiftCode, isActive, isPrimary } = req.body;
+      
+      const updatedAccount = await storage.updateBankAccount(id, {
+        bankName,
+        accountNumber,
+        accountName,
+        branchName,
+        swiftCode,
+        isActive,
+        isPrimary
+      });
+
+      if (!updatedAccount) {
+        return res.status(404).json({ message: "Bank account not found" });
+      }
+
+      await storage.createAudit({
+        adminId: req.user!.id,
+        action: 'BANK_ACCOUNT_UPDATED',
+        entity: 'bank_accounts',
+        entityId: id,
+        meta: { bankName, accountNumber, accountName },
+        ip: req.ip || null
+      });
+
+      res.json(updatedAccount);
+    } catch (error) {
+      console.error("Error updating bank account:", error);
+      res.status(500).json({ message: "Failed to update bank account" });
+    }
+  });
+
+  app.delete("/api/admin/bank-accounts/:id", isAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      
+      await storage.deleteBankAccount(id);
+
+      await storage.createAudit({
+        adminId: req.user!.id,
+        action: 'BANK_ACCOUNT_DELETED',
+        entity: 'bank_accounts',
+        entityId: id,
+        meta: {},
+        ip: req.ip || null
+      });
+
+      res.json({ message: "Bank account deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting bank account:", error);
+      res.status(500).json({ message: "Failed to delete bank account" });
+    }
+  });
+
+  app.put("/api/admin/bank-accounts/:id/primary", isAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      
+      await storage.setPrimaryBankAccount(id);
+
+      await storage.createAudit({
+        adminId: req.user!.id,
+        action: 'BANK_ACCOUNT_PRIMARY_SET',
+        entity: 'bank_accounts',
+        entityId: id,
+        meta: {},
+        ip: req.ip || null
+      });
+
+      res.json({ message: "Primary bank account updated successfully" });
+    } catch (error) {
+      console.error("Error setting primary bank account:", error);
+      res.status(500).json({ message: "Failed to set primary bank account" });
+    }
+  });
+
+  // Public endpoint to get active bank accounts for coin purchases
+  app.get("/api/bank-accounts", async (req, res) => {
+    try {
+      const accounts = await storage.getBankAccounts(true); // Only active accounts
+      res.json(accounts);
+    } catch (error) {
+      console.error("Error fetching bank accounts:", error);
+      res.status(500).json({ message: "Failed to fetch bank accounts" });
+    }
+  });
+
   // ================== COMPREHENSIVE POST MANAGEMENT ==================
   
   // Post CRUD operations for admin

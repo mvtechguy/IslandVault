@@ -45,6 +45,19 @@ export default function AdminPage() {
     isPopular: false
   });
   const [isEditingPackage, setIsEditingPackage] = useState(false);
+  
+  // Bank Account Management State
+  const [selectedBankAccount, setSelectedBankAccount] = useState<any>(null);
+  const [bankAccountForm, setBankAccountForm] = useState({
+    bankName: "",
+    accountNumber: "",
+    accountName: "",
+    branchName: "",
+    swiftCode: "",
+    isActive: true,
+    isPrimary: false
+  });
+  const [isEditingBankAccount, setIsEditingBankAccount] = useState(false);
 
   // Pagination states
   const [usersPage, setUsersPage] = useState(0);
@@ -135,6 +148,13 @@ export default function AdminPage() {
   // Fetch coin packages
   const { data: packagesData } = useQuery({
     queryKey: ["/api/admin/packages"],
+    queryFn: getQueryFn({ on401: "throw" }),
+    enabled: !!user && (user.role === "ADMIN" || user.role === "SUPERADMIN"),
+  });
+
+  // Fetch bank accounts for admin
+  const { data: bankAccountsData } = useQuery({
+    queryKey: ["/api/admin/bank-accounts"],
     queryFn: getQueryFn({ on401: "throw" }),
     enabled: !!user && (user.role === "ADMIN" || user.role === "SUPERADMIN"),
   });
@@ -450,7 +470,7 @@ export default function AdminPage() {
           <Tabs defaultValue="users" className="w-full">
             {/* Mobile-friendly scrollable tabs */}
             <div className="w-full overflow-x-auto">
-              <TabsList className="inline-flex h-auto p-1 space-x-1 md:grid md:grid-cols-9 md:w-full">
+              <TabsList className="inline-flex h-auto p-1 space-x-1 md:grid md:grid-cols-10 md:w-full">
                 <TabsTrigger value="users" className="relative whitespace-nowrap px-3 py-2 text-xs md:text-sm">
                   Users
                   {pendingCounts.users > 0 && (
@@ -477,6 +497,9 @@ export default function AdminPage() {
                 </TabsTrigger>
                 <TabsTrigger value="packages" className="whitespace-nowrap px-3 py-2 text-xs md:text-sm">
                   Packages
+                </TabsTrigger>
+                <TabsTrigger value="banks" className="whitespace-nowrap px-3 py-2 text-xs md:text-sm">
+                  Banks
                 </TabsTrigger>
                 <TabsTrigger value="connections" className="relative whitespace-nowrap px-3 py-2 text-xs md:text-sm">
                   Connect

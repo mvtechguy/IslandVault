@@ -9,6 +9,8 @@ import {
   InsertCoinTopup,
   CoinPackage,
   InsertCoinPackage,
+  BankAccount,
+  InsertBankAccount,
   CoinLedgerEntry,
   Settings,
   Notification,
@@ -29,6 +31,7 @@ import {
   connectionRequests, 
   coinTopups, 
   coinPackages,
+  bankAccounts,
   coinLedger, 
   settings, 
   notifications, 
@@ -81,6 +84,13 @@ export interface IStorage {
   createCoinPackage(pkg: InsertCoinPackage): Promise<CoinPackage>;
   updateCoinPackage(id: number, pkg: Partial<CoinPackage>): Promise<CoinPackage | undefined>;
   deleteCoinPackage(id: number): Promise<void>;
+
+  // Bank Accounts
+  getBankAccounts(activeOnly?: boolean): Promise<BankAccount[]>;
+  createBankAccount(account: InsertBankAccount): Promise<BankAccount>;
+  updateBankAccount(id: number, account: Partial<BankAccount>): Promise<BankAccount | undefined>;
+  deleteBankAccount(id: number): Promise<void>;
+  setPrimaryBankAccount(id: number): Promise<void>;
   
   // Settings
   getSettings(): Promise<Settings>;
@@ -419,6 +429,50 @@ export class DatabaseStorage implements IStorage {
     await db
       .delete(coinPackages)
       .where(eq(coinPackages.id, id));
+  }
+
+  // Bank Account methods
+  async getBankAccounts(activeOnly = false): Promise<BankAccount[]> {
+    const conditions = activeOnly ? eq(bankAccounts.isActive, true) : undefined;
+    return await db
+      .select()
+      .from(bankAccounts)
+      .where(conditions)
+      .orderBy(desc(bankAccounts.isPrimary), asc(bankAccounts.bankName));
+  }
+
+  async createBankAccount(account: InsertBankAccount): Promise<BankAccount> {
+    const [newAccount] = await db
+      .insert(bankAccounts)
+      .values(account)
+      .returning();
+    return newAccount;
+  }
+
+  async updateBankAccount(id: number, account: Partial<BankAccount>): Promise<BankAccount | undefined> {
+    const [updated] = await db
+      .update(bankAccounts)
+      .set({ ...account, updatedAt: sql`CURRENT_TIMESTAMP` })
+      .where(eq(bankAccounts.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  async deleteBankAccount(id: number): Promise<void> {
+    await db.delete(bankAccounts).where(eq(bankAccounts.id, id));
+  }
+
+  async setPrimaryBankAccount(id: number): Promise<void> {
+    // First, set all accounts to non-primary
+    await db
+      .update(bankAccounts)
+      .set({ isPrimary: false, updatedAt: sql`CURRENT_TIMESTAMP` });
+    
+    // Then set the specified account as primary
+    await db
+      .update(bankAccounts)
+      .set({ isPrimary: true, updatedAt: sql`CURRENT_TIMESTAMP` })
+      .where(eq(bankAccounts.id, id));
   }
 
   // Settings
