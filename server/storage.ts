@@ -10,7 +10,13 @@ import {
   CoinLedgerEntry,
   Settings,
   Notification,
-  Audit
+  Audit,
+  Conversation,
+  ConversationParticipant,
+  Message,
+  MessageReceipt,
+  ChatBlock,
+  ChatReport
 } from "@shared/schema";
 import { db } from "./db";
 import { 
@@ -21,9 +27,15 @@ import {
   coinLedger, 
   settings, 
   notifications, 
-  audits 
+  audits,
+  conversations,
+  conversationParticipants,
+  messages,
+  messageReceipts,
+  chatBlocks,
+  chatReports
 } from "@shared/schema";
-import { eq, and, desc, asc, sql, count } from "drizzle-orm";
+import { eq, and, desc, asc, sql, count, ne, or } from "drizzle-orm";
 
 export interface IStorage {
   // Users
@@ -70,6 +82,32 @@ export interface IStorage {
   // Audit
   createAudit(audit: Omit<Audit, 'id' | 'createdAt'>): Promise<Audit>;
   getAudits(limit?: number, offset?: number): Promise<{ audits: Audit[], total: number }>;
+
+  // Chat methods
+  createConversation(data: any): Promise<any>;
+  getConversation(id: number): Promise<any>;
+  getConversationByParticipants(userId1: number, userId2: number): Promise<any>;
+  getUserConversations(userId: number): Promise<any[]>;
+  addConversationParticipant(data: any): Promise<any>;
+  isConversationParticipant(conversationId: number, userId: number): Promise<boolean>;
+  
+  createMessage(data: any): Promise<any>;
+  getMessages(conversationId: number, beforeId?: number, limit?: number): Promise<any[]>;
+  getMessageById(id: number): Promise<any>;
+  updateMessageReadStatus(conversationId: number, userId: number, messageId: number): Promise<void>;
+  
+  createMessageReceipt(data: any): Promise<any>;
+  createChatBlock(data: any): Promise<any>;
+  removeChatBlock(blockerId: number, blockedId: number): Promise<void>;
+  isChatBlocked(userId1: number, userId2: number): Promise<boolean>;
+  
+  createChatReport(data: any): Promise<any>;
+  getChatReports(status?: string, limit?: number, offset?: number): Promise<{ reports: any[]; total: number }>;
+  updateChatReportStatus(id: number, status: string): Promise<any>;
+  
+  // Admin chat methods
+  getAllConversations(limit?: number, offset?: number): Promise<{ conversations: any[]; total: number }>;
+  getConversationMessages(conversationId: number, limit?: number, offset?: number): Promise<any[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -416,6 +454,279 @@ export class DatabaseStorage implements IStorage {
       audits: auditsList,
       total: totalResult?.count || 0
     };
+  }
+
+  // Chat methods
+  async createConversation(data: any): Promise<any> {
+    const [conversation] = await db
+      .insert(conversations)
+      .values(data)
+      .returning();
+    return conversation;
+  }
+
+  async getConversation(id: number): Promise<any> {
+    const [conversation] = await db
+      .select()
+      .from(conversations)
+      .where(eq(conversations.id, id));
+    return conversation || undefined;
+  }
+
+  async getConversationByParticipants(userId1: number, userId2: number): Promise<any> {
+    const result = await db
+      .select({ 
+        conversation: conversations,
+        participant1: conversationParticipants,
+        participant2: conversationParticipants
+      })
+      .from(conversations)
+      .innerJoin(
+        conversationParticipants,
+        eq(conversations.id, conversationParticipants.conversationId)
+      )
+      .innerJoin(
+        conversationParticipants,
+        and(
+          eq(conversations.id, conversationParticipants.conversationId),
+          eq(conversationParticipants.userId, userId2)
+        )
+      )
+      .where(eq(conversationParticipants.userId, userId1))
+      .limit(1);
+
+    return result[0]?.conversation || undefined;
+  }
+
+  async getUserConversations(userId: number): Promise<any[]> {
+    const result = await db
+      .select({
+        conversation: conversations,
+        participant: conversationParticipants,
+        otherUser: users,
+        lastMessage: messages
+      })
+      .from(conversationParticipants)
+      .innerJoin(conversations, eq(conversationParticipants.conversationId, conversations.id))
+      .innerJoin(users, and(
+        eq(users.id, conversationParticipants.userId),
+        ne(users.id, userId)
+      ))
+      .leftJoin(messages, eq(messages.conversationId, conversations.id))
+      .where(eq(conversationParticipants.userId, userId))
+      .orderBy(desc(conversations.updatedAt));
+
+    return result;
+  }
+
+  async addConversationParticipant(data: any): Promise<any> {
+    const [participant] = await db
+      .insert(conversationParticipants)
+      .values(data)
+      .returning();
+    return participant;
+  }
+
+  async isConversationParticipant(conversationId: number, userId: number): Promise<boolean> {
+    const [participant] = await db
+      .select()
+      .from(conversationParticipants)
+      .where(
+        and(
+          eq(conversationParticipants.conversationId, conversationId),
+          eq(conversationParticipants.userId, userId)
+        )
+      );
+    return !!participant;
+  }
+
+  async createMessage(data: any): Promise<any> {
+    const [message] = await db
+      .insert(messages)
+      .values(data)
+      .returning();
+    return message;
+  }
+
+  async getMessages(conversationId: number, beforeId?: number, limit = 50): Promise<any[]> {
+    let query = db
+      .select({
+        message: messages,
+        sender: users
+      })
+      .from(messages)
+      .innerJoin(users, eq(messages.senderId, users.id))
+      .where(eq(messages.conversationId, conversationId));
+
+    if (beforeId) {
+      query = query.where(and(
+        eq(messages.conversationId, conversationId),
+        sql`${messages.id} < ${beforeId}`
+      ));
+    }
+
+    const result = await query
+      .orderBy(desc(messages.sentAt))
+      .limit(limit);
+
+    return result;
+  }
+
+  async getMessageById(id: number): Promise<any> {
+    const [message] = await db
+      .select()
+      .from(messages)
+      .where(eq(messages.id, id));
+    return message || undefined;
+  }
+
+  async updateMessageReadStatus(conversationId: number, userId: number, messageId: number): Promise<void> {
+    await db
+      .update(conversationParticipants)
+      .set({ lastReadMessageId: messageId })
+      .where(
+        and(
+          eq(conversationParticipants.conversationId, conversationId),
+          eq(conversationParticipants.userId, userId)
+        )
+      );
+  }
+
+  async createMessageReceipt(data: any): Promise<any> {
+    const [receipt] = await db
+      .insert(messageReceipts)
+      .values(data)
+      .returning();
+    return receipt;
+  }
+
+  async createChatBlock(data: any): Promise<any> {
+    const [block] = await db
+      .insert(chatBlocks)
+      .values(data)
+      .returning();
+    return block;
+  }
+
+  async removeChatBlock(blockerId: number, blockedId: number): Promise<void> {
+    await db
+      .delete(chatBlocks)
+      .where(
+        and(
+          eq(chatBlocks.blockerId, blockerId),
+          eq(chatBlocks.blockedId, blockedId)
+        )
+      );
+  }
+
+  async isChatBlocked(userId1: number, userId2: number): Promise<boolean> {
+    const [block] = await db
+      .select()
+      .from(chatBlocks)
+      .where(
+        or(
+          and(
+            eq(chatBlocks.blockerId, userId1),
+            eq(chatBlocks.blockedId, userId2)
+          ),
+          and(
+            eq(chatBlocks.blockerId, userId2),
+            eq(chatBlocks.blockedId, userId1)
+          )
+        )
+      );
+    return !!block;
+  }
+
+  async createChatReport(data: any): Promise<any> {
+    const [report] = await db
+      .insert(chatReports)
+      .values(data)
+      .returning();
+    return report;
+  }
+
+  async getChatReports(status?: string, limit = 50, offset = 0): Promise<{ reports: any[]; total: number }> {
+    const conditions = status ? eq(chatReports.status, status as any) : undefined;
+
+    const reportsList = await db
+      .select({
+        report: chatReports,
+        reporter: users,
+        targetUser: users,
+        message: messages
+      })
+      .from(chatReports)
+      .leftJoin(users, eq(chatReports.reporterId, users.id))
+      .leftJoin(users, eq(chatReports.targetUserId, users.id))
+      .leftJoin(messages, eq(chatReports.messageId, messages.id))
+      .where(conditions)
+      .orderBy(desc(chatReports.createdAt))
+      .limit(limit)
+      .offset(offset);
+
+    const [totalResult] = await db
+      .select({ count: count() })
+      .from(chatReports)
+      .where(conditions);
+
+    return {
+      reports: reportsList,
+      total: totalResult?.count || 0
+    };
+  }
+
+  async updateChatReportStatus(id: number, status: string): Promise<any> {
+    const [report] = await db
+      .update(chatReports)
+      .set({ status: status as any })
+      .where(eq(chatReports.id, id))
+      .returning();
+    return report;
+  }
+
+  async getAllConversations(limit = 50, offset = 0): Promise<{ conversations: any[]; total: number }> {
+    const conversationsList = await db
+      .select({
+        conversation: conversations,
+        participant1: conversationParticipants,
+        participant2: conversationParticipants,
+        user1: users,
+        user2: users
+      })
+      .from(conversations)
+      .leftJoin(conversationParticipants, eq(conversations.id, conversationParticipants.conversationId))
+      .leftJoin(users, eq(conversationParticipants.userId, users.id))
+      .leftJoin(conversationParticipants, eq(conversations.id, conversationParticipants.conversationId))
+      .leftJoin(users, eq(conversationParticipants.userId, users.id))
+      .orderBy(desc(conversations.updatedAt))
+      .limit(limit)
+      .offset(offset);
+
+    const [totalResult] = await db
+      .select({ count: count() })
+      .from(conversations);
+
+    return {
+      conversations: conversationsList,
+      total: totalResult?.count || 0
+    };
+  }
+
+  async getConversationMessages(conversationId: number, limit = 100, offset = 0): Promise<any[]> {
+    const result = await db
+      .select({
+        message: messages,
+        sender: users
+      })
+      .from(messages)
+      .innerJoin(users, eq(messages.senderId, users.id))
+      .where(eq(messages.conversationId, conversationId))
+      .orderBy(desc(messages.sentAt))
+      .limit(limit)
+      .offset(offset);
+
+    return result;
   }
 }
 

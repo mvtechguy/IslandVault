@@ -23,6 +23,7 @@ export default function AdminPage() {
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [selectedPost, setSelectedPost] = useState<any>(null);
   const [selectedTopup, setSelectedTopup] = useState<any>(null);
+  const [selectedConversation, setSelectedConversation] = useState<any>(null);
   const [actionNote, setActionNote] = useState("");
   const [statusFilter, setStatusFilter] = useState("PENDING");
   const [telegramBotToken, setTelegramBotToken] = useState("");
@@ -70,6 +71,24 @@ export default function AdminPage() {
       queryParams: statusFilter !== "ALL" ? { status: statusFilter } : {}
     }),
     enabled: !!user && (user.role === "ADMIN" || user.role === "SUPERADMIN"),
+  });
+
+  // Fetch admin chat inbox
+  const { data: chatInboxData } = useQuery({
+    queryKey: ["/api/admin/chat/inbox"],
+    queryFn: getQueryFn({ on401: "throw" }),
+    enabled: !!user && (user.role === "ADMIN" || user.role === "SUPERADMIN"),
+    refetchInterval: 30000, // Refresh every 30 seconds for real-time monitoring
+  });
+
+  // Fetch conversation messages when viewing details
+  const { data: conversationMessagesData } = useQuery({
+    queryKey: ["/api/chat/conversations", selectedConversation?.id, "messages"],
+    queryFn: getQueryFn({ 
+      on401: "throw",
+      queryParams: { adminView: 'true' }
+    }),
+    enabled: !!selectedConversation && !!user && (user.role === "ADMIN" || user.role === "SUPERADMIN"),
   });
 
   // Fetch telegram settings
@@ -330,7 +349,7 @@ export default function AdminPage() {
         {/* Admin Tabs */}
         <div className="mt-6">
           <Tabs defaultValue="users" className="w-full">
-            <TabsList className="grid w-full grid-cols-6">
+            <TabsList className="grid w-full grid-cols-7">
               <TabsTrigger value="users" className="relative">
                 Users
                 {pendingCounts.users > 0 && (
@@ -362,6 +381,9 @@ export default function AdminPage() {
                     {pendingCounts.connections}
                   </Badge>
                 )}
+              </TabsTrigger>
+              <TabsTrigger value="chat-inbox">
+                Chat Inbox
               </TabsTrigger>
               <TabsTrigger value="telegram">
                 Telegram
@@ -581,6 +603,83 @@ export default function AdminPage() {
                 <MessageSquare className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                 <p className="text-gray-600 dark:text-gray-400">Connection requests management coming soon</p>
               </div>
+            </TabsContent>
+
+            <TabsContent value="chat-inbox" className="space-y-4">
+              <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4 mb-4">
+                <div className="flex items-center">
+                  <MessageSquare className="w-5 h-5 text-amber-600 dark:text-amber-400 mr-2" />
+                  <div>
+                    <h3 className="font-semibold text-amber-800 dark:text-amber-200">Admin Chat Monitoring</h3>
+                    <p className="text-sm text-amber-700 dark:text-amber-300">
+                      Monitor all user conversations for safety and policy compliance. This inbox updates in real-time.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {chatInboxData?.conversations?.length > 0 ? (
+                <div className="space-y-3">
+                  {chatInboxData.conversations.map((conv: any) => (
+                    <Card key={conv.conversation.id} className="border-l-4 border-l-soft-blue">
+                      <CardContent className="pt-4">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-3 mb-2">
+                              <div className="flex -space-x-2">
+                                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-mint to-soft-blue flex items-center justify-center border-2 border-white dark:border-gray-800">
+                                  <span className="text-white font-semibold text-xs">
+                                    {conv.user1?.fullName?.charAt(0) || 'U'}
+                                  </span>
+                                </div>
+                                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-lavender to-blush flex items-center justify-center border-2 border-white dark:border-gray-800">
+                                  <span className="text-white font-semibold text-xs">
+                                    {conv.user2?.fullName?.charAt(0) || 'U'}
+                                  </span>
+                                </div>
+                              </div>
+                              <div>
+                                <p className="font-medium text-sm">
+                                  {conv.user1?.fullName} ↔ {conv.user2?.fullName}
+                                </p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                  Conversation ID: {conv.conversation.id} • 
+                                  Started {formatDistanceToNow(new Date(conv.conversation.createdAt), { addSuffix: true })}
+                                </p>
+                              </div>
+                            </div>
+                            
+                            <div className="flex items-center justify-between">
+                              <Badge variant={conv.conversation.status === 'ACTIVE' ? 'default' : 'secondary'}>
+                                {conv.conversation.status}
+                              </Badge>
+                              
+                              <div className="flex space-x-2">
+                                <Button 
+                                  size="sm" 
+                                  variant="outline"
+                                  onClick={() => {
+                                    // Set selected conversation for detailed view
+                                    setSelectedConversation(conv.conversation);
+                                  }}
+                                >
+                                  <Eye className="w-3 h-3 mr-1" />
+                                  View Messages
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <MessageSquare className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                  <p className="text-gray-600 dark:text-gray-400">No conversations found</p>
+                </div>
+              )}
             </TabsContent>
 
             <TabsContent value="telegram" className="space-y-4">
@@ -944,6 +1043,81 @@ export default function AdminPage() {
                   >
                     <Check className="w-4 h-4 mr-1" />
                     Approve Topup
+                  </Button>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Conversation Detail Modal for Admin Monitoring */}
+        <Dialog open={!!selectedConversation} onOpenChange={() => setSelectedConversation(null)}>
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden">
+            <DialogHeader>
+              <DialogTitle className="flex items-center space-x-2">
+                <MessageSquare className="w-5 h-5" />
+                <span>Admin Chat Monitoring - Conversation {selectedConversation?.id}</span>
+              </DialogTitle>
+            </DialogHeader>
+            
+            {selectedConversation && (
+              <div className="space-y-4">
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                  <div className="flex items-center space-x-3">
+                    <MessageSquare className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                    <div>
+                      <h3 className="font-semibold text-blue-800 dark:text-blue-200">Conversation Details</h3>
+                      <p className="text-sm text-blue-700 dark:text-blue-300">
+                        Status: <Badge variant={selectedConversation.status === 'ACTIVE' ? 'default' : 'secondary'}>{selectedConversation.status}</Badge> • 
+                        Created: {formatDistanceToNow(new Date(selectedConversation.createdAt), { addSuffix: true })}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border rounded-lg max-h-96 overflow-y-auto bg-gray-50 dark:bg-gray-900/50">
+                  {conversationMessagesData?.messages?.length > 0 ? (
+                    <div className="p-4 space-y-3">
+                      {conversationMessagesData.messages
+                        .slice()
+                        .reverse()
+                        .map((msgData: any) => (
+                        <div key={msgData.message.id} className="flex space-x-3">
+                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-mint to-soft-blue flex items-center justify-center flex-shrink-0">
+                            <span className="text-white font-semibold text-xs">
+                              {msgData.sender?.fullName?.charAt(0) || 'U'}
+                            </span>
+                          </div>
+                          
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center space-x-2 mb-1">
+                              <span className="font-medium text-sm">{msgData.sender?.fullName}</span>
+                              <span className="text-xs text-gray-500 dark:text-gray-400">
+                                {formatDistanceToNow(new Date(msgData.message.sentAt), { addSuffix: true })}
+                              </span>
+                            </div>
+                            
+                            <div className="bg-white dark:bg-gray-800 rounded-lg p-3 shadow-sm border">
+                              <p className="text-sm whitespace-pre-wrap break-words">{msgData.message.body}</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="p-8 text-center">
+                      <MessageSquare className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                      <p className="text-gray-600 dark:text-gray-400">No messages in this conversation</p>
+                    </div>
+                  )}
+                </div>
+                
+                <div className="flex justify-between items-center pt-2 border-t">
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Real-time admin monitoring • All messages are logged for safety
+                  </p>
+                  <Button variant="outline" onClick={() => setSelectedConversation(null)}>
+                    Close
                   </Button>
                 </div>
               </div>

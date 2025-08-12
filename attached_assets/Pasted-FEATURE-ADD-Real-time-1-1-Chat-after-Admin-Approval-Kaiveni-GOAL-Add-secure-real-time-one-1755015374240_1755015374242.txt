@@ -1,0 +1,147 @@
+FEATURE ADD: Real-time 1:1 Chat after Admin Approval (Kaiveni)
+
+GOAL
+- Add secure, real-time, one-to-one chat that unlocks ONLY when a connection request is APPROVED by admin.
+- No new coins logic. Chat is free after approval.
+- Mobile-first UI, pastel theme, dark/light mode support (reuse existing styles).
+- Works on the existing stack and deploy scripts; minimal disruption.
+
+DO NOT BREAK
+- Existing auth, posts, coins, approvals, install.sh, nginx, PM2.
+- Existing DB tables and routes (additive changes only).
+- Keep code style and folder structure consistent.
+
+TECH
+- If backend is Node/Express: use Socket.IO for WebSockets + REST for history.
+- If backend is Laravel: use Laravel WebSockets/Pusher compatible (beyond free tier), or SOKeti/SSE as fallback. Prefer Laravel WebSockets with Redis.
+- DB: MySQL (use migrations). Store messages server-side. Avoid E2E for now; allow future upgrade.
+
+DATA MODEL (MySQL)
+- conversations(
+    id BIGINT PK, created_at, updated_at, status ENUM('ACTIVE','BLOCKED','CLOSED') DEFAULT 'ACTIVE'
+  )
+- conversation_participants(
+    id BIGINT PK, conversation_id FK, user_id FK,
+    last_read_message_id BIGINT NULL, muted_until DATETIME NULL,
+    joined_at DATETIME DEFAULT NOW(),
+    UNIQUE(conversation_id, user_id)
+  )
+- messages(
+    id BIGINT PK, conversation_id FK, sender_id FK,
+    body TEXT NULL, attachments JSON NULL,
+    sent_at DATETIME DEFAULT NOW(), edited_at DATETIME NULL, deleted_at DATETIME NULL,
+    INDEX(conversation_id, id)
+  )
+- message_receipts(
+    id BIGINT PK, message_id FK, user_id FK,
+    status ENUM('DELIVERED','READ') NOT NULL, at DATETIME DEFAULT NOW(),
+    UNIQUE(message_id, user_id, status)
+  )
+- chat_blocks(
+    id BIGINT PK, blocker_id FK users, blocked_id FK users, reason VARCHAR(255) NULL, created_at DATETIME DEFAULT NOW(),
+    UNIQUE(blocker_id, blocked_id)
+  )
+- chat_reports(
+    id BIGINT PK, reporter_id FK users, message_id FK messages NULL, target_user_id FK users NULL, reason VARCHAR(255), status ENUM('PENDING','REVIEWED') DEFAULT 'PENDING', created_at DATETIME DEFAULT NOW()
+  )
+
+MIGRATIONS
+- Create migrations for all new tables with FKs and indexes.
+- Seed: none needed.
+
+ACCESS CONTROL
+- A conversation may only exist between two users who have an APPROVED connection.
+- On admin approval of a connection request:
+  - If no conversation exists for that user pair, create it with two participants.
+  - Send both users a notification (existing notification system) that chat is available.
+- If either user blocks the other (chat_blocks), prevent sending messages both ways, show “User blocked” banner.
+
+API (REST)
+- GET /api/chat/conversations → list user’s conversations with: last message, other participant profile (name, island, photo), unread count.
+- POST /api/chat/conversations/:conversationId/messages {text?, attachments?} → send message; validate membership; return saved message.
+- GET /api/chat/conversations/:conversationId/messages?beforeId&limit=50 → history (paged, newest first).
+- POST /api/chat/conversations/:conversationId/read {messageId} → mark all ≤ messageId as READ for current user; update receipts + participant.last_read_message_id.
+- POST /api/chat/blocks/:userId → create/remove block.
+- POST /api/chat/reports → {messageId? targetUserId? reason} → create report.
+
+WEBSOCKETS (Socket.IO events or Laravel equivalent)
+- connect (with JWT) → authenticate user.
+- conversations:subscribe → server joins user to all conversation rooms.
+- message:send {conversationId, text?, attachments?} → server validates, saves, emits message:new to room.
+- message:delivered {messageId} → server writes DELIVERED for the other participant.
+- message:read {conversationId, messageId} → server writes READ; emit message:read to room with {userId, messageId}.
+- typing:start {conversationId}, typing:stop {conversationId} → emit to other participant.
+- presence:online/offline → optional; show green dot if online.
+
+VALIDATION & LIMITS
+- Max message length: 2000 chars.
+- Max attachments per message: 3 images (jpg/png/webp). Size ≤ 5MB each. Virus scanning not required, but validate MIME by magic bytes.
+- Rate limit: max 20 messages per minute per conversation per user; back off with 429.
+- Sanitize text; store as plain text; render with safe linkification on frontend.
+
+SECURITY
+- Auth required on all chat REST & WS.
+- Authorize that the current user is a participant of conversationId.
+- Don’t expose slip images or other private files in chat.
+- Hide messages when deleted; keep tombstones for audits.
+- Keep admin audit logs for blocks/reports resolution.
+
+ADMIN PANEL
+- New “Chat” section:
+  - View conversations (search by username/id), participants, last message time.
+  - Moderate reports: open a report, view limited context (±20 messages), mark REVIEWED, optionally block a user or delete a message.
+  - Global toggle: enable/disable chat feature.
+- On connection approval flow: add “Create/Go to Conversation” button and auto-create if missing.
+
+FRONTEND UI
+- New routes/components:
+  - /chat → ChatList (list conversations, last message, unread bubble)
+  - /chat/:id → ConversationView
+  - Components: ConversationHeader (other user name, island, photo, online dot), MessageList (virtualized, infinite scroll), MessageBubble (mine/theirs), Composer (text box + attach images), TypingIndicator, ReadReceipt ticks.
+- Theming: reuse pastel palette + dark/light toggle. Rounded-2xl bubbles, subtle shadows. Stick to existing Tailwind config.
+- Accessibility: focus traps, aria labels, keyboard send (Enter), upload preview with remove, image lightbox on click.
+
+UNREAD / READ STATE
+- On receive, emit message:new → client adds; server inserts DELIVERED for receiver.
+- When user focuses the thread or scrolls to bottom, call POST /read and emit message:read; update double-tick UI.
+
+NAMES & LIMITS
+- Max 1 conversation per user pair; enforce unique pair (min(user_id_a, user_id_b), max(...)).
+- Optional: allow admin to CLOSE a conversation; users can no longer send.
+
+NGINX / WEBSOCKET
+- Update nginx site to support WS:
+  proxy_http_version 1.1;
+  proxy_set_header Upgrade $http_upgrade;
+  proxy_set_header Connection "upgrade";
+- Ensure PM2 runs WS server entry.
+
+INSTALLER CHANGES
+- Update /deploy/install.sh to:
+  - Run new migrations.
+  - Restart PM2 processes.
+  - Confirm nginx WS headers present (idempotent patch).
+  - Print “Chat enabled” on success.
+
+NOTIFICATIONS
+- In-app toasts + badge on tab bar when new message arrives.
+- Optional PWA push: if VAPID keys exist in .env, subscribe user and send “New message from {name}”.
+
+BLOCK & REPORT UX
+- From ConversationHeader menu: Block user, Report user/message, Delete conversation (local hide).
+- If blocked, show banner and hide composer.
+- Reporting opens a modal with reason; thank user after submit.
+
+TESTS (happy paths)
+- Approve connection → conversation auto-created, appears to both users.
+- User A sends message → User B receives in real time, DELIVERED stored.
+- User B opens thread → READ receipt stored and emitted; unread count drops.
+- Attachments upload/preview/send works; MIME/size limits enforced.
+- Block prevents further sends.
+- Admin report review works.
+
+ACCEPTANCE
+- New DB tables and migrations present.
+- REST + WS work behind nginx/PM2 on Ubuntu 22.04+.
+- UI is mobile-first, matches existing theme.
+- No regressions in coins/posts/approvals.

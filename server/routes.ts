@@ -1,5 +1,6 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import { WebSocketServer, WebSocket } from "ws";
 import { setupAuth, isAuthenticated, isAdmin } from "./auth";
 import { storage } from "./storage";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
@@ -7,7 +8,7 @@ import { ObjectPermission } from "./objectAcl";
 import { telegramService } from "./telegram";
 import multer from "multer";
 import { z } from "zod";
-import { insertUserSchema, insertPostSchema, insertCoinTopupSchema, insertConnectionRequestSchema } from "@shared/schema";
+import { insertUserSchema, insertPostSchema, insertCoinTopupSchema, insertConnectionRequestSchema, insertMessageSchema, insertChatReportSchema, insertChatBlockSchema } from "@shared/schema";
 import { scrypt, randomBytes } from "crypto";
 import { promisify } from "util";
 
@@ -1201,6 +1202,171 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Chat API Routes
+  // Get user's conversations with admin inbox visibility for admins
+  app.get("/api/chat/conversations", isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const isAdminUser = req.user!.role === 'ADMIN' || req.user!.role === 'SUPERADMIN';
+      
+      let conversations;
+      if (isAdminUser && req.query.adminView === 'true') {
+        // Admin can see all conversations for monitoring
+        const result = await storage.getAllConversations(50, 0);
+        conversations = result.conversations;
+      } else {
+        conversations = await storage.getUserConversations(userId);
+      }
+      
+      res.json({ conversations });
+    } catch (error) {
+      console.error("Error fetching conversations:", error);
+      res.status(500).json({ error: "Failed to fetch conversations" });
+    }
+  });
+
+  // Send message in conversation
+  app.post("/api/chat/conversations/:conversationId/messages", isAuthenticated, async (req, res) => {
+    try {
+      const conversationId = parseInt(req.params.conversationId);
+      const userId = req.user!.id;
+      const { body } = req.body;
+
+      // Verify user is participant in conversation
+      const isParticipant = await storage.isConversationParticipant(conversationId, userId);
+      if (!isParticipant) {
+        return res.status(403).json({ error: "Not authorized to send messages in this conversation" });
+      }
+
+      const message = await storage.createMessage({
+        conversationId,
+        senderId: userId,
+        body,
+        attachments: req.body.attachments || null
+      });
+
+      res.status(201).json(message);
+    } catch (error) {
+      console.error("Error sending message:", error);
+      res.status(500).json({ error: "Failed to send message" });
+    }
+  });
+
+  // Get conversation messages with pagination
+  app.get("/api/chat/conversations/:conversationId/messages", isAuthenticated, async (req, res) => {
+    try {
+      const conversationId = parseInt(req.params.conversationId);
+      const userId = req.user!.id;
+      const beforeId = req.query.beforeId ? parseInt(req.query.beforeId as string) : undefined;
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : 50;
+
+      // Verify user is participant or admin
+      const isParticipant = await storage.isConversationParticipant(conversationId, userId);
+      const isAdminUser = req.user!.role === 'ADMIN' || req.user!.role === 'SUPERADMIN';
+      
+      if (!isParticipant && !isAdminUser) {
+        return res.status(403).json({ error: "Not authorized to view this conversation" });
+      }
+
+      const messages = isAdminUser && req.query.adminView === 'true'
+        ? await storage.getConversationMessages(conversationId, limit, 0)
+        : await storage.getMessages(conversationId, beforeId, limit);
+
+      res.json({ messages });
+    } catch (error) {
+      console.error("Error fetching messages:", error);
+      res.status(500).json({ error: "Failed to fetch messages" });
+    }
+  });
+
+  // Admin: Get all conversations for monitoring (Admin Inbox)
+  app.get("/api/admin/chat/inbox", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 50;
+      const offset = parseInt(req.query.offset as string) || 0;
+
+      const result = await storage.getAllConversations(limit, offset);
+      res.json({
+        conversations: result.conversations,
+        total: result.total,
+        adminView: true
+      });
+    } catch (error) {
+      console.error("Error fetching admin chat inbox:", error);
+      res.status(500).json({ error: "Failed to fetch admin chat inbox" });
+    }
+  });
+
+  // Auto-create conversation when connection request is approved
+  const createConversationForConnection = async (requesterId: number, targetUserId: number) => {
+    try {
+      // Check if conversation already exists
+      const existingConversation = await storage.getConversationByParticipants(requesterId, targetUserId);
+      if (existingConversation) {
+        return existingConversation;
+      }
+
+      // Create new conversation
+      const conversation = await storage.createConversation({
+        status: 'ACTIVE'
+      });
+
+      // Add participants
+      await storage.addConversationParticipant({
+        conversationId: conversation.id,
+        userId: requesterId
+      });
+
+      await storage.addConversationParticipant({
+        conversationId: conversation.id,
+        userId: targetUserId
+      });
+
+      return conversation;
+    } catch (error) {
+      console.error("Error creating conversation:", error);
+      throw error;
+    }
+  };
+
+  // WebSocket setup for real-time chat
   const httpServer = createServer(app);
+  const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
+  
+  // Store active WebSocket connections
+  const activeConnections = new Map<number, Set<WebSocket>>();
+
+  wss.on('connection', (ws: WebSocket, req) => {
+    let userId: number | null = null;
+
+    ws.on('message', async (message) => {
+      try {
+        const data = JSON.parse(message.toString());
+        
+        switch (data.type) {
+          case 'authenticate':
+            userId = data.userId;
+            if (!activeConnections.has(userId)) {
+              activeConnections.set(userId, new Set());
+            }
+            activeConnections.get(userId)!.add(ws);
+            ws.send(JSON.stringify({ type: 'authenticated', success: true }));
+            break;
+        }
+      } catch (error) {
+        console.error('WebSocket message error:', error);
+      }
+    });
+
+    ws.on('close', () => {
+      if (userId && activeConnections.has(userId)) {
+        activeConnections.get(userId)!.delete(ws);
+        if (activeConnections.get(userId)!.size === 0) {
+          activeConnections.delete(userId);
+        }
+      }
+    });
+  });
+
   return httpServer;
 }
