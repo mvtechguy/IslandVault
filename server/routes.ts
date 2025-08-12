@@ -338,9 +338,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const slipPath = `/objects/slips/${Date.now()}_${req.file.originalname}`;
 
       const topup = await storage.createCoinTopup({
-        userId: req.user.id,
-        amountMvr: amountMvr.toString(),
-        pricePerCoin: settings.coinPriceMvr.toString(),
+        userId: req.user!.id,
+        amountMvr: amountMvr,
+        pricePerCoin: settings.coinPriceMvr || "10.00",
         slipPath: slipPath
       });
 
@@ -680,11 +680,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/admin/branding", isAdmin, async (req, res) => {
     try {
       const settings = await storage.getSettings();
+      const branding = settings.branding as any || {};
       res.json({
-        appName: settings.branding?.appName || "Kaiveni",
-        logoUrl: settings.branding?.logoUrl || null,
-        primaryColor: settings.branding?.primaryColor || "#10b981",
-        tagline: settings.branding?.tagline || "Find your perfect partner in paradise"
+        appName: branding.appName || "Kaiveni",
+        logoUrl: branding.logoUrl || null,
+        primaryColor: branding.primaryColor || "#10b981",
+        tagline: branding.tagline || "Find your perfect partner in paradise"
       });
     } catch (error) {
       console.error("Error fetching branding settings:", error);
@@ -722,11 +723,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/branding", async (req, res) => {
     try {
       const settings = await storage.getSettings();
+      const branding = settings.branding as any || {};
       res.json({
-        appName: settings.branding?.appName || "Kaiveni",
-        logoUrl: settings.branding?.logoUrl || null,
-        primaryColor: settings.branding?.primaryColor || "#10b981",
-        tagline: settings.branding?.tagline || "Find your perfect partner in paradise"
+        appName: branding.appName || "Kaiveni",
+        logoUrl: branding.logoUrl || null,
+        primaryColor: branding.primaryColor || "#10b981",
+        tagline: branding.tagline || "Find your perfect partner in paradise"
       });
     } catch (error) {
       console.error("Error fetching public branding:", error);

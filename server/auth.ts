@@ -11,7 +11,31 @@ import createMemoryStore from "memorystore";
 
 declare global {
   namespace Express {
-    interface User extends User {}
+    interface User {
+      id: number;
+      username: string;
+      email?: string;
+      password: string;
+      fullName: string;
+      gender: string;
+      dateOfBirth: Date;
+      island: string;
+      atoll: string;
+      religion?: string;
+      job?: string;
+      education?: string;
+      shortBio?: string;
+      partnerPreferences?: any;
+      profilePhotoPath?: string;
+      telegramChatId?: string;
+      telegramNotifications?: boolean;
+      status: string;
+      role: string;
+      coins?: number;
+      createdAt?: Date;
+      updatedAt?: Date;
+      deletedAt?: Date;
+    }
   }
 }
 
