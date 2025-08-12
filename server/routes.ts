@@ -8,6 +8,16 @@ import { telegramService } from "./telegram";
 import multer from "multer";
 import { z } from "zod";
 import { insertUserSchema, insertPostSchema, insertCoinTopupSchema, insertConnectionRequestSchema } from "@shared/schema";
+import { scrypt, randomBytes } from "crypto";
+import { promisify } from "util";
+
+const scryptAsync = promisify(scrypt);
+
+async function hashPassword(password: string) {
+  const salt = randomBytes(16).toString("hex");
+  const buf = (await scryptAsync(password, salt, 64)) as Buffer;
+  return `${buf.toString("hex")}.${salt}`;
+}
 
 // Set up multer for file uploads
 const upload = multer({
@@ -428,7 +438,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const limit = parseInt(req.query.limit as string) || 50;
       const offset = parseInt(req.query.offset as string) || 0;
       
-      const result = await storage.getUsersForAdmin(status, limit, offset);
+      const result = await storage.getUsersForAdmin(status === "ALL" ? undefined : status, limit, offset);
       res.json(result);
     } catch (error) {
       console.error("Error fetching users for admin:", error);
@@ -517,7 +527,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const limit = parseInt(req.query.limit as string) || 50;
       const offset = parseInt(req.query.offset as string) || 0;
       
-      const result = await storage.getPostsForAdmin(status, limit, offset);
+      const result = await storage.getPostsForAdmin(status === "ALL" ? undefined : status, limit, offset);
       res.json(result);
     } catch (error) {
       console.error("Error fetching posts for admin:", error);
@@ -531,7 +541,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const limit = parseInt(req.query.limit as string) || 50;
       const offset = parseInt(req.query.offset as string) || 0;
       
-      const result = await storage.getCoinTopupsForAdmin(status, limit, offset);
+      const result = await storage.getCoinTopupsForAdmin(status === "ALL" ? undefined : status, limit, offset);
       res.json(result);
     } catch (error) {
       console.error("Error fetching topups for admin:", error);
@@ -545,7 +555,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const limit = parseInt(req.query.limit as string) || 50;
       const offset = parseInt(req.query.offset as string) || 0;
       
-      const result = await storage.getConnectionRequestsForAdmin(status, limit, offset);
+      const result = await storage.getConnectionRequestsForAdmin(status === "ALL" ? undefined : status, limit, offset);
       res.json(result);
     } catch (error) {
       console.error("Error fetching connection requests for admin:", error);
@@ -733,6 +743,461 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching public branding:", error);
       res.status(500).json({ message: "Failed to fetch branding" });
+    }
+  });
+
+  // ================== COMPREHENSIVE POST MANAGEMENT ==================
+  
+  // Post CRUD operations for admin
+  app.get("/api/admin/posts", isAdmin, async (req, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 50;
+      const offset = parseInt(req.query.offset as string) || 0;
+      const result = await storage.getPostsForAdmin(undefined, limit, offset);
+      res.json(result);
+    } catch (error) {
+      console.error("Error fetching all posts:", error);
+      res.status(500).json({ message: "Failed to fetch posts" });
+    }
+  });
+
+  app.get("/api/admin/posts/:id", isAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const post = await storage.getPost(id);
+      if (!post) {
+        return res.status(404).json({ message: "Post not found" });
+      }
+      res.json(post);
+    } catch (error) {
+      console.error("Error fetching post:", error);
+      res.status(500).json({ message: "Failed to fetch post" });
+    }
+  });
+
+  app.put("/api/admin/posts/:id", isAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { title, description, preferences, status } = req.body;
+      
+      const updatedPost = await storage.updatePost(id, {
+        title,
+        description,
+        preferences,
+        status
+      });
+      
+      if (!updatedPost) {
+        return res.status(404).json({ message: "Post not found" });
+      }
+
+      await storage.createAudit({
+        adminId: req.user!.id,
+        action: 'POST_UPDATED',
+        entity: 'posts',
+        entityId: id,
+        meta: { title, status },
+        ip: req.ip || null
+      });
+
+      res.json(updatedPost);
+    } catch (error) {
+      console.error("Error updating post:", error);
+      res.status(500).json({ message: "Failed to update post" });
+    }
+  });
+
+  app.delete("/api/admin/posts/:id", isAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { reason } = req.body;
+      
+      const post = await storage.getPost(id);
+      if (!post) {
+        return res.status(404).json({ message: "Post not found" });
+      }
+
+      await storage.updatePost(id, { deletedAt: new Date() });
+
+      await storage.createNotification({
+        userId: post.userId,
+        type: 'POST_DELETED',
+        data: { title: post.title, reason },
+        seen: false
+      });
+
+      await storage.createAudit({
+        adminId: req.user!.id,
+        action: 'POST_DELETED',
+        entity: 'posts',
+        entityId: id,
+        meta: { reason },
+        ip: req.ip || null
+      });
+
+      res.json({ message: "Post deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting post:", error);
+      res.status(500).json({ message: "Failed to delete post" });
+    }
+  });
+
+  app.post("/api/admin/posts/:id/approve", isAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { note } = req.body;
+      
+      const post = await storage.updatePost(id, { status: 'APPROVED' });
+      if (!post) {
+        return res.status(404).json({ message: "Post not found" });
+      }
+
+      await storage.createNotification({
+        userId: post.userId,
+        type: 'POST_APPROVED',
+        data: { title: post.title, note },
+        seen: false
+      });
+
+      await storage.createAudit({
+        adminId: req.user!.id,
+        action: 'POST_APPROVED',
+        entity: 'posts',
+        entityId: id,
+        meta: { note },
+        ip: req.ip || null
+      });
+
+      res.json(post);
+    } catch (error) {
+      console.error("Error approving post:", error);
+      res.status(500).json({ message: "Failed to approve post" });
+    }
+  });
+
+  app.post("/api/admin/posts/:id/reject", isAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { note, message } = req.body;
+      
+      const post = await storage.updatePost(id, { status: 'REJECTED' });
+      if (!post) {
+        return res.status(404).json({ message: "Post not found" });
+      }
+
+      await storage.createNotification({
+        userId: post.userId,
+        type: 'POST_REJECTED',
+        data: { 
+          title: post.title, 
+          note, 
+          message: message || "Your post has been rejected. Please review the guidelines and try again.",
+          adminFeedback: note
+        },
+        seen: false
+      });
+
+      await storage.createAudit({
+        adminId: req.user!.id,
+        action: 'POST_REJECTED',
+        entity: 'posts',
+        entityId: id,
+        meta: { note, message },
+        ip: req.ip || null
+      });
+
+      res.json(post);
+    } catch (error) {
+      console.error("Error rejecting post:", error);
+      res.status(500).json({ message: "Failed to reject post" });
+    }
+  });
+
+  app.post("/api/admin/posts/:id/hide", isAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { reason } = req.body;
+      
+      const post = await storage.updatePost(id, { status: 'HIDDEN' });
+      if (!post) {
+        return res.status(404).json({ message: "Post not found" });
+      }
+
+      await storage.createNotification({
+        userId: post.userId,
+        type: 'POST_HIDDEN',
+        data: { title: post.title, reason },
+        seen: false
+      });
+
+      await storage.createAudit({
+        adminId: req.user!.id,
+        action: 'POST_HIDDEN',
+        entity: 'posts',
+        entityId: id,
+        meta: { reason },
+        ip: req.ip || null
+      });
+
+      res.json(post);
+    } catch (error) {
+      console.error("Error hiding post:", error);
+      res.status(500).json({ message: "Failed to hide post" });
+    }
+  });
+
+  // ================== COMPREHENSIVE USER MANAGEMENT ==================
+  
+  // User CRUD operations for admin
+  app.get("/api/admin/users", isAdmin, async (req, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 50;
+      const offset = parseInt(req.query.offset as string) || 0;
+      const result = await storage.getUsersForAdmin(undefined, limit, offset);
+      res.json(result);
+    } catch (error) {
+      console.error("Error fetching all users:", error);
+      res.status(500).json({ message: "Failed to fetch users" });
+    }
+  });
+
+  app.get("/api/admin/users/:id", isAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const user = await storage.getUser(id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      res.json(user);
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
+
+  app.post("/api/admin/users", isAdmin, async (req, res) => {
+    try {
+      const userData = req.body;
+      
+      // Hash password
+      const hashedPassword = await hashPassword(userData.password);
+      
+      const newUser = await storage.createUser({
+        ...userData,
+        password: hashedPassword,
+        dateOfBirth: new Date(userData.dateOfBirth),
+        status: userData.status || 'PENDING',
+        role: userData.role || 'USER',
+        coins: userData.coins || 0
+      });
+
+      await storage.createAudit({
+        adminId: req.user!.id,
+        action: 'USER_CREATED',
+        entity: 'users',
+        entityId: newUser.id,
+        meta: { username: newUser.username },
+        ip: req.ip || null
+      });
+
+      res.status(201).json(newUser);
+    } catch (error) {
+      console.error("Error creating user:", error);
+      res.status(500).json({ message: "Failed to create user" });
+    }
+  });
+
+  app.put("/api/admin/users/:id", isAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const userData = req.body;
+      
+      // Hash password if provided
+      if (userData.password) {
+        userData.password = await hashPassword(userData.password);
+      }
+      
+      const updatedUser = await storage.updateUser(id, userData);
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      await storage.createAudit({
+        adminId: req.user!.id,
+        action: 'USER_UPDATED',
+        entity: 'users',
+        entityId: id,
+        meta: { username: updatedUser.username },
+        ip: req.ip || null
+      });
+
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error updating user:", error);
+      res.status(500).json({ message: "Failed to update user" });
+    }
+  });
+
+  app.delete("/api/admin/users/:id", isAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { reason } = req.body;
+      
+      const user = await storage.getUser(id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      await storage.updateUser(id, { deletedAt: new Date() });
+
+      await storage.createAudit({
+        adminId: req.user!.id,
+        action: 'USER_DELETED',
+        entity: 'users',
+        entityId: id,
+        meta: { username: user.username, reason },
+        ip: req.ip || null
+      });
+
+      res.json({ message: "User deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      res.status(500).json({ message: "Failed to delete user" });
+    }
+  });
+
+  app.post("/api/admin/users/:id/change-password", isAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { newPassword } = req.body;
+      
+      if (!newPassword || newPassword.length < 8) {
+        return res.status(400).json({ message: "Password must be at least 8 characters" });
+      }
+
+      const hashedPassword = await hashPassword(newPassword);
+      const updatedUser = await storage.updateUser(id, { password: hashedPassword });
+      
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      await storage.createNotification({
+        userId: id,
+        type: 'PASSWORD_CHANGED',
+        data: { message: "Your password has been changed by an administrator" },
+        seen: false
+      });
+
+      await storage.createAudit({
+        adminId: req.user!.id,
+        action: 'PASSWORD_CHANGED',
+        entity: 'users',
+        entityId: id,
+        meta: { username: updatedUser.username },
+        ip: req.ip || null
+      });
+
+      res.json({ message: "Password changed successfully" });
+    } catch (error) {
+      console.error("Error changing password:", error);
+      res.status(500).json({ message: "Failed to change password" });
+    }
+  });
+
+  app.post("/api/admin/users/:id/add-coins", isAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { amount, reason } = req.body;
+      
+      if (!amount || amount <= 0) {
+        return res.status(400).json({ message: "Amount must be positive" });
+      }
+
+      const user = await storage.getUser(id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      await storage.updateUserCoins(id, amount);
+      await storage.addCoinLedgerEntry({
+        userId: id,
+        delta: amount,
+        reason: 'OTHER',
+        description: reason || `Admin added ${amount} coins`,
+      });
+
+      await storage.createNotification({
+        userId: id,
+        type: 'COINS_ADDED',
+        data: { amount, reason },
+        seen: false
+      });
+
+      await storage.createAudit({
+        adminId: req.user!.id,
+        action: 'COINS_ADDED',
+        entity: 'users',
+        entityId: id,
+        meta: { amount, reason },
+        ip: req.ip || null
+      });
+
+      const updatedUser = await storage.getUser(id);
+      res.json({ message: "Coins added successfully", user: updatedUser });
+    } catch (error) {
+      console.error("Error adding coins:", error);
+      res.status(500).json({ message: "Failed to add coins" });
+    }
+  });
+
+  app.post("/api/admin/users/:id/remove-coins", isAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { amount, reason } = req.body;
+      
+      if (!amount || amount <= 0) {
+        return res.status(400).json({ message: "Amount must be positive" });
+      }
+
+      const user = await storage.getUser(id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      if ((user.coins || 0) < amount) {
+        return res.status(400).json({ message: "User doesn't have enough coins" });
+      }
+
+      await storage.updateUserCoins(id, -amount);
+      await storage.addCoinLedgerEntry({
+        userId: id,
+        delta: -amount,
+        reason: 'OTHER',
+        description: reason || `Admin removed ${amount} coins`,
+      });
+
+      await storage.createNotification({
+        userId: id,
+        type: 'COINS_REMOVED',
+        data: { amount, reason },
+        seen: false
+      });
+
+      await storage.createAudit({
+        adminId: req.user!.id,
+        action: 'COINS_REMOVED',
+        entity: 'users',
+        entityId: id,
+        meta: { amount, reason },
+        ip: req.ip || null
+      });
+
+      const updatedUser = await storage.getUser(id);
+      res.json({ message: "Coins removed successfully", user: updatedUser });
+    } catch (error) {
+      console.error("Error removing coins:", error);
+      res.status(500).json({ message: "Failed to remove coins" });
     }
   });
 

@@ -23,7 +23,7 @@ export const userRoleEnum = pgEnum("user_role", ["USER", "ADMIN", "SUPERADMIN"])
 export const postStatusEnum = pgEnum("post_status", ["PENDING", "APPROVED", "REJECTED", "HIDDEN"]);
 export const requestStatusEnum = pgEnum("request_status", ["PENDING", "APPROVED", "REJECTED", "CANCELLED"]);
 export const topupStatusEnum = pgEnum("topup_status", ["PENDING", "APPROVED", "REJECTED"]);
-export const ledgerReasonEnum = pgEnum("ledger_reason", ["TOPUP", "POST", "CONNECT", "ADJUST", "REFUND"]);
+export const ledgerReasonEnum = pgEnum("ledger_reason", ["TOPUP", "POST", "CONNECT", "ADJUST", "REFUND", "OTHER"]);
 
 // Users table
 export const users = pgTable("users", {
