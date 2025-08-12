@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Shield, Users, FileText, Coins, MessageSquare, Check, X, Eye, Search, Filter } from "lucide-react";
+import { Shield, Users, FileText, Coins, MessageSquare, Check, X, Eye, Search, Filter, Palette, Save, RotateCcw, Download, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { BottomNavigation } from "@/components/BottomNavigation";
+import { ThemeCustomizationPanel } from "@/components/ThemeCustomizationPanel";
 import { apiRequest, getQueryFn } from "@/lib/queryClient";
 import { formatDistanceToNow } from "date-fns";
 
@@ -416,6 +417,9 @@ export default function AdminPage() {
                 </TabsTrigger>
                 <TabsTrigger value="branding" className="whitespace-nowrap px-3 py-2 text-xs md:text-sm">
                   Brand
+                </TabsTrigger>
+                <TabsTrigger value="themes" className="whitespace-nowrap px-3 py-2 text-xs md:text-sm">
+                  Themes
                 </TabsTrigger>
                 <TabsTrigger value="analytics" className="whitespace-nowrap px-3 py-2 text-xs md:text-sm">
                   Analytics
@@ -1037,6 +1041,10 @@ export default function AdminPage() {
                   </div>
                 </CardContent>
               </Card>
+            </TabsContent>
+
+            <TabsContent value="themes" className="space-y-4">
+              <ThemeCustomizationPanel />
             </TabsContent>
 
             <TabsContent value="analytics" className="space-y-4">

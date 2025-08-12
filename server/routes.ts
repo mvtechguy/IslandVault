@@ -662,12 +662,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
         bankAccountNumber: settings.bankAccountNumber,
         bankBranch: settings.bankBranch,
         bankName: settings.bankName,
-        maxUploadMb: settings.maxUploadMb
+        maxUploadMb: settings.maxUploadMb,
+        themeConfig: settings.themeConfig
       };
       res.json(publicSettings);
     } catch (error) {
       console.error("Error fetching settings:", error);
       res.status(500).json({ message: "Failed to fetch settings" });
+    }
+  });
+
+  // Admin settings endpoints
+  app.get("/api/admin/settings", isAdmin, async (req, res) => {
+    try {
+      const settings = await storage.getSettings();
+      res.json(settings);
+    } catch (error) {
+      console.error("Error fetching admin settings:", error);
+      res.status(500).json({ message: "Failed to fetch settings" });
+    }
+  });
+
+  app.put("/api/admin/settings", isAdmin, async (req, res) => {
+    try {
+      const updatedSettings = await storage.updateSettings(req.body);
+      
+      await storage.createAudit({
+        adminId: req.user!.id,
+        action: 'SETTINGS_UPDATED',
+        entity: 'settings',
+        entityId: updatedSettings.id,
+        meta: req.body,
+        ip: req.ip || null
+      });
+
+      res.json(updatedSettings);
+    } catch (error) {
+      console.error("Error updating settings:", error);
+      res.status(500).json({ message: "Failed to update settings" });
     }
   });
 

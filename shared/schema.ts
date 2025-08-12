@@ -224,6 +224,7 @@ export const settings = pgTable("settings", {
   maxUploadMb: integer("max_upload_mb").default(5),
   allowedMimes: json("allowed_mimes"),
   branding: json("branding"),
+  themeConfig: json("theme_config"),
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
   updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
 });
