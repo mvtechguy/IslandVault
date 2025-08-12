@@ -204,6 +204,46 @@ export default function AdminPage() {
     },
   });
 
+  const approvePostMutation = useMutation({
+    mutationFn: async ({ id, note }: { id: number; note: string }) => {
+      const res = await apiRequest("POST", `/api/admin/posts/${id}/approve`, { note });
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Post approved successfully" });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/queues/posts"] });
+      setSelectedPost(null);
+      setActionNote("");
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to approve post",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const rejectPostMutation = useMutation({
+    mutationFn: async ({ id, note }: { id: number; note: string }) => {
+      const res = await apiRequest("POST", `/api/admin/posts/${id}/reject`, { note });
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Post rejected" });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/queues/posts"] });
+      setSelectedPost(null);
+      setActionNote("");
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to reject post",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const approveTopupMutation = useMutation({
     mutationFn: async ({ id, note }: { id: number; note: string }) => {
       const res = await apiRequest("POST", `/api/admin/topups/${id}/approve`, { note });
@@ -1383,6 +1423,135 @@ export default function AdminPage() {
                   >
                     <Check className="w-4 h-4 mr-1" />
                     Approve
+                  </Button>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Post Review Modal */}
+        <Dialog open={!!selectedPost} onOpenChange={() => setSelectedPost(null)}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Review Post</DialogTitle>
+            </DialogHeader>
+            {selectedPost && (
+              <div className="space-y-6">
+                {/* Post Details */}
+                <div className="space-y-4">
+                  <div>
+                    <Label>Title:</Label>
+                    <h3 className="text-lg font-semibold mt-1">{selectedPost.title || "No title"}</h3>
+                  </div>
+                  
+                  <div>
+                    <Label>Description:</Label>
+                    <p className="text-gray-700 dark:text-gray-300 mt-1 whitespace-pre-wrap">{selectedPost.description}</p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <Label>Posted by:</Label>
+                      <p>{selectedPost.user?.fullName || "Unknown user"}</p>
+                    </div>
+                    <div>
+                      <Label>Submitted:</Label>
+                      <p>{formatDistanceToNow(new Date(selectedPost.createdAt), { addSuffix: true })}</p>
+                    </div>
+                  </div>
+
+                  {/* Partner Preferences */}
+                  {selectedPost.preferences && (
+                    <div>
+                      <Label>Partner Preferences:</Label>
+                      <div className="mt-2 space-y-2 text-sm">
+                        {selectedPost.preferences.ageMin && selectedPost.preferences.ageMax && (
+                          <p><strong>Age:</strong> {selectedPost.preferences.ageMin}-{selectedPost.preferences.ageMax} years</p>
+                        )}
+                        {selectedPost.preferences.gender && (
+                          <p><strong>Gender:</strong> {selectedPost.preferences.gender}</p>
+                        )}
+                        {selectedPost.preferences.notes && (
+                          <p><strong>Additional Notes:</strong> {selectedPost.preferences.notes}</p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Images */}
+                {selectedPost.images && selectedPost.images.length > 0 && (
+                  <div>
+                    <Label>Images ({selectedPost.images.length}):</Label>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-2">
+                      {selectedPost.images.map((imageUrl: string, index: number) => (
+                        <div key={index} className="relative">
+                          <img
+                            src={imageUrl}
+                            alt={`Post image ${index + 1}`}
+                            className="w-full h-32 object-cover rounded-lg border border-gray-200 dark:border-gray-600"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = 'none';
+                              const parent = target.parentElement;
+                              if (parent) {
+                                const placeholder = document.createElement('div');
+                                placeholder.className = 'w-full h-32 bg-gray-200 dark:bg-gray-600 rounded-lg flex items-center justify-center text-gray-400 text-sm';
+                                placeholder.textContent = 'Failed to load image';
+                                parent.appendChild(placeholder);
+                              }
+                            }}
+                          />
+                          <div className="absolute top-1 left-1 bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded">
+                            {index + 1}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Admin Notes */}
+                <div>
+                  <Label htmlFor="postAdminNote">Admin Note:</Label>
+                  <Textarea
+                    id="postAdminNote"
+                    value={actionNote}
+                    onChange={(e) => setActionNote(e.target.value)}
+                    placeholder="Add a note for this action..."
+                    rows={3}
+                  />
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex justify-end space-x-2 pt-4 border-t">
+                  <Button
+                    variant="outline"
+                    onClick={() => setSelectedPost(null)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      rejectPostMutation.mutate({ id: selectedPost.id, note: actionNote });
+                    }}
+                    disabled={rejectPostMutation.isPending}
+                    variant="outline"
+                    className="border-red-200 text-red-700 hover:bg-red-50"
+                  >
+                    <X className="w-4 h-4 mr-1" />
+                    Reject Post
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      approvePostMutation.mutate({ id: selectedPost.id, note: actionNote });
+                    }}
+                    disabled={approvePostMutation.isPending}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    <Check className="w-4 h-4 mr-1" />
+                    Approve Post
                   </Button>
                 </div>
               </div>
