@@ -54,7 +54,7 @@ export default function HomePage() {
     total: number;
     hasMore: boolean;
   }>({
-    queryKey: ["/api/posts?pinned=true"],
+    queryKey: ["/api/posts", { pinned: true }],
     queryFn: getQueryFn({ on401: "throw" }),
   });
 

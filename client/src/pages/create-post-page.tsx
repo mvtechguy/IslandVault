@@ -184,7 +184,7 @@ export default function CreatePostPage() {
             <div className="space-y-2">
               <Label>Photos (up to 5)</Label>
               <ImageUploader
-                images={postImages}
+                currentImages={postImages}
                 onImagesChange={setPostImages}
                 maxImages={5}
               />

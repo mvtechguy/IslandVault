@@ -311,6 +311,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Search posts with filters (must come before parameterized routes)
+  app.get("/api/posts/search", async (req, res) => {
+    try {
+      const query = req.query.q as string || '';
+      const limit = parseInt(req.query.limit as string) || 20;
+      const offset = parseInt(req.query.offset as string) || 0;
+      
+      const filters = {
+        atoll: req.query.atoll as string,
+        island: req.query.island as string,
+        gender: req.query.gender as string,
+        ageMin: req.query.ageMin ? parseInt(req.query.ageMin as string) : undefined,
+        ageMax: req.query.ageMax ? parseInt(req.query.ageMax as string) : undefined,
+        relationshipType: req.query.relationshipType as string
+      };
+
+      const result = await storage.searchPosts(query, filters, limit, offset);
+      
+      // Get user details for each post
+      const postsWithUsers = await Promise.all(
+        result.posts.map(async (post) => {
+          const user = await storage.getUser(post.userId);
+          return {
+            ...post,
+            user: user ? { 
+              id: user.id,
+              fullName: user.fullName,
+              island: user.island,
+              atoll: user.atoll,
+              profilePhotoPath: user.profilePhotoPath,
+              shortBio: user.shortBio,
+              dateOfBirth: user.dateOfBirth
+            } : null
+          };
+        })
+      );
+
+      res.json({
+        posts: postsWithUsers,
+        total: result.total,
+        hasMore: result.total > offset + result.posts.length
+      });
+    } catch (error) {
+      console.error("Error searching posts:", error);
+      res.status(500).json({ message: "Failed to search posts" });
+    }
+  });
+
   app.get("/api/posts/my", isAuthenticated, async (req, res) => {
     try {
       const posts = await storage.getUserPosts(req.user!.id);
@@ -453,53 +501,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Search posts with filters
-  app.get("/api/posts/search", async (req, res) => {
-    try {
-      const query = req.query.q as string || '';
-      const limit = parseInt(req.query.limit as string) || 20;
-      const offset = parseInt(req.query.offset as string) || 0;
-      
-      const filters = {
-        atoll: req.query.atoll as string,
-        island: req.query.island as string,
-        gender: req.query.gender as string,
-        ageMin: req.query.ageMin ? parseInt(req.query.ageMin as string) : undefined,
-        ageMax: req.query.ageMax ? parseInt(req.query.ageMax as string) : undefined,
-        relationshipType: req.query.relationshipType as string
-      };
 
-      const result = await storage.searchPosts(query, filters, limit, offset);
-      
-      // Get user details for each post
-      const postsWithUsers = await Promise.all(
-        result.posts.map(async (post) => {
-          const user = await storage.getUser(post.userId);
-          return {
-            ...post,
-            user: user ? { 
-              id: user.id,
-              fullName: user.fullName,
-              island: user.island,
-              atoll: user.atoll,
-              profilePhotoPath: user.profilePhotoPath,
-              shortBio: user.shortBio,
-              dateOfBirth: user.dateOfBirth
-            } : null
-          };
-        })
-      );
-
-      res.json({
-        posts: postsWithUsers,
-        total: result.total,
-        hasMore: result.total > offset + result.posts.length
-      });
-    } catch (error) {
-      console.error("Error searching posts:", error);
-      res.status(500).json({ message: "Failed to search posts" });
-    }
-  });
 
   // Request post pin (costs 3 extra coins)
   app.post("/api/posts/:id/request-pin", isAuthenticated, async (req, res) => {
