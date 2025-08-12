@@ -131,23 +131,10 @@ export default function CreatePostPage() {
   const totalCost = (settings?.costPost || 2) + (wantToPinPost ? 3 : 0);
   const canAfford = user?.role === 'ADMIN' || user?.role === 'SUPERADMIN' || (coinBalance?.coins || 0) >= totalCost;
 
-  // Debug logging for form rendering
-  console.log("CreatePostPage - Render Debug:");
-  console.log("- User:", user?.fullName, user?.role, user?.status);
-  console.log("- Settings:", settings);
-  console.log("- Coin Balance:", coinBalance);
-  console.log("- Total Cost:", totalCost);
-  console.log("- Can Afford:", canAfford);
-  console.log("- About to render form");
+
 
   return (
-    <div className="container mx-auto p-4 max-w-2xl" style={{backgroundColor: 'red', minHeight: '100px', border: '2px solid blue'}}>
-      {/* DEBUG MARKER */}
-      <div style={{backgroundColor: 'yellow', padding: '10px', margin: '10px 0'}}>
-        <p style={{color: 'black'}}>DEBUG: Create Post Form Loading</p>
-        <p style={{color: 'black'}}>User: {user?.fullName} ({user?.role})</p>
-        <p style={{color: 'black'}}>Status: {user?.status}</p>
-      </div>
+    <div className="container mx-auto p-4 max-w-2xl">
 
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
