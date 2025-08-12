@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ObjectUploader } from "./ObjectUploader";
 import { Button } from "./ui/button";
 import { X, Image as ImageIcon } from "lucide-react";
@@ -15,6 +15,11 @@ export function MultiImageUploader({
   currentImages = [] 
 }: MultiImageUploaderProps) {
   const [images, setImages] = useState<string[]>(currentImages);
+
+  // Sync with parent component's currentImages
+  useEffect(() => {
+    setImages(currentImages);
+  }, [currentImages]);
 
   const handleImageUpload = async (result: any) => {
     if (result.successful && result.successful.length > 0) {

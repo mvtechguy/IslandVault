@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { ReactNode } from "react";
 import Uppy from "@uppy/core";
 import { DashboardModal } from "@uppy/react";
@@ -36,6 +36,7 @@ export function ObjectUploader({
       restrictions: {
         maxNumberOfFiles,
         maxFileSize,
+        allowedFileTypes: ['image/*'],
       },
       autoProceed: false,
     })
@@ -46,8 +47,21 @@ export function ObjectUploader({
       .on("complete", (result) => {
         onComplete?.(result);
         setShowModal(false);
+        // Clear all files after successful upload
+        uppy.reset();
       })
   );
+
+  // Update Uppy restrictions when props change
+  useEffect(() => {
+    uppy.setOptions({
+      restrictions: {
+        maxNumberOfFiles,
+        maxFileSize,
+        allowedFileTypes: ['image/*'],
+      }
+    });
+  }, [maxNumberOfFiles, maxFileSize, uppy]);
 
   return (
     <div>
