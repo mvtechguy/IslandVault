@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Heart, Bell, Moon, Sun, Coins, Plus, Filter, Search } from "lucide-react";
+import { Heart, Bell, Moon, Sun, Coins, Plus, Filter, Search, Shield } from "lucide-react";
 import { Redirect } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -162,6 +162,19 @@ export default function HomePage() {
                 </span>
               )}
             </Button>
+            
+            {/* Admin Dashboard Access - Only for Admin Users */}
+            {user && (user.role === 'ADMIN' || user.role === 'SUPERADMIN') && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => window.location.href = '/admin'}
+                className="w-8 h-8 rounded-lg bg-orange-100 dark:bg-orange-900/20 hover:bg-orange-200 dark:hover:bg-orange-900/40 border border-orange-300 dark:border-orange-600"
+                title="Admin Dashboard"
+              >
+                <Shield className="w-4 h-4 text-orange-600 dark:text-orange-400" />
+              </Button>
+            )}
           </div>
         </div>
       </header>
