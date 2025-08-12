@@ -303,12 +303,18 @@ export default function HomePage() {
 
                 <div className="mt-4">
                   <Label htmlFor="gender">Preferred Gender</Label>
-                  <Select onValueChange={(value) => createPostForm.setValue("preferences.gender", value)}>
+                  <Select 
+                    value={createPostForm.watch("preferences.gender") || "any"}
+                    onValueChange={(value) => {
+                      const genderValue = value === "any" ? undefined : value;
+                      createPostForm.setValue("preferences.gender", genderValue);
+                    }}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Any" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Any</SelectItem>
+                      <SelectItem value="any">Any</SelectItem>
                       <SelectItem value="male">Male</SelectItem>
                       <SelectItem value="female">Female</SelectItem>
                     </SelectContent>
