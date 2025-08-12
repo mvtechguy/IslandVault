@@ -16,7 +16,7 @@ import {
   CreditCard,
   MessageCircle,
   ArrowRight,
-  Gift,
+
   Award,
   Eye,
   Ban
@@ -200,14 +200,11 @@ export default function OnboardPage() {
       content: (
         <div className="space-y-4">
           <div className="bg-lavender/10 p-4 rounded-lg border border-lavender/20 text-center">
-            <Gift className="w-12 h-12 text-lavender mx-auto mb-3" />
-            <h4 className="font-semibold text-lavender mb-2">Welcome Bonus</h4>
-            <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
-              Once your profile is approved, you'll receive 5 free coins to get started!
+            <Award className="w-12 h-12 text-lavender mx-auto mb-3" />
+            <h4 className="font-semibold text-lavender mb-2">Ready to Connect</h4>
+            <p className="text-sm text-gray-600 dark:text-gray-300">
+              Once your profile is approved, you can start creating posts and connecting with other Maldivians!
             </p>
-            <Badge variant="secondary" className="bg-lavender/20 text-lavender">
-              5 Free Coins
-            </Badge>
           </div>
           
           <div className="space-y-2">
@@ -223,7 +220,7 @@ export default function OnboardPage() {
               </div>
               <div className="flex items-center gap-2">
                 <CheckCircle className="w-4 h-4 text-green-500" />
-                <span>Receive 5 welcome coins</span>
+                <span>Purchase coins to get started</span>
               </div>
               <div className="flex items-center gap-2">
                 <CheckCircle className="w-4 h-4 text-green-500" />
