@@ -1,28 +1,38 @@
 import { sql } from "drizzle-orm";
 import { 
-  mysqlTable, 
+  pgTable, 
   varchar, 
   text, 
-  int, 
+  integer, 
   decimal, 
   boolean, 
   timestamp, 
   json,
   primaryKey,
   index,
-  mysqlEnum
-} from "drizzle-orm/mysql-core";
+  pgEnum,
+  serial
+} from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+// Enums
+export const genderEnum = pgEnum("gender", ["male", "female", "other"]);
+export const userStatusEnum = pgEnum("user_status", ["PENDING", "APPROVED", "REJECTED"]);
+export const userRoleEnum = pgEnum("user_role", ["USER", "ADMIN", "SUPERADMIN"]);
+export const postStatusEnum = pgEnum("post_status", ["PENDING", "APPROVED", "REJECTED", "HIDDEN"]);
+export const requestStatusEnum = pgEnum("request_status", ["PENDING", "APPROVED", "REJECTED", "CANCELLED"]);
+export const topupStatusEnum = pgEnum("topup_status", ["PENDING", "APPROVED", "REJECTED"]);
+export const ledgerReasonEnum = pgEnum("ledger_reason", ["TOPUP", "POST", "CONNECT", "ADJUST", "REFUND"]);
+
 // Users table
-export const users = mysqlTable("users", {
-  id: int("id").primaryKey().autoincrement(),
+export const users = pgTable("users", {
+  id: serial("id").primaryKey(),
   username: varchar("username", { length: 50 }).notNull().unique(),
   email: varchar("email", { length: 255 }),
   password: varchar("password", { length: 255 }).notNull(),
   fullName: varchar("full_name", { length: 255 }).notNull(),
-  gender: mysqlEnum("gender", ["male", "female", "other"]).notNull(),
+  gender: genderEnum("gender").notNull(),
   dateOfBirth: timestamp("date_of_birth").notNull(),
   island: varchar("island", { length: 64 }).notNull(),
   atoll: varchar("atoll", { length: 64 }).notNull(),
@@ -32,11 +42,13 @@ export const users = mysqlTable("users", {
   shortBio: text("short_bio"),
   partnerPreferences: json("partner_preferences"),
   profilePhotoPath: varchar("profile_photo_path", { length: 255 }),
-  status: mysqlEnum("status", ["PENDING", "APPROVED", "REJECTED"]).default("PENDING"),
-  role: mysqlEnum("role", ["USER", "ADMIN", "SUPERADMIN"]).default("USER"),
-  coins: int("coins").default(0),
+  telegramChatId: varchar("telegram_chat_id", { length: 128 }),
+  telegramNotifications: boolean("telegram_notifications").default(false),
+  status: userStatusEnum("status").default("PENDING"),
+  role: userRoleEnum("role").default("USER"),
+  coins: integer("coins").default(0),
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`),
   deletedAt: timestamp("deleted_at")
 }, (table) => ({
   usernameIdx: index("username_idx").on(table.username),
@@ -45,110 +57,112 @@ export const users = mysqlTable("users", {
 }));
 
 // Posts table
-export const posts = mysqlTable("posts", {
-  id: int("id").primaryKey().autoincrement(),
-  userId: int("user_id").notNull(),
+export const posts = pgTable("posts", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
   title: varchar("title", { length: 120 }),
   description: text("description").notNull(),
   imagePath: varchar("image_path", { length: 255 }),
   preferences: json("preferences"),
-  status: mysqlEnum("status", ["PENDING", "APPROVED", "REJECTED", "HIDDEN"]).default("PENDING"),
+  status: postStatusEnum("status").default("PENDING"),
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`),
   deletedAt: timestamp("deleted_at")
 }, (table) => ({
-  userIdIdx: index("user_id_idx").on(table.userId),
-  statusIdx: index("status_idx").on(table.status)
+  postUserIdIdx: index("post_user_id_idx").on(table.userId),
+  postStatusIdx: index("post_status_idx").on(table.status)
 }));
 
 // Connection requests table
-export const connectionRequests = mysqlTable("connection_requests", {
-  id: int("id").primaryKey().autoincrement(),
-  requesterId: int("requester_id").notNull(),
-  targetUserId: int("target_user_id").notNull(),
-  postId: int("post_id"),
-  status: mysqlEnum("status", ["PENDING", "APPROVED", "REJECTED", "CANCELLED"]).default("PENDING"),
+export const connectionRequests = pgTable("connection_requests", {
+  id: serial("id").primaryKey(),
+  requesterId: integer("requester_id").notNull(),
+  targetUserId: integer("target_user_id").notNull(),
+  postId: integer("post_id"),
+  status: requestStatusEnum("status").default("PENDING"),
   adminNote: varchar("admin_note", { length: 255 }),
   refundApplied: boolean("refund_applied").default(false),
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`)
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
 }, (table) => ({
-  requesterIdx: index("requester_idx").on(table.requesterId),
-  targetIdx: index("target_idx").on(table.targetUserId),
-  statusIdx: index("status_idx").on(table.status)
+  connRequesterIdx: index("conn_requester_idx").on(table.requesterId),
+  connTargetIdx: index("conn_target_idx").on(table.targetUserId),
+  connStatusIdx: index("conn_status_idx").on(table.status)
 }));
 
 // Coin top-ups table
-export const coinTopups = mysqlTable("coin_topups", {
-  id: int("id").primaryKey().autoincrement(),
-  userId: int("user_id").notNull(),
+export const coinTopups = pgTable("coin_topups", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
   amountMvr: decimal("amount_mvr", { precision: 10, scale: 2 }).notNull(),
-  computedCoins: int("computed_coins"),
+  computedCoins: integer("computed_coins"),
   pricePerCoin: decimal("price_per_coin", { precision: 10, scale: 2 }).notNull(),
   slipPath: varchar("slip_path", { length: 255 }).notNull(),
-  status: mysqlEnum("status", ["PENDING", "APPROVED", "REJECTED"]).default("PENDING"),
+  status: topupStatusEnum("status").default("PENDING"),
   adminNote: varchar("admin_note", { length: 255 }),
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`)
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
 }, (table) => ({
-  userIdIdx: index("user_id_idx").on(table.userId),
-  statusIdx: index("status_idx").on(table.status)
+  topupUserIdIdx: index("topup_user_id_idx").on(table.userId),
+  topupStatusIdx: index("topup_status_idx").on(table.status)
 }));
 
 // Coin ledger table
-export const coinLedger = mysqlTable("coin_ledger", {
-  id: int("id").primaryKey().autoincrement(),
-  userId: int("user_id").notNull(),
-  delta: int("delta").notNull(),
-  reason: mysqlEnum("reason", ["TOPUP", "POST", "CONNECT", "ADJUST", "REFUND"]).notNull(),
+export const coinLedger = pgTable("coin_ledger", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  delta: integer("delta").notNull(),
+  reason: ledgerReasonEnum("reason").notNull(),
   refTable: varchar("ref_table", { length: 32 }),
-  refId: int("ref_id"),
+  refId: integer("ref_id"),
   description: varchar("description", { length: 255 }),
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`)
 }, (table) => ({
-  userIdIdx: index("user_id_idx").on(table.userId),
-  reasonIdx: index("reason_idx").on(table.reason)
+  ledgerUserIdIdx: index("ledger_user_id_idx").on(table.userId),
+  ledgerReasonIdx: index("ledger_reason_idx").on(table.reason)
 }));
 
 // Settings table
-export const settings = mysqlTable("settings", {
-  id: int("id").primaryKey().default(1),
+export const settings = pgTable("settings", {
+  id: serial("id").primaryKey(),
   coinPriceMvr: decimal("coin_price_mvr", { precision: 10, scale: 2 }).default("10.00"),
-  costPost: int("cost_post").default(2),
-  costConnect: int("cost_connect").default(5),
+  costPost: integer("cost_post").default(2),
+  costConnect: integer("cost_connect").default(5),
   bankAccountName: varchar("bank_account_name", { length: 120 }),
   bankAccountNumber: varchar("bank_account_number", { length: 64 }),
   bankBranch: varchar("bank_branch", { length: 120 }),
   bankName: varchar("bank_name", { length: 120 }),
+  telegramBotToken: varchar("telegram_bot_token", { length: 255 }),
+  telegramAdminChatId: varchar("telegram_admin_chat_id", { length: 128 }),
   allowRefunds: boolean("allow_refunds").default(true),
   requireTargetAccept: boolean("require_target_accept").default(true),
-  maxUploadMb: int("max_upload_mb").default(5),
+  maxUploadMb: integer("max_upload_mb").default(5),
   allowedMimes: json("allowed_mimes"),
   branding: json("branding"),
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`)
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
 });
 
 // Notifications table
-export const notifications = mysqlTable("notifications", {
-  id: int("id").primaryKey().autoincrement(),
-  userId: int("user_id").notNull(),
+export const notifications = pgTable("notifications", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
   type: varchar("type", { length: 64 }).notNull(),
   data: json("data"),
   seen: boolean("seen").default(false),
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`)
 }, (table) => ({
-  userIdIdx: index("user_id_idx").on(table.userId),
-  seenIdx: index("seen_idx").on(table.seen)
+  notifUserIdIdx: index("notif_user_id_idx").on(table.userId),
+  notifSeenIdx: index("notif_seen_idx").on(table.seen)
 }));
 
 // Audit logs table
-export const audits = mysqlTable("audits", {
-  id: int("id").primaryKey().autoincrement(),
-  adminId: int("admin_id").notNull(),
+export const audits = pgTable("audits", {
+  id: serial("id").primaryKey(),
+  adminId: integer("admin_id").notNull(),
   action: varchar("action", { length: 64 }).notNull(),
   entity: varchar("entity", { length: 32 }).notNull(),
-  entityId: int("entity_id").notNull(),
+  entityId: integer("entity_id").notNull(),
   meta: json("meta"),
   ip: varchar("ip", { length: 45 }),
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`)

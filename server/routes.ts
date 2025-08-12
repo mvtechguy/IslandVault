@@ -4,6 +4,7 @@ import { setupAuth, isAuthenticated, isAdmin } from "./auth";
 import { storage } from "./storage";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { ObjectPermission } from "./objectAcl";
+import { telegramService } from "./telegram";
 import multer from "multer";
 import { z } from "zod";
 import { insertUserSchema, insertPostSchema, insertCoinTopupSchema, insertConnectionRequestSchema } from "@shared/schema";
@@ -175,19 +176,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const postData = insertPostSchema.parse(req.body);
       const post = await storage.createPost({
         ...postData,
-        userId: req.user!.id
+        userId: req.user.id
       });
 
       // Deduct coins
-      await storage.updateUserCoins(req.user!.id, -settings.costPost);
+      await storage.updateUserCoins(req.user.id, -settings.costPost);
       await storage.addCoinLedgerEntry({
-        userId: req.user!.id,
+        userId: req.user.id,
         delta: -settings.costPost,
         reason: 'POST',
         refTable: 'posts',
         refId: post.id,
         description: 'Created new post'
       });
+
+      // Send Telegram notification to admin about new post
+      await telegramService.notifyAdminNewPost(
+        user.username, 
+        post.title || 'Untitled', 
+        post.description
+      );
 
       res.status(201).json(post);
     } catch (error) {
@@ -237,19 +245,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const request = await storage.createConnectionRequest({
         ...requestData,
-        requesterId: req.user!.id
+        requesterId: req.user.id
       });
 
       // Deduct coins
-      await storage.updateUserCoins(req.user!.id, -settings.costConnect);
+      await storage.updateUserCoins(req.user.id, -settings.costConnect);
       await storage.addCoinLedgerEntry({
-        userId: req.user!.id,
+        userId: req.user.id,
         delta: -settings.costConnect,
         reason: 'CONNECT',
         refTable: 'connection_requests',
         refId: request.id,
         description: 'Sent connection request'
       });
+
+      // Get target user and post details for notifications
+      const targetUser = await storage.getUser(requestData.targetUserId);
+      const post = requestData.postId ? await storage.getPost(requestData.postId) : null;
+
+      // Send Telegram notification to target user
+      if (targetUser) {
+        await telegramService.notifyConnectionRequest(targetUser.id, user.fullName);
+      }
+
+      // Send admin notification
+      await telegramService.notifyAdminConnectionRequest(
+        user.fullName,
+        targetUser?.fullName || 'Unknown User',
+        post?.title
+      );
 
       res.status(201).json(request);
     } catch (error) {
@@ -314,11 +338,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const slipPath = `/objects/slips/${Date.now()}_${req.file.originalname}`;
 
       const topup = await storage.createCoinTopup({
-        userId: req.user!.id,
+        userId: req.user.id,
         amountMvr: amountMvr.toString(),
-        pricePerCoin: settings.coinPriceMvr,
+        pricePerCoin: settings.coinPriceMvr.toString(),
         slipPath: slipPath
       });
+
+      // Get user details for notification
+      const user = await storage.getUser(req.user.id);
+      const computedCoins = Math.floor(parseFloat(amountMvr.toString()) / parseFloat(settings.coinPriceMvr.toString()));
+
+      // Send Telegram notification to admin about new coin request
+      if (user) {
+        await telegramService.notifyAdminCoinRequest(
+          user.username,
+          amountMvr.toString(),
+          computedCoins
+        );
+      }
 
       res.status(201).json(topup);
     } catch (error) {
@@ -413,17 +450,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.createNotification({
         userId: id,
         type: 'PROFILE_APPROVED',
-        data: { note }
+        data: { note },
+        seen: false
       });
+
+      // Send Telegram notification to user
+      await telegramService.notifyUserRegistrationApproved(id);
 
       // Create audit log
       await storage.createAudit({
-        adminId: req.user!.id,
+        adminId: req.user.id,
         action: 'USER_APPROVED',
         entity: 'users',
         entityId: id,
         meta: { note },
-        ip: req.ip
+        ip: req.ip || null
       });
 
       res.json(user);
@@ -446,16 +487,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.createNotification({
         userId: id,
         type: 'PROFILE_REJECTED',
-        data: { note }
+        data: { note },
+        seen: false
       });
 
+      // Send Telegram notification to user
+      await telegramService.notifyUserRegistrationRejected(id, note);
+
       await storage.createAudit({
-        adminId: req.user!.id,
+        adminId: req.user.id,
         action: 'USER_REJECTED',
         entity: 'users',
         entityId: id,
         meta: { note },
-        ip: req.ip
+        ip: req.ip || null
       });
 
       res.json(user);
@@ -499,13 +544,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const id = parseInt(req.params.id);
       const { note } = req.body;
       
-      const topup = await storage.getConnectionRequest(id);
+      // Get topup from the correct storage method
+      const topups = await storage.getCoinTopupsForAdmin('PENDING', 1000, 0);
+      const topup = topups.topups.find(t => t.id === id);
       if (!topup) {
         return res.status(404).json({ message: "Topup not found" });
       }
 
       const settings = await storage.getSettings();
-      const computedCoins = Math.floor(parseFloat(topup.amountMvr) / parseFloat(settings.coinPriceMvr));
+      const computedCoins = Math.floor(parseFloat(topup.amountMvr.toString()) / parseFloat(settings.coinPriceMvr.toString()));
       
       const updatedTopup = await storage.updateCoinTopup(id, { 
         status: 'APPROVED',
@@ -527,16 +574,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.createNotification({
         userId: topup.userId,
         type: 'TOPUP_APPROVED',
-        data: { coins: computedCoins, note }
+        data: { coins: computedCoins, note },
+        seen: false
       });
 
+      // Send Telegram notification to user
+      await telegramService.notifyCoinsAdded(topup.userId, computedCoins);
+
       await storage.createAudit({
-        adminId: req.user!.id,
+        adminId: req.user.id,
         action: 'TOPUP_APPROVED',
         entity: 'coin_topups',
         entityId: id,
         meta: { coins: computedCoins, note },
-        ip: req.ip
+        ip: req.ip || null
       });
 
       res.json(updatedTopup);
@@ -565,6 +616,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching settings:", error);
       res.status(500).json({ message: "Failed to fetch settings" });
+    }
+  });
+
+  // Admin telegram settings endpoints
+  app.get("/api/admin/telegram/settings", isAdmin, async (req, res) => {
+    try {
+      const settings = await storage.getSettings();
+      res.json({
+        telegramBotToken: settings.telegramBotToken ? '***' : null,
+        telegramChatId: settings.telegramChatId
+      });
+    } catch (error) {
+      console.error("Error fetching telegram settings:", error);
+      res.status(500).json({ message: "Failed to fetch telegram settings" });
+    }
+  });
+
+  app.put("/api/admin/telegram/settings", isAdmin, async (req, res) => {
+    try {
+      const { telegramBotToken, telegramChatId } = req.body;
+      
+      await storage.updateSettings({
+        telegramBotToken,
+        telegramChatId
+      });
+
+      // Reinitialize telegram service with new settings
+      await telegramService.initialize();
+
+      res.json({ message: "Telegram settings updated successfully" });
+    } catch (error) {
+      console.error("Error updating telegram settings:", error);
+      res.status(500).json({ message: "Failed to update telegram settings" });
+    }
+  });
+
+  app.post("/api/admin/telegram/test", isAdmin, async (req, res) => {
+    try {
+      await telegramService.sendTestMessage();
+      res.json({ message: "Test message sent successfully" });
+    } catch (error) {
+      console.error("Error sending test message:", error);
+      res.status(500).json({ message: "Failed to send test message" });
     }
   });
 

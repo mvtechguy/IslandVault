@@ -5,6 +5,7 @@ import session from "express-session";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
+import { telegramService } from "./telegram";
 import { User } from "@shared/schema";
 import createMemoryStore from "memorystore";
 
@@ -107,6 +108,14 @@ export function setupAuth(app: Express) {
         ...userData,
         password: await hashPassword(userData.password),
       });
+
+      // Send Telegram notification to admin about new user registration
+      await telegramService.notifyAdminNewUser(
+        user.username,
+        user.fullName,
+        user.island,
+        user.atoll
+      );
 
       // Remove password from response
       const { password, ...safeUser } = user;

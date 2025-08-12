@@ -25,6 +25,8 @@ export default function AdminPage() {
   const [selectedTopup, setSelectedTopup] = useState<any>(null);
   const [actionNote, setActionNote] = useState("");
   const [statusFilter, setStatusFilter] = useState("PENDING");
+  const [telegramBotToken, setTelegramBotToken] = useState("");
+  const [telegramChatId, setTelegramChatId] = useState("");
 
   // Fetch pending users
   const { data: usersData } = useQuery({
@@ -50,6 +52,13 @@ export default function AdminPage() {
   // Fetch pending connection requests
   const { data: connectionsData } = useQuery({
     queryKey: ["/api/admin/queues/connect", statusFilter],
+    queryFn: getQueryFn({ on401: "throw" }),
+    enabled: !!user && (user.role === "ADMIN" || user.role === "SUPERADMIN"),
+  });
+
+  // Fetch telegram settings
+  const { data: telegramSettings } = useQuery({
+    queryKey: ["/api/admin/telegram/settings"],
     queryFn: getQueryFn({ on401: "throw" }),
     enabled: !!user && (user.role === "ADMIN" || user.role === "SUPERADMIN"),
   });
@@ -108,6 +117,41 @@ export default function AdminPage() {
     onError: (error: Error) => {
       toast({
         title: "Failed to approve topup",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateTelegramMutation = useMutation({
+    mutationFn: async (data: { telegramBotToken: string; telegramChatId: string }) => {
+      const res = await apiRequest("PUT", "/api/admin/telegram/settings", data);
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Telegram settings updated successfully" });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/telegram/settings"] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to update telegram settings",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const testTelegramMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/admin/telegram/test");
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Test message sent successfully" });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to send test message",
         description: error.message,
         variant: "destructive",
       });
@@ -234,7 +278,7 @@ export default function AdminPage() {
         {/* Admin Tabs */}
         <div className="mt-6">
           <Tabs defaultValue="users" className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="users" className="relative">
                 Users
                 {pendingCounts.users > 0 && (
@@ -266,6 +310,9 @@ export default function AdminPage() {
                     {pendingCounts.connections}
                   </Badge>
                 )}
+              </TabsTrigger>
+              <TabsTrigger value="telegram">
+                Telegram
               </TabsTrigger>
             </TabsList>
 
@@ -479,6 +526,85 @@ export default function AdminPage() {
                 <MessageSquare className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                 <p className="text-gray-600 dark:text-gray-400">Connection requests management coming soon</p>
               </div>
+            </TabsContent>
+
+            <TabsContent value="telegram" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Telegram Bot Configuration</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label htmlFor="botToken">Bot Token</Label>
+                    <Input
+                      id="botToken"
+                      type="password"
+                      placeholder="Enter Telegram bot token"
+                      value={telegramBotToken}
+                      onChange={(e) => setTelegramBotToken(e.target.value)}
+                    />
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                      Get your bot token from @BotFather on Telegram
+                    </p>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="chatId">Chat ID</Label>
+                    <Input
+                      id="chatId"
+                      placeholder="Enter chat ID or channel username"
+                      value={telegramChatId}
+                      onChange={(e) => setTelegramChatId(e.target.value)}
+                    />
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                      Chat ID where admin notifications will be sent
+                    </p>
+                  </div>
+
+                  <div className="flex space-x-2">
+                    <Button
+                      onClick={() => updateTelegramMutation.mutate({
+                        telegramBotToken,
+                        telegramChatId
+                      })}
+                      disabled={updateTelegramMutation.isPending || !telegramBotToken || !telegramChatId}
+                    >
+                      {updateTelegramMutation.isPending ? "Saving..." : "Save Settings"}
+                    </Button>
+                    
+                    <Button
+                      variant="outline"
+                      onClick={() => testTelegramMutation.mutate()}
+                      disabled={testTelegramMutation.isPending}
+                    >
+                      {testTelegramMutation.isPending ? "Testing..." : "Send Test Message"}
+                    </Button>
+                  </div>
+
+                  {telegramSettings && (
+                    <div className="mt-4 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                      <p className="text-sm text-green-700 dark:text-green-300">
+                        ✓ Bot token configured: {telegramSettings.telegramBotToken ? "Yes" : "No"}
+                      </p>
+                      <p className="text-sm text-green-700 dark:text-green-300">
+                        ✓ Chat ID: {telegramSettings.telegramChatId || "Not set"}
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="mt-6">
+                    <h4 className="font-semibold mb-2">Notification Features</h4>
+                    <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                      <li>• New user registrations</li>
+                      <li>• New post submissions</li>
+                      <li>• Coin top-up requests</li>
+                      <li>• Connection requests</li>
+                      <li>• User approval/rejection status updates</li>
+                      <li>• Coin credit notifications</li>
+                    </ul>
+                  </div>
+                </CardContent>
+              </Card>
             </TabsContent>
           </Tabs>
         </div>
