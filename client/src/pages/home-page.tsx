@@ -20,6 +20,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertPostSchema } from "@shared/schema";
 import { z } from "zod";
+import { MultiImageUploader } from "@/components/MultiImageUploader";
 
 const createPostSchema = insertPostSchema.extend({
   preferences: z.object({
@@ -29,6 +30,7 @@ const createPostSchema = insertPostSchema.extend({
     religion: z.string().optional(),
     notes: z.string().optional(),
   }).optional(),
+  images: z.array(z.string()).max(5).optional(),
 });
 
 type CreatePostFormData = z.infer<typeof createPostSchema>;
@@ -45,6 +47,7 @@ export default function HomePage() {
   const queryClient = useQueryClient();
   const [showCreatePost, setShowCreatePost] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const [postImages, setPostImages] = useState<string[]>([]);
 
   // Fetch posts
   const { data: postsData, isLoading: postsLoading } = useQuery({
@@ -75,6 +78,7 @@ export default function HomePage() {
     defaultValues: {
       title: "",
       description: "",
+      images: [],
       preferences: {
         ageMin: 18,
         ageMax: 50,
@@ -97,6 +101,7 @@ export default function HomePage() {
       });
       setShowCreatePost(false);
       createPostForm.reset();
+      setPostImages([]);
       queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
       queryClient.invalidateQueries({ queryKey: ["/api/coins/balance"] });
     },
@@ -110,7 +115,11 @@ export default function HomePage() {
   });
 
   const onCreatePost = (data: CreatePostFormData) => {
-    createPostMutation.mutate(data);
+    const postData = {
+      ...data,
+      images: postImages,
+    };
+    createPostMutation.mutate(postData);
   };
 
   const unreadNotifications = notifications?.filter((n: any) => !n.seen).length || 0;
@@ -290,6 +299,19 @@ export default function HomePage() {
                     {createPostForm.formState.errors.description.message}
                   </p>
                 )}
+              </div>
+
+              {/* Image Upload Section */}
+              <div>
+                <Label>Images (Optional)</Label>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                  Add up to 5 images to make your post more attractive
+                </p>
+                <MultiImageUploader
+                  maxImages={5}
+                  onImagesChange={setPostImages}
+                  currentImages={postImages}
+                />
               </div>
 
               <div className="border-t pt-4">

@@ -208,6 +208,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Your profile must be approved to create posts" });
       }
 
+      // Check post limit (3 posts per user)
+      const userPosts = await storage.getUserPosts(req.user!.id);
+      const activePosts = userPosts.filter(post => !post.deletedAt);
+      if (activePosts.length >= 3) {
+        return res.status(400).json({ message: "You can only have 3 active posts at a time. Please delete an existing post to create a new one." });
+      }
+
       const settings = await storage.getSettings();
       if (user.coins < settings.costPost) {
         return res.status(400).json({ message: `Insufficient coins. You need ${settings.costPost} coins to create a post.` });
@@ -254,6 +261,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching user posts:", error);
       res.status(500).json({ message: "Failed to fetch your posts" });
+    }
+  });
+
+  // Update user's own post
+  app.put("/api/posts/:id", isAuthenticated, async (req, res) => {
+    try {
+      const postId = parseInt(req.params.id);
+      if (isNaN(postId)) {
+        return res.status(400).json({ message: "Invalid post ID" });
+      }
+
+      const post = await storage.getPost(postId);
+      if (!post) {
+        return res.status(404).json({ message: "Post not found" });
+      }
+
+      if (post.userId !== req.user!.id) {
+        return res.status(403).json({ message: "You can only edit your own posts" });
+      }
+
+      const updateData = insertPostSchema.partial().parse(req.body);
+      const updatedPost = await storage.updatePost(postId, {
+        ...updateData,
+        status: 'PENDING' // Re-submit for approval after editing
+      });
+
+      res.json(updatedPost);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid post data", errors: error.errors });
+      }
+      console.error("Error updating post:", error);
+      res.status(500).json({ message: "Failed to update post" });
+    }
+  });
+
+  // Delete user's own post
+  app.delete("/api/posts/:id", isAuthenticated, async (req, res) => {
+    try {
+      const postId = parseInt(req.params.id);
+      if (isNaN(postId)) {
+        return res.status(400).json({ message: "Invalid post ID" });
+      }
+
+      const post = await storage.getPost(postId);
+      if (!post) {
+        return res.status(404).json({ message: "Post not found" });
+      }
+
+      if (post.userId !== req.user!.id) {
+        return res.status(403).json({ message: "You can only delete your own posts" });
+      }
+
+      // Soft delete
+      await storage.updatePost(postId, {
+        deletedAt: new Date()
+      });
+
+      res.json({ message: "Post deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting post:", error);
+      res.status(500).json({ message: "Failed to delete post" });
     }
   });
 

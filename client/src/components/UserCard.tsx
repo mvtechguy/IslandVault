@@ -12,6 +12,7 @@ interface UserCardProps {
     id: number;
     title?: string;
     description: string;
+    images?: string[];
     preferences?: any;
     createdAt: string;
     user: {
@@ -128,6 +129,38 @@ export function UserCard({ post }: UserCardProps) {
         <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">
           {post.description}
         </p>
+
+        {/* Post Images */}
+        {post.images && post.images.length > 0 && (
+          <div className="mb-3">
+            {post.images.length === 1 ? (
+              <img
+                src={post.images[0]}
+                alt="Post image"
+                className="w-full h-48 object-cover rounded-lg border border-gray-200 dark:border-gray-600"
+              />
+            ) : (
+              <div className="grid grid-cols-2 gap-2">
+                {post.images.slice(0, 4).map((image, index) => (
+                  <div key={index} className="relative">
+                    <img
+                      src={image}
+                      alt={`Post image ${index + 1}`}
+                      className="w-full h-24 object-cover rounded-lg border border-gray-200 dark:border-gray-600"
+                    />
+                    {index === 3 && post.images!.length > 4 && (
+                      <div className="absolute inset-0 bg-black/60 rounded-lg flex items-center justify-center">
+                        <span className="text-white font-medium text-sm">
+                          +{post.images!.length - 4}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {post.user.shortBio && (
           <p className="text-xs text-gray-600 dark:text-gray-400 mb-3 italic">

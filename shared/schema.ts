@@ -147,7 +147,7 @@ export const posts = pgTable("posts", {
   userId: integer("user_id").notNull(),
   title: varchar("title", { length: 120 }),
   description: text("description").notNull(),
-  imagePath: varchar("image_path", { length: 255 }),
+  images: json("images"), // Array of image paths (up to 5)
   preferences: json("preferences"),
   status: postStatusEnum("status").default("PENDING"),
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),

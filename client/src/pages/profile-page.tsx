@@ -78,6 +78,42 @@ export default function ProfilePage() {
     queryFn: getQueryFn({ on401: "throw" }),
   });
 
+  // Post management mutations
+  const deletePostMutation = useMutation({
+    mutationFn: async (postId: number) => {
+      const res = await apiRequest("DELETE", `/api/posts/${postId}`);
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Post deleted",
+        description: "Your post has been deleted successfully.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/posts/my"] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to delete post",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const editPost = (post: any) => {
+    // TODO: Implement edit post functionality
+    toast({
+      title: "Edit functionality",
+      description: "Post editing will be available soon.",
+    });
+  };
+
+  const deletePost = (postId: number) => {
+    if (confirm("Are you sure you want to delete this post? This action cannot be undone.")) {
+      deletePostMutation.mutate(postId);
+    }
+  };
+
   // Fetch coin topups
   const { data: coinTopups } = useQuery({
     queryKey: ["/api/coins/topups"],
@@ -264,13 +300,57 @@ export default function ProfilePage() {
                               <span className="ml-1">{post.status}</span>
                             </Badge>
                           </div>
-                          <span className="text-xs text-gray-500">
-                            {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}
-                          </span>
+                          <div className="flex items-center space-x-2">
+                            <span className="text-xs text-gray-500">
+                              {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}
+                            </span>
+                            {!post.deletedAt && (
+                              <div className="flex items-center space-x-1">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-7 px-2 text-xs"
+                                  onClick={() => editPost(post)}
+                                >
+                                  <Edit3 className="w-3 h-3 mr-1" />
+                                  Edit
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-7 px-2 text-xs text-red-600 hover:text-red-700"
+                                  onClick={() => deletePost(post.id)}
+                                >
+                                  Delete
+                                </Button>
+                              </div>
+                            )}
+                          </div>
                         </div>
                         <p className="text-sm text-gray-700 dark:text-gray-300">
                           {post.description}
                         </p>
+                        {post.images && post.images.length > 0 && (
+                          <div className="mt-2">
+                            <div className="flex space-x-2 overflow-x-auto">
+                              {post.images.slice(0, 3).map((image: string, index: number) => (
+                                <img
+                                  key={index}
+                                  src={image}
+                                  alt={`Post image ${index + 1}`}
+                                  className="w-16 h-16 object-cover rounded border border-gray-200 dark:border-gray-600 flex-shrink-0"
+                                />
+                              ))}
+                              {post.images.length > 3 && (
+                                <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600 flex items-center justify-center flex-shrink-0">
+                                  <span className="text-xs text-gray-600 dark:text-gray-400">
+                                    +{post.images.length - 3}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
                       </CardContent>
                     </Card>
                   ))}
