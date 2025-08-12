@@ -462,9 +462,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin endpoints
-  app.get("/api/admin/queues/users", isAdmin, async (req, res) => {
+  app.get("/api/admin/queues/users/:status", isAdmin, async (req, res) => {
     try {
-      const status = req.query.status as string;
+      const status = req.params.status;
       const limit = parseInt(req.query.limit as string) || 50;
       const offset = parseInt(req.query.offset as string) || 0;
       
@@ -551,9 +551,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // More admin endpoints for posts, topups, connections...
-  app.get("/api/admin/queues/posts", isAdmin, async (req, res) => {
+  app.get("/api/admin/queues/posts/:status", isAdmin, async (req, res) => {
     try {
-      const status = req.query.status as string;
+      const status = req.params.status;
       const limit = parseInt(req.query.limit as string) || 50;
       const offset = parseInt(req.query.offset as string) || 0;
       
@@ -565,9 +565,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/admin/queues/topups", isAdmin, async (req, res) => {
+  app.get("/api/admin/queues/topups/:status", isAdmin, async (req, res) => {
     try {
-      const status = req.query.status as string;
+      const status = req.params.status;
       const limit = parseInt(req.query.limit as string) || 50;
       const offset = parseInt(req.query.offset as string) || 0;
       
@@ -579,9 +579,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/admin/queues/connect", isAdmin, async (req, res) => {
+  app.get("/api/admin/queues/connect/:status", isAdmin, async (req, res) => {
     try {
-      const status = req.query.status as string;
+      const status = req.params.status;
       const limit = parseInt(req.query.limit as string) || 50;
       const offset = parseInt(req.query.offset as string) || 0;
       

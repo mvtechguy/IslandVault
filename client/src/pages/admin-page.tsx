@@ -54,8 +54,7 @@ export default function AdminPage() {
   const { data: usersData } = useQuery({
     queryKey: ["/api/admin/queues/users", statusFilter],
     queryFn: getQueryFn({ 
-      on401: "throw",
-      queryParams: statusFilter !== "ALL" ? { status: statusFilter } : {}
+      on401: "throw"
     }),
     enabled: !!user && (user.role === "ADMIN" || user.role === "SUPERADMIN"),
   });
@@ -64,8 +63,7 @@ export default function AdminPage() {
   const { data: postsData } = useQuery({
     queryKey: ["/api/admin/queues/posts", statusFilter],
     queryFn: getQueryFn({ 
-      on401: "throw",
-      queryParams: statusFilter !== "ALL" ? { status: statusFilter } : {}
+      on401: "throw"
     }),
     enabled: !!user && (user.role === "ADMIN" || user.role === "SUPERADMIN"),
   });
