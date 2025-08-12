@@ -33,6 +33,18 @@ export default function AdminPage() {
   const [logoUrl, setLogoUrl] = useState("");
   const [primaryColor, setPrimaryColor] = useState("");
   const [tagline, setTagline] = useState("");
+  
+  // Package management states
+  const [selectedPackage, setSelectedPackage] = useState<any>(null);
+  const [packageForm, setPackageForm] = useState({
+    name: "",
+    coins: "",
+    priceMvr: "",
+    description: "",
+    isActive: true,
+    isPopular: false
+  });
+  const [isEditingPackage, setIsEditingPackage] = useState(false);
 
   // Pagination states
   const [usersPage, setUsersPage] = useState(0);
@@ -116,6 +128,13 @@ export default function AdminPage() {
   // Fetch branding settings
   const { data: brandingSettings } = useQuery({
     queryKey: ["/api/admin/branding"],
+    queryFn: getQueryFn({ on401: "throw" }),
+    enabled: !!user && (user.role === "ADMIN" || user.role === "SUPERADMIN"),
+  });
+
+  // Fetch coin packages
+  const { data: packagesData } = useQuery({
+    queryKey: ["/api/admin/packages"],
     queryFn: getQueryFn({ on401: "throw" }),
     enabled: !!user && (user.role === "ADMIN" || user.role === "SUPERADMIN"),
   });
@@ -236,6 +255,63 @@ export default function AdminPage() {
     onError: (error: Error) => {
       toast({
         title: "Failed to update app branding",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Package management mutations
+  const createPackageMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const res = await apiRequest("POST", "/api/admin/packages", data);
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Package created successfully" });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/packages"] });
+      setSelectedPackage(null);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to create package",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updatePackageMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: any }) => {
+      const res = await apiRequest("PUT", `/api/admin/packages/${id}`, data);
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Package updated successfully" });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/packages"] });
+      setSelectedPackage(null);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to update package",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deletePackageMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await apiRequest("DELETE", `/api/admin/packages/${id}`);
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Package deleted successfully" });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/packages"] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to delete package",
         description: error.message,
         variant: "destructive",
       });
@@ -374,7 +450,7 @@ export default function AdminPage() {
           <Tabs defaultValue="users" className="w-full">
             {/* Mobile-friendly scrollable tabs */}
             <div className="w-full overflow-x-auto">
-              <TabsList className="inline-flex h-auto p-1 space-x-1 md:grid md:grid-cols-8 md:w-full">
+              <TabsList className="inline-flex h-auto p-1 space-x-1 md:grid md:grid-cols-9 md:w-full">
                 <TabsTrigger value="users" className="relative whitespace-nowrap px-3 py-2 text-xs md:text-sm">
                   Users
                   {pendingCounts.users > 0 && (
@@ -398,6 +474,9 @@ export default function AdminPage() {
                       {pendingCounts.topups}
                     </Badge>
                   )}
+                </TabsTrigger>
+                <TabsTrigger value="packages" className="whitespace-nowrap px-3 py-2 text-xs md:text-sm">
+                  Packages
                 </TabsTrigger>
                 <TabsTrigger value="connections" className="relative whitespace-nowrap px-3 py-2 text-xs md:text-sm">
                   Connect
@@ -713,6 +792,99 @@ export default function AdminPage() {
                 <div className="text-center py-8">
                   <Coins className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                   <p className="text-gray-600 dark:text-gray-400">No topups to review</p>
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="packages" className="space-y-4">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold">Coin Packages</h3>
+                <Button 
+                  onClick={() => {
+                    setPackageForm({
+                      name: "",
+                      coins: "",
+                      priceMvr: "",
+                      description: "",
+                      isActive: true,
+                      isPopular: false
+                    });
+                    setIsEditingPackage(false);
+                    setSelectedPackage(true);
+                  }}
+                  className="bg-mint hover:bg-mint/90"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Package
+                </Button>
+              </div>
+
+              {packagesData?.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {packagesData.map((pkg: any) => (
+                    <Card key={pkg.id} className={`relative ${pkg.isPopular ? 'border-mint' : ''}`}>
+                      {pkg.isPopular && (
+                        <div className="absolute -top-2 left-4">
+                          <Badge className="bg-mint text-white">Most Popular</Badge>
+                        </div>
+                      )}
+                      <CardContent className="pt-6">
+                        <div className="text-center space-y-2">
+                          <h4 className="font-semibold text-lg">{pkg.name}</h4>
+                          <div className="text-3xl font-bold text-mint">{pkg.coins} Coins</div>
+                          <div className="text-lg text-gray-600 dark:text-gray-400">MVR {parseFloat(pkg.priceMvr).toFixed(2)}</div>
+                          {pkg.description && (
+                            <p className="text-sm text-gray-500 dark:text-gray-400">{pkg.description}</p>
+                          )}
+                          <div className="flex justify-center">
+                            <Badge variant={pkg.isActive ? 'default' : 'secondary'}>
+                              {pkg.isActive ? 'Active' : 'Inactive'}
+                            </Badge>
+                          </div>
+                        </div>
+                        
+                        <div className="flex space-x-2 mt-4">
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            className="flex-1"
+                            onClick={() => {
+                              setPackageForm({
+                                name: pkg.name,
+                                coins: pkg.coins.toString(),
+                                priceMvr: pkg.priceMvr.toString(),
+                                description: pkg.description || "",
+                                isActive: pkg.isActive,
+                                isPopular: pkg.isPopular
+                              });
+                              setIsEditingPackage(true);
+                              setSelectedPackage(pkg);
+                            }}
+                          >
+                            <Edit className="w-3 h-3 mr-1" />
+                            Edit
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            className="text-red-600 border-red-200 hover:bg-red-50"
+                            onClick={() => {
+                              if (confirm(`Delete package "${pkg.name}"?`)) {
+                                deletePackageMutation.mutate(pkg.id);
+                              }
+                            }}
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <Package className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                  <p className="text-gray-600 dark:text-gray-400">No coin packages available</p>
                 </div>
               )}
             </TabsContent>
@@ -1346,6 +1518,129 @@ export default function AdminPage() {
 
       {/* Bottom Navigation */}
       <BottomNavigation />
+
+      {/* Package Creation/Edit Dialog */}
+      <Dialog open={!!selectedPackage} onOpenChange={() => setSelectedPackage(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center space-x-2">
+              <Package className="w-5 h-5" />
+              <span>{isEditingPackage ? 'Edit Package' : 'Create Package'}</span>
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="packageName">Package Name</Label>
+              <Input
+                id="packageName"
+                value={packageForm.name}
+                onChange={(e) => setPackageForm({ ...packageForm, name: e.target.value })}
+                placeholder="e.g., Starter Package"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="packageCoins">Coins</Label>
+                <Input
+                  id="packageCoins"
+                  type="number"
+                  value={packageForm.coins}
+                  onChange={(e) => setPackageForm({ ...packageForm, coins: e.target.value })}
+                  placeholder="100"
+                />
+              </div>
+              <div>
+                <Label htmlFor="packagePrice">Price (MVR)</Label>
+                <Input
+                  id="packagePrice"
+                  type="number"
+                  step="0.01"
+                  value={packageForm.priceMvr}
+                  onChange={(e) => setPackageForm({ ...packageForm, priceMvr: e.target.value })}
+                  placeholder="50.00"
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="packageDescription">Description (Optional)</Label>
+              <Textarea
+                id="packageDescription"
+                value={packageForm.description}
+                onChange={(e) => setPackageForm({ ...packageForm, description: e.target.value })}
+                placeholder="Best value package for new users..."
+                rows={3}
+              />
+            </div>
+
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="packageActive"
+                  checked={packageForm.isActive}
+                  onChange={(e) => setPackageForm({ ...packageForm, isActive: e.target.checked })}
+                  className="rounded"
+                />
+                <Label htmlFor="packageActive">Active</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="packagePopular"
+                  checked={packageForm.isPopular}
+                  onChange={(e) => setPackageForm({ ...packageForm, isPopular: e.target.checked })}
+                  className="rounded"
+                />
+                <Label htmlFor="packagePopular">Most Popular</Label>
+              </div>
+            </div>
+
+            <div className="flex justify-end space-x-2">
+              <Button
+                variant="outline"
+                onClick={() => setSelectedPackage(null)}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => {
+                  const packageData = {
+                    name: packageForm.name,
+                    coins: parseInt(packageForm.coins),
+                    priceMvr: parseFloat(packageForm.priceMvr),
+                    description: packageForm.description || null,
+                    isActive: packageForm.isActive,
+                    isPopular: packageForm.isPopular
+                  };
+
+                  if (isEditingPackage && selectedPackage?.id) {
+                    updatePackageMutation.mutate({ id: selectedPackage.id, data: packageData });
+                  } else {
+                    createPackageMutation.mutate(packageData);
+                  }
+                }}
+                disabled={!packageForm.name || !packageForm.coins || !packageForm.priceMvr || createPackageMutation.isPending || updatePackageMutation.isPending}
+                className="bg-mint hover:bg-mint/90"
+              >
+                {isEditingPackage ? (
+                  <>
+                    <Edit className="w-4 h-4 mr-1" />
+                    Update Package
+                  </>
+                ) : (
+                  <>
+                    <Plus className="w-4 h-4 mr-1" />
+                    Create Package
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
