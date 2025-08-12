@@ -275,7 +275,10 @@ export default function AuthPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="gender">Gender *</Label>
-                    <Select onValueChange={(value) => registerForm.setValue("gender", value)}>
+                    <Select 
+                      value={registerForm.watch("gender")}
+                      onValueChange={(value) => registerForm.setValue("gender", value)}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Select gender" />
                       </SelectTrigger>
@@ -309,7 +312,10 @@ export default function AuthPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="atoll">Atoll *</Label>
-                    <Select onValueChange={setSelectedAtoll}>
+                    <Select 
+                      value={selectedAtoll}
+                      onValueChange={setSelectedAtoll}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Select atoll" />
                       </SelectTrigger>
@@ -330,6 +336,7 @@ export default function AuthPage() {
                   <div>
                     <Label htmlFor="island">Island *</Label>
                     <Select
+                      value={registerForm.watch("island")}
                       onValueChange={(value) => registerForm.setValue("island", value)}
                       disabled={!selectedAtoll}
                     >
