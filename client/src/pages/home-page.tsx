@@ -13,7 +13,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useTheme } from "@/lib/theme-provider";
 import { useToast } from "@/hooks/use-toast";
 import { UserCard } from "@/components/UserCard";
-import { StatusBanner } from "@/components/StatusBanner";
+
 import { BottomNavigation } from "@/components/BottomNavigation";
 import { apiRequest, getQueryFn } from "@/lib/queryClient";
 import { useForm } from "react-hook-form";
@@ -168,8 +168,7 @@ export default function HomePage() {
 
       {/* Main Content */}
       <main className="pb-20 px-4">
-        {/* Status Banner */}
-        <StatusBanner />
+
 
         {/* Quick Filters */}
         <div className="mt-6">
