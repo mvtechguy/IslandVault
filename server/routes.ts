@@ -539,6 +539,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/admin/queues/connect", isAdmin, async (req, res) => {
+    try {
+      const status = req.query.status as string;
+      const limit = parseInt(req.query.limit as string) || 50;
+      const offset = parseInt(req.query.offset as string) || 0;
+      
+      const result = await storage.getConnectionRequestsForAdmin(status, limit, offset);
+      res.json(result);
+    } catch (error) {
+      console.error("Error fetching connection requests for admin:", error);
+      res.status(500).json({ message: "Failed to fetch connection requests" });
+    }
+  });
+
   app.post("/api/admin/topups/:id/approve", isAdmin, async (req, res) => {
     try {
       const id = parseInt(req.params.id);

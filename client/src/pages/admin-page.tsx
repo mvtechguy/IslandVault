@@ -35,28 +35,40 @@ export default function AdminPage() {
   // Fetch pending users
   const { data: usersData } = useQuery({
     queryKey: ["/api/admin/queues/users", statusFilter],
-    queryFn: getQueryFn({ on401: "throw" }),
+    queryFn: getQueryFn({ 
+      on401: "throw",
+      queryParams: statusFilter !== "ALL" ? { status: statusFilter } : {}
+    }),
     enabled: !!user && (user.role === "ADMIN" || user.role === "SUPERADMIN"),
   });
 
   // Fetch pending posts
   const { data: postsData } = useQuery({
     queryKey: ["/api/admin/queues/posts", statusFilter],
-    queryFn: getQueryFn({ on401: "throw" }),
+    queryFn: getQueryFn({ 
+      on401: "throw",
+      queryParams: statusFilter !== "ALL" ? { status: statusFilter } : {}
+    }),
     enabled: !!user && (user.role === "ADMIN" || user.role === "SUPERADMIN"),
   });
 
   // Fetch pending topups
   const { data: topupsData } = useQuery({
     queryKey: ["/api/admin/queues/topups", statusFilter],
-    queryFn: getQueryFn({ on401: "throw" }),
+    queryFn: getQueryFn({ 
+      on401: "throw",
+      queryParams: statusFilter !== "ALL" ? { status: statusFilter } : {}
+    }),
     enabled: !!user && (user.role === "ADMIN" || user.role === "SUPERADMIN"),
   });
 
   // Fetch pending connection requests
   const { data: connectionsData } = useQuery({
     queryKey: ["/api/admin/queues/connect", statusFilter],
-    queryFn: getQueryFn({ on401: "throw" }),
+    queryFn: getQueryFn({ 
+      on401: "throw",
+      queryParams: statusFilter !== "ALL" ? { status: statusFilter } : {}
+    }),
     enabled: !!user && (user.role === "ADMIN" || user.role === "SUPERADMIN"),
   });
 
@@ -370,7 +382,7 @@ export default function AdminPage() {
                   <SelectItem value="PENDING">Pending</SelectItem>
                   <SelectItem value="APPROVED">Approved</SelectItem>
                   <SelectItem value="REJECTED">Rejected</SelectItem>
-                  <SelectItem value="">All</SelectItem>
+                  <SelectItem value="ALL">All</SelectItem>
                 </SelectContent>
               </Select>
             </div>
