@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
+import { useBranding } from "@/hooks/use-branding";
 import { Redirect } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -23,6 +24,7 @@ type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function AuthPage() {
   const { user, isLoading, loginMutation, registerMutation } = useAuth();
+  const { appName, logoUrl, tagline } = useBranding();
   const [isRegister, setIsRegister] = useState(false);
   const [selectedAtoll, setSelectedAtoll] = useState("");
   const [availableIslands, setAvailableIslands] = useState<string[]>([]);
@@ -92,11 +94,26 @@ export default function AuthPage() {
         {/* Hero Section */}
         <div className="text-center md:text-left">
           <div className="flex items-center justify-center md:justify-start mb-6">
-            <div className="w-12 h-12 bg-gradient-to-br from-mint to-soft-blue rounded-2xl flex items-center justify-center mr-3">
-              <Heart className="w-6 h-6 text-white" />
-            </div>
+            {logoUrl ? (
+              <img 
+                src={logoUrl} 
+                alt={`${appName} Logo`}
+                className="w-12 h-12 object-contain rounded-2xl mr-3"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                  const fallbackDiv = document.createElement('div');
+                  fallbackDiv.className = 'w-12 h-12 bg-gradient-to-br from-mint to-soft-blue rounded-2xl flex items-center justify-center mr-3';
+                  fallbackDiv.innerHTML = '<svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>';
+                  e.currentTarget.parentNode?.replaceChild(fallbackDiv, e.currentTarget);
+                }}
+              />
+            ) : (
+              <div className="w-12 h-12 bg-gradient-to-br from-mint to-soft-blue rounded-2xl flex items-center justify-center mr-3">
+                <Heart className="w-6 h-6 text-white" />
+              </div>
+            )}
             <h1 className="text-3xl font-bold bg-gradient-to-r from-mint to-soft-blue bg-clip-text text-transparent">
-              Kaiveni
+              {appName}
             </h1>
           </div>
           
@@ -105,7 +122,7 @@ export default function AuthPage() {
           </h2>
           
           <p className="text-xl text-gray-600 dark:text-gray-300 mb-8">
-            The trusted partner finder exclusively for Maldivians. Connect with genuine people from across our beautiful islands.
+            {tagline}
           </p>
           
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
@@ -131,7 +148,7 @@ export default function AuthPage() {
         <Card className="w-full max-w-lg mx-auto border-2 border-mint/20 shadow-2xl">
           <CardHeader>
             <CardTitle className="text-center">
-              {isRegister ? "Join Kaiveni" : "Welcome Back"}
+              {isRegister ? `Join ${appName}` : "Welcome Back"}
             </CardTitle>
             <p className="text-center text-sm text-gray-600 dark:text-gray-400">
               {isRegister 

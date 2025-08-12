@@ -662,6 +662,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // App branding endpoints
+  app.get("/api/admin/branding", isAdmin, async (req, res) => {
+    try {
+      const settings = await storage.getSettings();
+      res.json({
+        appName: settings.branding?.appName || "Kaiveni",
+        logoUrl: settings.branding?.logoUrl || null,
+        primaryColor: settings.branding?.primaryColor || "#10b981",
+        tagline: settings.branding?.tagline || "Find your perfect partner in paradise"
+      });
+    } catch (error) {
+      console.error("Error fetching branding settings:", error);
+      res.status(500).json({ message: "Failed to fetch branding settings" });
+    }
+  });
+
+  app.put("/api/admin/branding", isAdmin, async (req, res) => {
+    try {
+      const { appName, logoUrl, primaryColor, tagline } = req.body;
+      
+      const settings = await storage.getSettings();
+      const currentBranding = settings.branding || {};
+      
+      const updatedBranding = {
+        ...currentBranding,
+        appName: appName || "Kaiveni",
+        logoUrl: logoUrl || null,
+        primaryColor: primaryColor || "#10b981",
+        tagline: tagline || "Find your perfect partner in paradise"
+      };
+
+      await storage.updateSettings({
+        branding: updatedBranding
+      });
+
+      res.json({ message: "Branding settings updated successfully", branding: updatedBranding });
+    } catch (error) {
+      console.error("Error updating branding settings:", error);
+      res.status(500).json({ message: "Failed to update branding settings" });
+    }
+  });
+
+  // Public branding endpoint for frontend
+  app.get("/api/branding", async (req, res) => {
+    try {
+      const settings = await storage.getSettings();
+      res.json({
+        appName: settings.branding?.appName || "Kaiveni",
+        logoUrl: settings.branding?.logoUrl || null,
+        primaryColor: settings.branding?.primaryColor || "#10b981",
+        tagline: settings.branding?.tagline || "Find your perfect partner in paradise"
+      });
+    } catch (error) {
+      console.error("Error fetching public branding:", error);
+      res.status(500).json({ message: "Failed to fetch branding" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

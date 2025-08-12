@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Shield, Users, FileText, Coins, MessageSquare, Check, X, Eye, Search, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,10 @@ export default function AdminPage() {
   const [statusFilter, setStatusFilter] = useState("PENDING");
   const [telegramBotToken, setTelegramBotToken] = useState("");
   const [telegramChatId, setTelegramChatId] = useState("");
+  const [appName, setAppName] = useState("");
+  const [logoUrl, setLogoUrl] = useState("");
+  const [primaryColor, setPrimaryColor] = useState("");
+  const [tagline, setTagline] = useState("");
 
   // Fetch pending users
   const { data: usersData } = useQuery({
@@ -59,6 +63,13 @@ export default function AdminPage() {
   // Fetch telegram settings
   const { data: telegramSettings } = useQuery({
     queryKey: ["/api/admin/telegram/settings"],
+    queryFn: getQueryFn({ on401: "throw" }),
+    enabled: !!user && (user.role === "ADMIN" || user.role === "SUPERADMIN"),
+  });
+
+  // Fetch branding settings
+  const { data: brandingSettings } = useQuery({
+    queryKey: ["/api/admin/branding"],
     queryFn: getQueryFn({ on401: "throw" }),
     enabled: !!user && (user.role === "ADMIN" || user.role === "SUPERADMIN"),
   });
@@ -157,6 +168,35 @@ export default function AdminPage() {
       });
     },
   });
+
+  const updateBrandingMutation = useMutation({
+    mutationFn: async (data: { appName: string; logoUrl: string; primaryColor: string; tagline: string }) => {
+      const res = await apiRequest("PUT", "/api/admin/branding", data);
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: "App branding updated successfully" });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/branding"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/branding"] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to update app branding",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Populate form fields when settings are loaded
+  useEffect(() => {
+    if (brandingSettings) {
+      setAppName(brandingSettings.appName || "");
+      setLogoUrl(brandingSettings.logoUrl || "");
+      setPrimaryColor(brandingSettings.primaryColor || "");
+      setTagline(brandingSettings.tagline || "");
+    }
+  }, [brandingSettings]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -278,7 +318,7 @@ export default function AdminPage() {
         {/* Admin Tabs */}
         <div className="mt-6">
           <Tabs defaultValue="users" className="w-full">
-            <TabsList className="grid w-full grid-cols-5">
+            <TabsList className="grid w-full grid-cols-6">
               <TabsTrigger value="users" className="relative">
                 Users
                 {pendingCounts.users > 0 && (
@@ -313,6 +353,9 @@ export default function AdminPage() {
               </TabsTrigger>
               <TabsTrigger value="telegram">
                 Telegram
+              </TabsTrigger>
+              <TabsTrigger value="branding">
+                Branding
               </TabsTrigger>
             </TabsList>
 
@@ -602,6 +645,138 @@ export default function AdminPage() {
                       <li>• User approval/rejection status updates</li>
                       <li>• Coin credit notifications</li>
                     </ul>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="branding" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>App Branding & Identity</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label htmlFor="appName">App Name</Label>
+                    <Input
+                      id="appName"
+                      placeholder="Enter app name"
+                      value={appName}
+                      onChange={(e) => setAppName(e.target.value)}
+                    />
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                      This will appear in the browser tab and throughout the app
+                    </p>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="tagline">Tagline</Label>
+                    <Input
+                      id="tagline"
+                      placeholder="Enter app tagline"
+                      value={tagline}
+                      onChange={(e) => setTagline(e.target.value)}
+                    />
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                      A short description that appears on the landing page
+                    </p>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="logoUrl">Logo URL</Label>
+                    <Input
+                      id="logoUrl"
+                      placeholder="Enter logo image URL"
+                      value={logoUrl}
+                      onChange={(e) => setLogoUrl(e.target.value)}
+                    />
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                      URL to your logo image (recommended: 200x200px, PNG or SVG)
+                    </p>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="primaryColor">Primary Color</Label>
+                    <div className="flex space-x-2">
+                      <Input
+                        id="primaryColor"
+                        placeholder="#10b981"
+                        value={primaryColor}
+                        onChange={(e) => setPrimaryColor(e.target.value)}
+                      />
+                      <div 
+                        className="w-12 h-10 rounded border border-gray-300 dark:border-gray-600"
+                        style={{ backgroundColor: primaryColor || "#10b981" }}
+                      />
+                    </div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                      Main theme color in hex format (e.g., #10b981)
+                    </p>
+                  </div>
+
+                  <div className="flex space-x-2">
+                    <Button
+                      onClick={() => updateBrandingMutation.mutate({
+                        appName: appName || "Kaiveni",
+                        logoUrl: logoUrl || "",
+                        primaryColor: primaryColor || "#10b981",
+                        tagline: tagline || "Find your perfect partner in paradise"
+                      })}
+                      disabled={updateBrandingMutation.isPending}
+                    >
+                      {updateBrandingMutation.isPending ? "Saving..." : "Save Branding"}
+                    </Button>
+                  </div>
+
+                  {brandingSettings && (
+                    <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                      <div className="flex items-center space-x-4">
+                        {brandingSettings.logoUrl && (
+                          <img 
+                            src={brandingSettings.logoUrl} 
+                            alt="App Logo" 
+                            className="w-12 h-12 object-contain rounded"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                            }}
+                          />
+                        )}
+                        <div>
+                          <p className="text-sm text-blue-700 dark:text-blue-300 font-medium">
+                            Current: {brandingSettings.appName}
+                          </p>
+                          <p className="text-sm text-blue-600 dark:text-blue-400">
+                            {brandingSettings.tagline}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="mt-6">
+                    <h4 className="font-semibold mb-2">Preview</h4>
+                    <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-gradient-to-br from-mint/10 to-soft-blue/10">
+                      <div className="flex items-center space-x-3">
+                        {(logoUrl || brandingSettings?.logoUrl) && (
+                          <img 
+                            src={logoUrl || brandingSettings?.logoUrl} 
+                            alt="Logo Preview" 
+                            className="w-8 h-8 object-contain rounded"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                            }}
+                          />
+                        )}
+                        <div>
+                          <h3 className="font-semibold text-lg" style={{ color: primaryColor || brandingSettings?.primaryColor || "#10b981" }}>
+                            {appName || brandingSettings?.appName || "Kaiveni"}
+                          </h3>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                            {tagline || brandingSettings?.tagline || "Find your perfect partner in paradise"}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
