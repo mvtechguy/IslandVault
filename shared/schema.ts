@@ -28,6 +28,25 @@ export const conversationStatusEnum = pgEnum("conversation_status", ["ACTIVE", "
 export const messageReceiptStatusEnum = pgEnum("message_receipt_status", ["DELIVERED", "READ"]);
 export const chatReportStatusEnum = pgEnum("chat_report_status", ["PENDING", "REVIEWED"]);
 
+// Visitor tracking table
+export const visitors = pgTable("visitors", {
+  id: serial("id").primaryKey(),
+  ipAddress: varchar("ip_address", { length: 45 }).notNull(),
+  userAgent: text("user_agent"),
+  referer: text("referer"),
+  path: varchar("path", { length: 500 }).notNull(),
+  userId: integer("user_id").references(() => users.id), // null for anonymous visitors
+  visitedAt: timestamp("visited_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+  sessionId: varchar("session_id", { length: 255 }),
+  country: varchar("country", { length: 100 }),
+  city: varchar("city", { length: 100 })
+}, (table) => ({
+  visitorDateIdx: index("visitor_date_idx").on(table.visitedAt),
+  visitorIpIdx: index("visitor_ip_idx").on(table.ipAddress),
+  visitorUserIdx: index("visitor_user_idx").on(table.userId),
+  visitorSessionIdx: index("visitor_session_idx").on(table.sessionId)
+}));
+
 // Chat tables
 export const conversations = pgTable("conversations", {
   id: serial("id").primaryKey(),
@@ -319,4 +338,19 @@ export const insertChatReportSchema = createInsertSchema(chatReports).pick({
 export const insertChatBlockSchema = createInsertSchema(chatBlocks).pick({
   blockedId: true,
   reason: true
+});
+
+// Visitor types and schemas
+export type Visitor = typeof visitors.$inferSelect;
+export type InsertVisitor = typeof visitors.$inferInsert;
+
+export const insertVisitorSchema = createInsertSchema(visitors).pick({
+  ipAddress: true,
+  userAgent: true,
+  referer: true,
+  path: true,
+  userId: true,
+  sessionId: true,
+  country: true,
+  city: true
 });

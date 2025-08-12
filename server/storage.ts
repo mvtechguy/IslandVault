@@ -16,7 +16,9 @@ import {
   Message,
   MessageReceipt,
   ChatBlock,
-  ChatReport
+  ChatReport,
+  Visitor,
+  InsertVisitor
 } from "@shared/schema";
 import { db } from "./db";
 import { 
@@ -33,7 +35,8 @@ import {
   messages,
   messageReceipts,
   chatBlocks,
-  chatReports
+  chatReports,
+  visitors
 } from "@shared/schema";
 import { eq, and, desc, asc, sql, count, ne, or } from "drizzle-orm";
 
@@ -108,6 +111,15 @@ export interface IStorage {
   // Admin chat methods
   getAllConversations(limit?: number, offset?: number): Promise<{ conversations: any[]; total: number }>;
   getConversationMessages(conversationId: number, limit?: number, offset?: number): Promise<any[]>;
+  
+  // Visitor tracking
+  createVisitor(visitor: InsertVisitor): Promise<Visitor>;
+  getVisitorStats(): Promise<{
+    today: number;
+    thisWeek: number;
+    thisMonth: number;
+    thisYear: number;
+  }>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -554,23 +566,21 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getMessages(conversationId: number, beforeId?: number, limit = 50): Promise<any[]> {
-    let query = db
+    const conditions = beforeId 
+      ? and(
+          eq(messages.conversationId, conversationId),
+          sql`${messages.id} < ${beforeId}`
+        )
+      : eq(messages.conversationId, conversationId);
+
+    const result = await db
       .select({
         message: messages,
         sender: users
       })
       .from(messages)
       .innerJoin(users, eq(messages.senderId, users.id))
-      .where(eq(messages.conversationId, conversationId));
-
-    if (beforeId) {
-      query = query.where(and(
-        eq(messages.conversationId, conversationId),
-        sql`${messages.id} < ${beforeId}`
-      ));
-    }
-
-    const result = await query
+      .where(conditions)
       .orderBy(desc(messages.sentAt))
       .limit(limit);
 
@@ -750,6 +760,57 @@ export class DatabaseStorage implements IStorage {
       .offset(offset);
 
     return result;
+  }
+
+  // Visitor tracking methods
+  async createVisitor(visitorData: InsertVisitor): Promise<Visitor> {
+    const [visitor] = await db
+      .insert(visitors)
+      .values(visitorData)
+      .returning();
+    return visitor;
+  }
+
+  async getVisitorStats(): Promise<{
+    today: number;
+    thisWeek: number;
+    thisMonth: number;
+    thisYear: number;
+  }> {
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const startOfWeek = new Date(startOfToday);
+    startOfWeek.setDate(startOfToday.getDate() - startOfToday.getDay());
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startOfYear = new Date(now.getFullYear(), 0, 1);
+
+    // Get unique visitors (by IP) for each period
+    const [todayResult] = await db
+      .select({ count: sql<number>`COUNT(DISTINCT ${visitors.ipAddress})` })
+      .from(visitors)
+      .where(sql`${visitors.visitedAt} >= ${startOfToday}`);
+
+    const [weekResult] = await db
+      .select({ count: sql<number>`COUNT(DISTINCT ${visitors.ipAddress})` })
+      .from(visitors)
+      .where(sql`${visitors.visitedAt} >= ${startOfWeek}`);
+
+    const [monthResult] = await db
+      .select({ count: sql<number>`COUNT(DISTINCT ${visitors.ipAddress})` })
+      .from(visitors)
+      .where(sql`${visitors.visitedAt} >= ${startOfMonth}`);
+
+    const [yearResult] = await db
+      .select({ count: sql<number>`COUNT(DISTINCT ${visitors.ipAddress})` })
+      .from(visitors)
+      .where(sql`${visitors.visitedAt} >= ${startOfYear}`);
+
+    return {
+      today: Number(todayResult?.count || 0),
+      thisWeek: Number(weekResult?.count || 0),
+      thisMonth: Number(monthResult?.count || 0),
+      thisYear: Number(yearResult?.count || 0)
+    };
   }
 }
 

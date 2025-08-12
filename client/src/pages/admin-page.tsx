@@ -121,6 +121,14 @@ export default function AdminPage() {
     enabled: !!user && (user.role === "ADMIN" || user.role === "SUPERADMIN"),
   });
 
+  // Fetch visitor statistics
+  const { data: visitorStats } = useQuery({
+    queryKey: ["/api/admin/visitor-stats"],
+    queryFn: getQueryFn({ on401: "throw" }),
+    enabled: !!user && (user.role === "ADMIN" || user.role === "SUPERADMIN"),
+    refetchInterval: 60000, // Refresh every minute
+  });
+
   const approveUserMutation = useMutation({
     mutationFn: async ({ id, note }: { id: number; note: string }) => {
       const res = await apiRequest("POST", `/api/admin/users/${id}/approve`, { note });
@@ -367,7 +375,7 @@ export default function AdminPage() {
           <Tabs defaultValue="users" className="w-full">
             {/* Mobile-friendly scrollable tabs */}
             <div className="w-full overflow-x-auto">
-              <TabsList className="inline-flex h-auto p-1 space-x-1 md:grid md:grid-cols-7 md:w-full">
+              <TabsList className="inline-flex h-auto p-1 space-x-1 md:grid md:grid-cols-8 md:w-full">
                 <TabsTrigger value="users" className="relative whitespace-nowrap px-3 py-2 text-xs md:text-sm">
                   Users
                   {pendingCounts.users > 0 && (
@@ -408,6 +416,9 @@ export default function AdminPage() {
                 </TabsTrigger>
                 <TabsTrigger value="branding" className="whitespace-nowrap px-3 py-2 text-xs md:text-sm">
                   Brand
+                </TabsTrigger>
+                <TabsTrigger value="analytics" className="whitespace-nowrap px-3 py-2 text-xs md:text-sm">
+                  Analytics
                 </TabsTrigger>
               </TabsList>
             </div>
@@ -1023,6 +1034,72 @@ export default function AdminPage() {
                         </div>
                       </div>
                     </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="analytics" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Visitor Analytics</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {visitorStats ? (
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="bg-gradient-to-br from-mint/10 to-mint/20 p-4 rounded-lg border">
+                        <div className="text-2xl font-bold text-mint dark:text-mint-light">
+                          {visitorStats.today}
+                        </div>
+                        <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                          Today
+                        </div>
+                      </div>
+                      
+                      <div className="bg-gradient-to-br from-soft-blue/10 to-soft-blue/20 p-4 rounded-lg border">
+                        <div className="text-2xl font-bold text-soft-blue dark:text-soft-blue-light">
+                          {visitorStats.thisWeek}
+                        </div>
+                        <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                          This Week
+                        </div>
+                      </div>
+                      
+                      <div className="bg-gradient-to-br from-lavender/10 to-lavender/20 p-4 rounded-lg border">
+                        <div className="text-2xl font-bold text-lavender dark:text-lavender-light">
+                          {visitorStats.thisMonth}
+                        </div>
+                        <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                          This Month
+                        </div>
+                      </div>
+                      
+                      <div className="bg-gradient-to-br from-blush/10 to-blush/20 p-4 rounded-lg border">
+                        <div className="text-2xl font-bold text-blush dark:text-blush-light">
+                          {visitorStats.thisYear}
+                        </div>
+                        <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                          This Year
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <div className="animate-spin w-6 h-6 border-2 border-mint border-t-transparent rounded-full mx-auto mb-2"></div>
+                      <p className="text-gray-600 dark:text-gray-400">Loading analytics...</p>
+                    </div>
+                  )}
+                  
+                  <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                    <h4 className="font-semibold text-blue-700 dark:text-blue-300 mb-2">
+                      About Visitor Tracking
+                    </h4>
+                    <ul className="text-sm text-blue-600 dark:text-blue-400 space-y-1">
+                      <li>• Tracks unique visitors by IP address</li>
+                      <li>• Updates in real-time as people visit your site</li>
+                      <li>• Excludes admin panel and API requests</li>
+                      <li>• Privacy-friendly - no personal data stored</li>
+                    </ul>
                   </div>
                 </CardContent>
               </Card>

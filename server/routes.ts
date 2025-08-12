@@ -8,7 +8,7 @@ import { ObjectPermission } from "./objectAcl";
 import { telegramService } from "./telegram";
 import multer from "multer";
 import { z } from "zod";
-import { insertUserSchema, insertPostSchema, insertCoinTopupSchema, insertConnectionRequestSchema, insertMessageSchema, insertChatReportSchema, insertChatBlockSchema } from "@shared/schema";
+import { insertUserSchema, insertPostSchema, insertCoinTopupSchema, insertConnectionRequestSchema, insertMessageSchema, insertChatReportSchema, insertChatBlockSchema, insertVisitorSchema } from "@shared/schema";
 import { scrypt, randomBytes } from "crypto";
 import { promisify } from "util";
 
@@ -39,6 +39,33 @@ const upload = multer({
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication
   setupAuth(app);
+
+  // Visitor tracking middleware
+  app.use(async (req: any, res: any, next: any) => {
+    try {
+      // Skip tracking for admin/API endpoints and static files
+      if (req.path.startsWith('/api') || req.path.startsWith('/admin') || req.path.includes('.')) {
+        return next();
+      }
+
+      const visitorData = {
+        ipAddress: req.ip || req.connection.remoteAddress || 'unknown',
+        userAgent: req.get('User-Agent') || null,
+        referer: req.get('Referer') || null,
+        path: req.path,
+        userId: req.user?.id || null,
+        sessionId: req.sessionID || null
+      };
+
+      // Track visitor asynchronously (don't block request)
+      storage.createVisitor(visitorData).catch(err => {
+        console.error('Failed to track visitor:', err);
+      });
+    } catch (error) {
+      console.error('Visitor tracking error:', error);
+    }
+    next();
+  });
 
   // Error handler for multer
   app.use((error: any, req: any, res: any, next: any) => {
@@ -1372,6 +1399,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       throw error;
     }
   };
+
+  // ================== VISITOR ANALYTICS ==================
+  
+  // Get visitor statistics for admin dashboard
+  app.get("/api/admin/visitor-stats", isAdmin, async (req, res) => {
+    try {
+      const stats = await storage.getVisitorStats();
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching visitor stats:", error);
+      res.status(500).json({ message: "Failed to fetch visitor statistics" });
+    }
+  });
 
   // WebSocket setup for real-time chat
   const httpServer = createServer(app);
