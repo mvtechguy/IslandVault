@@ -156,20 +156,24 @@ export default function AuthPage() {
       const { uploadURL } = await uploadResponse.json();
 
       // Upload file to Google Cloud Storage
-      const formData = new FormData();
-      formData.append('file', file);
-
       const response = await fetch(uploadURL, {
-        method: 'POST',
-        body: formData,
+        method: 'PUT',
+        body: file,
+        headers: {
+          'Content-Type': file.type,
+        },
       });
 
+      console.log("Upload response status:", response.status);
+
       if (!response.ok) {
-        throw new Error('Failed to upload image');
+        const errorText = await response.text();
+        console.error("Upload failed:", errorText);
+        throw new Error(`Upload failed: ${response.status}`);
       }
 
-      const result = await response.json();
-      const imageUrl = result.url || result.publicUrl;
+      // Get public URL by removing query parameters
+      const imageUrl = uploadURL.split('?')[0];
       
       setUploadedPhotoUrl(imageUrl);
       registerForm.setValue("profilePhotoPath", imageUrl);

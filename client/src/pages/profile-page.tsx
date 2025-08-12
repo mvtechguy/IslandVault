@@ -211,22 +211,36 @@ export default function ProfilePage() {
       // Get upload URL
       const uploadResponse = await apiRequest("POST", "/api/objects/upload");
       const { uploadURL } = await uploadResponse.json();
+      
+      console.log("Upload URL:", uploadURL);
 
-      // Upload file to Google Cloud Storage
+      // Create FormData for file upload
       const formData = new FormData();
       formData.append('file', file);
 
+      // Upload file to Google Cloud Storage
       const response = await fetch(uploadURL, {
-        method: 'POST',
-        body: formData,
+        method: 'PUT',
+        body: file,
+        headers: {
+          'Content-Type': file.type,
+        },
       });
 
+      console.log("Upload response status:", response.status);
+      console.log("Upload response:", response);
+
       if (!response.ok) {
-        throw new Error('Failed to upload image');
+        const errorText = await response.text();
+        console.error("Upload failed:", errorText);
+        throw new Error(`Upload failed: ${response.status} ${errorText}`);
       }
 
-      const result = await response.json();
-      const imageUrl = result.url || result.publicUrl;
+      // Google Cloud Storage typically returns the public URL in the location header
+      // or we can construct it from the upload URL
+      const imageUrl = uploadURL.split('?')[0]; // Remove query parameters to get public URL
+      
+      console.log("Image URL:", imageUrl);
       
       setUploadedPhotoUrl(imageUrl);
       updateProfileForm.setValue("profilePhotoPath", imageUrl);
@@ -235,11 +249,11 @@ export default function ProfilePage() {
         title: "Photo uploaded successfully",
         description: "Your profile picture has been uploaded.",
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Upload error:", error);
       toast({
         title: "Upload failed",
-        description: "Failed to upload profile picture. Please try again.",
+        description: error.message || "Failed to upload profile picture. Please try again.",
         variant: "destructive",
       });
     }
@@ -358,11 +372,11 @@ export default function ProfilePage() {
             <TabsContent value="posts" className="space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="font-semibold">My Posts</h3>
-                <Badge variant="secondary">{userPosts?.length || 0}</Badge>
+                <Badge variant="secondary">{(userPosts as any[])?.length || 0}</Badge>
               </div>
-              {userPosts?.length > 0 ? (
+              {(userPosts as any[])?.length > 0 ? (
                 <div className="space-y-3">
-                  {userPosts.map((post: any) => (
+                  {(userPosts as any[]).map((post: any) => (
                     <Card key={post.id}>
                       <CardContent className="pt-4">
                         <div className="flex items-center justify-between mb-2">
@@ -442,9 +456,9 @@ export default function ProfilePage() {
               <div className="space-y-4">
                 <div>
                   <h3 className="font-semibold mb-3">Sent Requests</h3>
-                  {sentRequests?.length > 0 ? (
+                  {(sentRequests as any[])?.length > 0 ? (
                     <div className="space-y-2">
-                      {sentRequests.map((request: any) => (
+                      {(sentRequests as any[]).map((request: any) => (
                         <Card key={request.id}>
                           <CardContent className="pt-4">
                             <div className="flex items-center justify-between">
@@ -471,9 +485,9 @@ export default function ProfilePage() {
 
                 <div>
                   <h3 className="font-semibold mb-3">Received Requests</h3>
-                  {receivedRequests?.length > 0 ? (
+                  {(receivedRequests as any[])?.length > 0 ? (
                     <div className="space-y-2">
-                      {receivedRequests.map((request: any) => (
+                      {(receivedRequests as any[]).map((request: any) => (
                         <Card key={request.id}>
                           <CardContent className="pt-4">
                             <div className="flex items-center justify-between">
@@ -511,9 +525,9 @@ export default function ProfilePage() {
 
               <div>
                 <h3 className="font-semibold mb-3">Top-up History</h3>
-                {coinTopups?.length > 0 ? (
+                {(coinTopups as any[])?.length > 0 ? (
                   <div className="space-y-2">
-                    {coinTopups.map((topup: any) => (
+                    {(coinTopups as any[]).map((topup: any) => (
                       <Card key={topup.id}>
                         <CardContent className="pt-4">
                           <div className="flex items-center justify-between">
@@ -548,9 +562,9 @@ export default function ProfilePage() {
 
             <TabsContent value="history" className="space-y-4">
               <h3 className="font-semibold">Coin Transactions</h3>
-              {coinLedger?.length > 0 ? (
+              {(coinLedger as any[])?.length > 0 ? (
                 <div className="space-y-2">
-                  {coinLedger.map((entry: any) => (
+                  {(coinLedger as any[]).map((entry: any) => (
                     <Card key={entry.id}>
                       <CardContent className="pt-4">
                         <div className="flex items-center justify-between">
