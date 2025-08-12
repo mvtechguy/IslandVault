@@ -237,6 +237,27 @@ export default function AuthPage() {
                 >
                   {loginMutation.isPending ? "Signing in..." : "Sign In"}
                 </Button>
+                
+                {/* Admin Dashboard Access Button */}
+                <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full border-2 border-orange-300 text-orange-600 hover:bg-orange-50 dark:border-orange-600 dark:text-orange-400 dark:hover:bg-orange-900/20"
+                    onClick={() => {
+                      loginForm.setValue("username", "admin");
+                      loginForm.setValue("password", "admin123");
+                      loginMutation.mutate({ username: "admin", password: "admin123" });
+                    }}
+                    disabled={loginMutation.isPending}
+                  >
+                    <Shield className="w-4 h-4 mr-2" />
+                    {loginMutation.isPending ? "Accessing..." : "Admin Dashboard Access"}
+                  </Button>
+                  <p className="text-xs text-center text-gray-500 dark:text-gray-400 mt-2">
+                    Quick access to admin dashboard
+                  </p>
+                </div>
               </form>
             ) : (
               /* Register Form */
