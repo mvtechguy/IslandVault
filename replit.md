@@ -39,9 +39,10 @@ Preferred communication style: Simple, everyday language.
 - **Security**: CSRF protection, password hashing with scrypt, and input validation with Zod schemas
 
 ## Geographic Data Integration
-- **Maldivian Context**: Complete atoll and island data structure for location-based matching
-- **Validation**: Server-side validation ensuring users can only select valid Maldivian locations
-- **Filtering**: Location-based partner search and preference matching
+- **Authentic Maldivian Data**: Complete dataset with 191 inhabited islands across all 21 atolls/administrative divisions, sourced from official government data
+- **Detailed Structure**: Islands include capital city designations, administrative status, and full atoll names with traditional and administrative naming
+- **Location Hierarchy**: Proper atoll-to-island relationships with accurate spelling and administrative divisions
+- **Server Validation**: Ensures users can only select valid Maldivian locations from the authentic dataset
 
 # External Dependencies
 

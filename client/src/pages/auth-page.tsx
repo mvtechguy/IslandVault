@@ -14,7 +14,7 @@ import { insertUserSchema } from "@shared/schema";
 import { z } from "zod";
 import { Heart, Users, Shield, Sparkles, Eye, EyeOff, Check, X, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { getMaldivesData, getIslandsForAtoll } from "@/data/maldives-data";
+import { getMaldivesData, getIslandsByAtoll } from "@/data/maldives-data";
 
 const loginSchema = z.object({
   username: z.string().min(1, "Username or phone number is required"),
@@ -95,8 +95,9 @@ export default function AuthPage() {
   // Update available islands when atoll changes
   useEffect(() => {
     if (selectedAtoll) {
-      const islands = getIslandsForAtoll(selectedAtoll);
-      setAvailableIslands(islands);
+      const islands = getIslandsByAtoll(selectedAtoll);
+      const islandNames = islands.map(island => island.name);
+      setAvailableIslands(islandNames);
       registerForm.setValue("atoll", selectedAtoll);
       registerForm.setValue("island", ""); // Reset island selection
     }
@@ -457,7 +458,7 @@ export default function AuthPage() {
                       </SelectTrigger>
                       <SelectContent>
                         {availableIslands.map((island) => (
-                          <SelectItem key={island} value={island.toLowerCase().replace(/\s+/g, '_')}>
+                          <SelectItem key={island} value={island}>
                             {island}
                           </SelectItem>
                         ))}
