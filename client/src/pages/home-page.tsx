@@ -50,25 +50,39 @@ export default function HomePage() {
   const [postImages, setPostImages] = useState<string[]>([]);
 
   // Fetch posts
-  const { data: postsData, isLoading: postsLoading } = useQuery({
+  const { data: postsData, isLoading: postsLoading } = useQuery<{
+    posts: any[];
+    total: number;
+    hasMore: boolean;
+  }>({
     queryKey: ["/api/posts"],
     queryFn: getQueryFn({ on401: "throw" }),
   });
 
   // Fetch coin balance
-  const { data: coinBalance } = useQuery({
+  const { data: coinBalance } = useQuery<{ coins: number }>({
     queryKey: ["/api/coins/balance"],
     queryFn: getQueryFn({ on401: "throw" }),
   });
 
   // Fetch notifications
-  const { data: notifications } = useQuery({
+  const { data: notifications } = useQuery<any[]>({
     queryKey: ["/api/notifications"],
     queryFn: getQueryFn({ on401: "throw" }),
   });
 
   // Fetch settings
-  const { data: settings } = useQuery({
+  const { data: settings } = useQuery<{
+    coinPriceMvr: string;
+    costPost: number;
+    costConnect: number;
+    bankAccountName?: string;
+    bankAccountNumber?: string;
+    bankBranch?: string;
+    bankName?: string;
+    maxUploadMb: number;
+    themeConfig?: any;
+  }>({
     queryKey: ["/api/settings"],
     queryFn: getQueryFn({ on401: "throw" }),
   });
@@ -243,7 +257,7 @@ export default function HomePage() {
                 </div>
               ))}
             </div>
-          ) : postsData?.posts?.length > 0 ? (
+          ) : postsData?.posts && postsData.posts.length > 0 ? (
             postsData.posts.map((post: any) => (
               <UserCard key={post.id} post={post} />
             ))

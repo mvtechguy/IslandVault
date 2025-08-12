@@ -26,7 +26,7 @@ const upload = multer({
   limits: {
     fileSize: 5 * 1024 * 1024, // 5MB
   },
-  fileFilter: (req, file, cb) => {
+  fileFilter: (req: any, file: any, cb: any) => {
     const allowedMimes = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
     if (allowedMimes.includes(file.mimetype)) {
       cb(null, true);
@@ -216,8 +216,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const settings = await storage.getSettings();
-      if (user.coins < settings.costPost) {
-        return res.status(400).json({ message: `Insufficient coins. You need ${settings.costPost} coins to create a post.` });
+      if ((user.coins || 0) < (settings.costPost || 0)) {
+        return res.status(400).json({ message: `Insufficient coins. You need ${settings.costPost || 0} coins to create a post.` });
       }
 
       const postData = insertPostSchema.parse(req.body);
@@ -227,10 +227,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       // Deduct coins
-      await storage.updateUserCoins(req.user.id, -settings.costPost);
+      await storage.updateUserCoins(req.user!.id, -(settings.costPost || 0));
       await storage.addCoinLedgerEntry({
-        userId: req.user.id,
-        delta: -settings.costPost,
+        userId: req.user!.id,
+        delta: -(settings.costPost || 0),
         reason: 'POST',
         refTable: 'posts',
         refId: post.id,
@@ -335,8 +335,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const settings = await storage.getSettings();
-      if (user.coins < settings.costConnect) {
-        return res.status(400).json({ message: `Insufficient coins. You need ${settings.costConnect} coins to send a connection request.` });
+      if ((user.coins || 0) < (settings.costConnect || 0)) {
+        return res.status(400).json({ message: `Insufficient coins. You need ${settings.costConnect || 0} coins to send a connection request.` });
       }
 
       const requestData = insertConnectionRequestSchema.parse(req.body);
@@ -358,10 +358,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       // Deduct coins
-      await storage.updateUserCoins(req.user.id, -settings.costConnect);
+      await storage.updateUserCoins(req.user!.id, -(settings.costConnect || 0));
       await storage.addCoinLedgerEntry({
-        userId: req.user.id,
-        delta: -settings.costConnect,
+        userId: req.user!.id,
+        delta: -(settings.costConnect || 0),
         reason: 'CONNECT',
         refTable: 'connection_requests',
         refId: request.id,
@@ -467,13 +467,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const topup = await storage.createCoinTopup({
         userId: req.user!.id,
         amountMvr: selectedPackage.priceMvr,
-        pricePerCoin: (parseFloat(selectedPackage.priceMvr.toString()) / selectedPackage.coins).toFixed(2),
+        computedCoins: selectedPackage.coins,
         slipPath: slipPath,
         computedCoins: selectedPackage.coins
       });
 
       // Get user details for notification
-      const user = await storage.getUser(req.user.id);
+      const user = await storage.getUser(req.user!.id);
 
       // Send Telegram notification to admin about new coin request
       if (user) {
@@ -693,7 +693,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const settings = await storage.getSettings();
-      const computedCoins = Math.floor(parseFloat(topup.amountMvr.toString()) / parseFloat(settings.coinPriceMvr.toString()));
+      const computedCoins = Math.floor(parseFloat(topup.amountMvr.toString()) / parseFloat(settings.coinPriceMvr?.toString() || "10"));
       
       const updatedTopup = await storage.updateCoinTopup(id, { 
         status: 'APPROVED',
