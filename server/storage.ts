@@ -44,7 +44,7 @@ import {
   chatReports,
   visitors
 } from "@shared/schema";
-import { eq, and, desc, asc, sql, count, ne, or } from "drizzle-orm";
+import { eq, and, desc, asc, sql, count, ne, or, isNull } from "drizzle-orm";
 
 export interface IStorage {
   // Users
@@ -205,7 +205,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getApprovedPosts(limit = 20, offset = 0, filters?: any): Promise<{ posts: Post[], total: number }> {
-    const conditions = eq(posts.status, 'APPROVED');
+    const conditions = and(eq(posts.status, 'APPROVED'), isNull(posts.deletedAt));
     
     const postsList = await db
       .select()
@@ -230,7 +230,7 @@ export class DatabaseStorage implements IStorage {
     return await db
       .select()
       .from(posts)
-      .where(eq(posts.userId, userId))
+      .where(and(eq(posts.userId, userId), isNull(posts.deletedAt)))
       .orderBy(desc(posts.createdAt));
   }
 
