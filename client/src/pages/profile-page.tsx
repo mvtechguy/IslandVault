@@ -18,8 +18,31 @@ import { apiRequest, getQueryFn } from "@/lib/queryClient";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertUserSchema } from "@shared/schema";
+import { z } from "zod";
 import { getMaldivesData, getIslandsForAtoll } from "@/data/maldives-data";
 import { formatDistanceToNow } from "date-fns";
+
+// Create update profile schema without password fields
+const updateProfileSchema = z.object({
+  username: z.string().min(1, "Username is required"),
+  email: z.string().email().optional(),
+  fullName: z.string().min(1, "Full name is required"),
+  gender: z.enum(["male", "female", "other"]),
+  dateOfBirth: z.string().min(1, "Date of birth is required"),
+  island: z.string().min(1, "Island is required"),
+  atoll: z.string().min(1, "Atoll is required"),
+  religion: z.string().optional(),
+  job: z.string().optional(),
+  education: z.string().optional(),
+  shortBio: z.string().optional(),
+  partnerPreferences: z.object({
+    ageMin: z.number().min(18).max(80).optional(),
+    ageMax: z.number().min(18).max(80).optional(),
+    gender: z.string().optional(),
+    religion: z.string().optional(),
+    notes: z.string().optional(),
+  }).optional(),
+});
 
 export default function ProfilePage() {
   const { user, logoutMutation } = useAuth();
@@ -62,7 +85,7 @@ export default function ProfilePage() {
   });
 
   const updateProfileForm = useForm({
-    resolver: zodResolver(insertUserSchema.omit({ password: true, confirmPassword: true })),
+    resolver: zodResolver(updateProfileSchema),
     defaultValues: {
       username: user?.username || "",
       email: user?.email || "",
