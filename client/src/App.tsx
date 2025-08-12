@@ -13,11 +13,17 @@ import AuthPage from "@/pages/auth-page";
 import ProfilePage from "@/pages/profile-page";
 import AdminPage from "@/pages/admin-page";
 import BuyCoinsPage from "@/pages/buy-coins-page";
+import OnboardPage from "@/pages/onboard-page";
 
 function Router() {
   return (
     <Switch>
       <Route path="/auth" component={AuthPage} />
+      <Route path="/onboard">
+        <ProtectedRoute>
+          <OnboardPage />
+        </ProtectedRoute>
+      </Route>
       <Route path="/">
         <ProtectedRoute>
           <HomePage />
