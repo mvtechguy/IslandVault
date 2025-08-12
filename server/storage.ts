@@ -474,28 +474,33 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getConversationByParticipants(userId1: number, userId2: number): Promise<any> {
-    const result = await db
-      .select({ 
-        conversation: conversations,
-        participant1: conversationParticipants,
-        participant2: conversationParticipants
-      })
-      .from(conversations)
-      .innerJoin(
-        conversationParticipants,
-        eq(conversations.id, conversationParticipants.conversationId)
-      )
-      .innerJoin(
-        conversationParticipants,
-        and(
-          eq(conversations.id, conversationParticipants.conversationId),
-          eq(conversationParticipants.userId, userId2)
-        )
-      )
-      .where(eq(conversationParticipants.userId, userId1))
-      .limit(1);
+    // Find conversations where both users are participants
+    const conversationsWithUser1 = await db
+      .select({ conversationId: conversationParticipants.conversationId })
+      .from(conversationParticipants)
+      .where(eq(conversationParticipants.userId, userId1));
 
-    return result[0]?.conversation || undefined;
+    const conversationsWithUser2 = await db
+      .select({ conversationId: conversationParticipants.conversationId })
+      .from(conversationParticipants)
+      .where(eq(conversationParticipants.userId, userId2));
+
+    // Find common conversations
+    const user1ConvIds = conversationsWithUser1.map(c => c.conversationId);
+    const user2ConvIds = conversationsWithUser2.map(c => c.conversationId);
+    const commonConvIds = user1ConvIds.filter(id => user2ConvIds.includes(id));
+
+    if (commonConvIds.length === 0) {
+      return undefined;
+    }
+
+    // Return the first common conversation
+    const [conversation] = await db
+      .select()
+      .from(conversations)
+      .where(eq(conversations.id, commonConvIds[0]));
+
+    return conversation || undefined;
   }
 
   async getUserConversations(userId: number): Promise<any[]> {
@@ -686,29 +691,47 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAllConversations(limit = 50, offset = 0): Promise<{ conversations: any[]; total: number }> {
+    // Get all conversations with participant count
     const conversationsList = await db
       .select({
-        conversation: conversations,
-        participant1: conversationParticipants,
-        participant2: conversationParticipants,
-        user1: users,
-        user2: users
+        id: conversations.id,
+        status: conversations.status,
+        createdAt: conversations.createdAt,
+        updatedAt: conversations.updatedAt,
       })
       .from(conversations)
-      .leftJoin(conversationParticipants, eq(conversations.id, conversationParticipants.conversationId))
-      .leftJoin(users, eq(conversationParticipants.userId, users.id))
-      .leftJoin(conversationParticipants, eq(conversations.id, conversationParticipants.conversationId))
-      .leftJoin(users, eq(conversationParticipants.userId, users.id))
       .orderBy(desc(conversations.updatedAt))
       .limit(limit)
       .offset(offset);
+
+    // For each conversation, get the participants
+    const conversationsWithParticipants = await Promise.all(
+      conversationsList.map(async (conv) => {
+        const participants = await db
+          .select({
+            userId: conversationParticipants.userId,
+            fullName: users.fullName,
+            username: users.username
+          })
+          .from(conversationParticipants)
+          .innerJoin(users, eq(conversationParticipants.userId, users.id))
+          .where(eq(conversationParticipants.conversationId, conv.id));
+
+        return {
+          conversation: conv,
+          user1: participants[0] || null,
+          user2: participants[1] || null,
+          participants: participants
+        };
+      })
+    );
 
     const [totalResult] = await db
       .select({ count: count() })
       .from(conversations);
 
     return {
-      conversations: conversationsList,
+      conversations: conversationsWithParticipants,
       total: totalResult?.count || 0
     };
   }

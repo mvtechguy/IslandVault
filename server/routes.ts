@@ -1226,6 +1226,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Send message in conversation
+  // Create conversation endpoint
+  app.post("/api/chat/conversations", isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const { participantIds } = req.body;
+
+      if (!participantIds || !Array.isArray(participantIds) || participantIds.length === 0) {
+        return res.status(400).json({ error: "participantIds array is required" });
+      }
+
+      // Check if conversation already exists between these users
+      if (participantIds.length === 1) {
+        const existingConversation = await storage.getConversationByParticipants(userId, participantIds[0]);
+        if (existingConversation) {
+          return res.json(existingConversation);
+        }
+      }
+
+      // Create new conversation
+      const conversation = await storage.createConversation({
+        status: 'ACTIVE'
+      });
+
+      // Add current user as participant
+      await storage.addConversationParticipant({
+        conversationId: conversation.id,
+        userId: userId
+      });
+
+      // Add other participants
+      for (const participantId of participantIds) {
+        await storage.addConversationParticipant({
+          conversationId: conversation.id,
+          userId: participantId
+        });
+      }
+
+      res.status(201).json(conversation);
+    } catch (error) {
+      console.error("Error creating conversation:", error);
+      res.status(500).json({ error: "Failed to create conversation" });
+    }
+  });
+
   app.post("/api/chat/conversations/:conversationId/messages", isAuthenticated, async (req, res) => {
     try {
       const conversationId = parseInt(req.params.conversationId);
