@@ -1,0 +1,197 @@
+PROJECT: Kaiveni — Maldives-only partner finder web app with bank-transfer coin top-ups (slip upload), admin approvals, beautiful card feed, PWA/mobile-first UI, pastel theme, dark/light mode, and one-click Linux VPS deployment (auto DB migrations).
+
+========================
+CORE PRINCIPLES
+========================
+- Audience: ONLY Maldivians. Require Island/Atoll selection during signup. All content/currency in MVR. Timezone: Indian/Maldives (UTC+05:00).
+- Safety/Privacy: Admin will never sell/share data. Contact info shared ONLY if both parties approve inside the system (no manual messaging with admin).
+- Coins: Users top up coins by BANK TRANSFER + SLIP UPLOAD. Admin reviews slips in admin panel and approves/rejects. No WhatsApp/Viber contact.
+- UX: Mobile-app feel (PWA), pastel palette, clean card-based feed, bottom tab bar, smooth animations, dark/light theme toggle.
+- Deployability: One-click `install.sh` for Ubuntu 22.04+ that installs deps, configures Nginx + Node/Laravel, creates DB, runs migrations/seed, and starts PM2 services. Include `.env.example` and README.
+
+========================
+TECH STACK & PROJECT STRUCTURE
+========================
+- Frontend: React + Vite + TypeScript + TailwindCSS. PWA (manifest + service worker). Component library minimal; use Headless UI where helpful.
+- Backend (choose ONE and implement fully):
+  A) Node.js + Express + TypeScript + Prisma ORM (MySQL)
+  OR
+  B) Laravel 11 + PHP 8.3 + Eloquent (MySQL)
+- DB: MySQL 8.x. Use Prisma/Laravel migrations. Seed initial data (atolls list, default settings, an admin user).
+- Auth: Email/username + password (bcrypt/scrypt). JWT (access + refresh) or Laravel Sanctum. Role-based access control (RBAC).
+- File storage: Local `uploads/` with date-based subfolders. Validate & limit slip/photo size (<=5MB), types (jpg/jpeg/png/webp). Generate thumbnails for profile photos. Never expose original slip URLs to public—secure URLs via backend.
+- API: REST with JSON. CORS restricted to web origin. Include OpenAPI/Swagger JSON.
+
+Suggested repo layout:
+- `/frontend` (React)
+- `/backend` (Express/Laravel)
+- `/deploy/install.sh`, `/deploy/nginx.conf`, `/deploy/pm2.config.cjs`
+- `/docs/README.md`, `/docs/API.md`, `/docs/DB_SCHEMA.md`, `/docs/PRIVACY_POLICY.md`
+- `.env.example` at backend root
+
+========================
+FEATURES — USER FLOW
+========================
+1) Onboarding & Profile (Maldives-only)
+   - Signup fields (required unless noted): username (unique), email (optional), password, full_name, gender, dob, island, atoll (dropdown), religion (optional), job/education (optional), short_bio (max 300 chars), partner_preferences (structured: preferred_age_min/max, preferred_gender, preferred_religion optional, notes), profile_photo (upload).
+   - Status: PENDING until admin approves. Unapproved users cannot post/request/connect.
+   - Validation: sensible min/max ages; dob ≥ 18 yrs; profanity filter on bios; image type/size checks.
+
+2) Coins (Bank Transfer + Slip Upload)
+   - “Buy Coins” screen: show bank info (from settings), coin price (configurable), predefined packages (optional: 100/300/500 MVR) + custom MVR amount.
+   - User enters amount, uploads slip (image), submits. Create record with status=PENDING_REVIEW.
+   - Admin reviews in admin panel (thumbnail + full view), can Approve (credit computed coins = floor(amount / price_per_coin)) or Reject (with reason). On approve, append ledger entry and update user balance.
+   - User sees history table: date, MVR, coins, status, admin note.
+
+3) Posting (Costs Coins)
+   - New Post form (consumes X coins; configurable in Settings): title (optional), description (max 600 chars), preferences overview (age range, island/atoll, etc.), optional image.
+   - On submit → status=PENDING_REVIEW → admin approves → appears on the public feed (visible to logged-in users).
+   - Editing a post requires re-approval; outline whether edits consume coins (configurable).
+
+4) Feed: Beautiful Card Layout
+   - Responsive card grid/list (mobile-first): profile photo or post image, name, age, island/atoll, religion (optional), short bio snippet, preferences, “Request to Connect” button (disabled if not enough coins), posted time (e.g., “2h ago”).
+   - Filters/search: gender, age range slider, island/atoll, religion, “has photo,” sort by latest.
+   - Infinite scroll with skeleton loaders. Pastel shadows, rounded-2xl cards, subtle hover/tap effects.
+
+5) Request to Connect (Costs Coins)
+   - Clicking “Request to Connect” shows a confirm modal (shows cost and remaining coins).
+   - On confirm: create CONNECT_REQUEST (PENDING) and consume coins. Admin receives it in queue.
+   - Admin checks both profiles. If target user ACCEPTS (toggle or confirmation workflow in admin), admin sets request=APPROVED and system privately reveals contact info to both users (e.g., email/phone fields on each profile; reveal via secure inbox or masked view).
+   - If rejected, refund coins (configurable partial/full). Store reason.
+
+6) Dashboard (User)
+   - Profile status (Pending/Approved/Rejected), edit profile (re-approval).
+   - Coins: balance, ledger, top-up history with slip thumbnails/status.
+   - Posts: list with statuses; create/edit; usage of coins.
+   - Connection requests: sent/received with statuses and outcomes.
+   - Notifications: simple in-app alerts (coin approved, post approved, connection approved/rejected).
+
+========================
+FEATURES — ADMIN PANEL
+========================
+- Role: ADMIN (and SUPERADMIN optional).
+- Queues:
+  a) User approvals (approve/reject; note)
+  b) Post approvals (approve/reject; note)
+  c) Connection requests (view both profiles, approve; optional request confirmation by target; reject with note; configure refund policy)
+  d) Coin top-ups (slip verification: thumbnail/full; approve → credit; reject → note)
+- Users: search, filter, view profiles, adjust coins (manual credit/debit with reason), block/unblock, delete (soft-delete).
+- Posts: list/search/filter by status, force-hide, delete (soft), edit text (with audit trail).
+- Settings:
+  - Bank account name/number/branch, coin price (MVR per coin), coin costs (post, connect), Maldives atoll/island lists, branding (logo, colors), legal pages content (Privacy, ToS), contact email.
+  - Toggle features (refund-on-reject, require-target-acceptance, max image size, allowed mime types).
+- Audit & Logs: every approve/reject/credit/debit recorded with admin_id, timestamp, IP. Export CSV.
+- Security: rate limiting on admin auth, IP allowlist (optional), enforced strong passwords.
+
+========================
+DATA MODEL (MySQL — adjust types if Laravel/Prisma)
+========================
+- users(id PK, username UNIQUE, email NULL, password_hash, full_name, gender ENUM('male','female','other'), dob DATE, island VARCHAR(64), atoll VARCHAR(64), religion VARCHAR(64) NULL, job VARCHAR(128) NULL, education VARCHAR(128) NULL, short_bio VARCHAR(300) NULL, partner_pref JSON, profile_photo_path VARCHAR(255) NULL, status ENUM('PENDING','APPROVED','REJECTED') DEFAULT 'PENDING', role ENUM('USER','ADMIN','SUPERADMIN') DEFAULT 'USER', coins INT DEFAULT 0, created_at, updated_at, deleted_at NULL)
+- posts(id PK, user_id FK users, title VARCHAR(120) NULL, description VARCHAR(600), image_path VARCHAR(255) NULL, prefs JSON, status ENUM('PENDING','APPROVED','REJECTED','HIDDEN') DEFAULT 'PENDING', created_at, updated_at, deleted_at NULL)
+- connection_requests(id PK, requester_id FK users, target_user_id FK users, post_id FK posts NULL, status ENUM('PENDING','APPROVED','REJECTED','CANCELLED') DEFAULT 'PENDING', admin_note VARCHAR(255) NULL, refund_applied BOOL DEFAULT 0, created_at, updated_at)
+- coin_topups(id PK, user_id FK users, amount_mvr DECIMAL(10,2), computed_coins INT, price_per_coin DECIMAL(10,2), slip_path VARCHAR(255), status ENUM('PENDING','APPROVED','REJECTED') DEFAULT 'PENDING', admin_note VARCHAR(255) NULL, created_at, updated_at)
+- coin_ledger(id PK, user_id FK users, delta INT, reason ENUM('TOPUP','POST','CONNECT','ADJUST','REFUND'), ref_table VARCHAR(32) NULL, ref_id BIGINT NULL, created_at)
+- settings(id PK=1, coin_price_mvr DECIMAL(10,2) DEFAULT 10.00, cost_post INT DEFAULT 1, cost_connect INT DEFAULT 1, bank_account_name VARCHAR(120), bank_account_number VARCHAR(64), bank_branch VARCHAR(120) NULL, allow_refunds BOOL DEFAULT 1, require_target_accept BOOL DEFAULT 1, max_upload_mb INT DEFAULT 5, allowed_mimes JSON, branding JSON, created_at, updated_at)
+- notifications(id PK, user_id FK users, type VARCHAR(64), data JSON, seen BOOL DEFAULT 0, created_at)
+- audits(id PK, admin_id FK users, action VARCHAR(64), entity VARCHAR(32), entity_id BIGINT, meta JSON, ip VARCHAR(45), created_at)
+
+Indexes: add on foreign keys + (users.username), (posts.status), (coin_topups.status), (connection_requests.status). Use soft delete where noted.
+
+========================
+API CONTRACT (examples; expand to full OpenAPI)
+========================
+Auth:
+- POST /api/auth/register {username, email?, password, profile fields}
+- POST /api/auth/login {username_or_email, password} -> {access_token, refresh_token}
+- POST /api/auth/refresh {refresh_token}
+Users:
+- GET /api/me
+- PATCH /api/me {editable profile fields} → sets status back to PENDING
+- GET /api/atolls (seeded list)
+Coins:
+- POST /api/coins/topups {amount_mvr, slip_file} multipart → creates PENDING
+- GET /api/coins/topups → list mine
+- GET /api/coins/balance → {coins}
+Posts:
+- GET /api/posts?status=APPROVED&filters...
+- POST /api/posts {description, prefs, image?} → consumes settings.cost_post coins
+- PATCH /api/posts/:id {fields} → re-approval flow
+Connect:
+- POST /api/connect {target_user_id, post_id?} → consumes settings.cost_connect coins
+- GET /api/connect/sent, GET /api/connect/received
+Admin:
+- GET /api/admin/queues/{users|posts|topups|connect}
+- POST /api/admin/users/:id/approve|reject
+- POST /api/admin/posts/:id/approve|reject|hide
+- POST /api/admin/topups/:id/approve|reject (on approve: credit coins = floor(amount_mvr / coin_price_mvr), create coin_ledger)
+- POST /api/admin/connect/:id/approve|reject (apply refund if configured)
+- POST /api/admin/users/:id/coins {delta, reason:'ADJUST', note}
+- GET/POST /api/admin/settings
+
+Validation errors return 422 with clear messages. Auth failures return 401/403. Rate limit sensitive endpoints.
+
+========================
+FRONTEND UI DETAILS
+========================
+- Global: Pastel palette (mint, blush pink, lavender, soft blue). Rounded-2xl, soft shadows, smooth transitions. Dark/light toggle (store in localStorage).
+- Bottom tab bar (mobile): Home, Posts, Create, Buy Coins, Profile.
+- Home: Hero header, quick filters, latest approved posts (cards).
+- Card component (PostCard): avatar/image, name & age, island/atoll chip, bio snippet (truncate), preferences chips, “Request to Connect” button (coin cost tooltip), posted time. Loading skeletons.
+- Buy Coins: package tiles + custom, bank details from settings, slip upload (preview + remove), submit -> status timeline (Pending/Approved/Rejected).
+- Dashboard: coin balance badge; tables for history (ledger/top-ups/requests); profile status banner.
+- Accessibility: proper alt text, focus rings, keyboard nav.
+
+========================
+SECURITY & QUALITY
+========================
+- Hash passwords (bcrypt >= 12 rounds). Never log secrets. Sanitize/escape all inputs. Validate file MIME via magic bytes.
+- Limit upload size and requests (rate limit by IP + user).
+- Only admin role can access admin endpoints; check RBAC on every protected route.
+- Serve images via signed routes or static with auth checks for slips. Do NOT show slip files to other users.
+- Comprehensive error messages (simple, actionable).
+- Unit tests for services (coin credit, ledger consistency, refunds).
+- API tests for key flows (register, approve user, top-up approve, post create, request connect approve).
+- E2E seed & test script: creates sample admin/user data, submits flows, verifies balances change correctly.
+- Logging: JSON logs with levels; request IDs; audit trail for admin actions.
+
+========================
+LEGAL PAGES (rendered routes)
+========================
+- /privacy: “Admin will never use or sell your information. Data is only used for verification and matchmaking. Contact info is shared only with consent from both users. Slip uploads are kept secure and confidential.”
+- /terms: acceptable use, age 18+, no harassment, admin may remove content, jurisdiction Maldives.
+
+========================
+ONE-CLICK VPS DEPLOY (Ubuntu 22.04+)
+========================
+Produce `/deploy/install.sh` that:
+1) Checks root/sudo; updates apt; installs: curl, git, unzip, build-essential, nginx, mysql-server, ufw, node (LTS) or PHP stack if Laravel, pm2.
+2) Creates MySQL DB & user (prompt or env). Secures MySQL (bind-address 127.0.0.1).
+3) Copies `.env.example` to `.env` and fills values (PORTs, DB creds, JWT secrets, APP_URL, coin price, bank details). If values missing, prompt interactively.
+4) Runs `npm ci`/`composer install` + builds frontend.
+5) Runs migrations + seeds (atolls list, admin user; print admin login & temp password).
+6) Configures PM2 to run backend (and serve frontend from Nginx). Saves PM2 startup.
+7) Writes `/etc/nginx/sites-available/kaiveni` with reverse proxy to backend and static for frontend build. Enables site + reloads nginx. Optional: Certbot if domain provided.
+8) Opens firewall: allow 80/443. Prints success banner with URLs:
+   - Frontend: https://<domain> or http://<ip>
+   - Admin: /admin
+   - Admin user/pass printed once
+9) Idempotent: safe to re-run; skips steps if already done. Provides `/deploy/uninstall.sh` to remove services (optional).
+
+CLI: `bash deploy/install.sh`
+
+========================
+ACCEPTANCE CRITERIA (must pass)
+========================
+- A new user can register, complete profile, and becomes APPROVED after admin action.
+- User can submit top-up with slip; admin approves; coins increase and ledger records TOPUP.
+- User can create a post; coins decrease; post shows as APPROVED card after admin approval.
+- User can request connection; coins decrease; admin approves; both users see each other’s contact info in a secure view.
+- Dark/light toggle persists. Feed filters work. Image validations enforced. All protected routes secured by role.
+- One-click installer completes on clean Ubuntu VM and prints admin credentials, with DB migrated and seed data present.
+
+DELIVERABLES
+- Source code for frontend + backend.
+- `/deploy/install.sh`, `/deploy/nginx.conf`, `/deploy/pm2.config.cjs`.
+- `.env.example` with all variables.
+- Migrations + seeds (atolls, settings, admin).
+- `/docs/README.md` (setup, run, deploy), `/docs/API.md` (endpoint docs), `/docs/DB_SCHEMA.md` (diagram), `/docs/PRIVACY_POLICY.md` (site copy).
