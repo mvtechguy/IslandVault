@@ -33,6 +33,22 @@ export default function AdminPage() {
   const [primaryColor, setPrimaryColor] = useState("");
   const [tagline, setTagline] = useState("");
 
+  // Pagination states
+  const [usersPage, setUsersPage] = useState(0);
+  const [postsPage, setPostsPage] = useState(0);
+  const [topupsPage, setTopupsPage] = useState(0);
+  const [connectionsPage, setConnectionsPage] = useState(0);
+  const [chatPage, setChatPage] = useState(0);
+  const itemsPerPage = 10;
+
+  // Reset pagination when status filter changes
+  useEffect(() => {
+    setUsersPage(0);
+    setPostsPage(0);
+    setTopupsPage(0);
+    setConnectionsPage(0);
+  }, [statusFilter]);
+
   // Fetch pending users
   const { data: usersData } = useQuery({
     queryKey: ["/api/admin/queues/users", statusFilter],
@@ -349,49 +365,52 @@ export default function AdminPage() {
         {/* Admin Tabs */}
         <div className="mt-6">
           <Tabs defaultValue="users" className="w-full">
-            <TabsList className="grid w-full grid-cols-7">
-              <TabsTrigger value="users" className="relative">
-                Users
-                {pendingCounts.users > 0 && (
-                  <Badge variant="destructive" className="absolute -top-2 -right-2 w-5 h-5 p-0 text-xs">
-                    {pendingCounts.users}
-                  </Badge>
-                )}
-              </TabsTrigger>
-              <TabsTrigger value="posts" className="relative">
-                Posts
-                {pendingCounts.posts > 0 && (
-                  <Badge variant="destructive" className="absolute -top-2 -right-2 w-5 h-5 p-0 text-xs">
-                    {pendingCounts.posts}
-                  </Badge>
-                )}
-              </TabsTrigger>
-              <TabsTrigger value="topups" className="relative">
-                Topups
-                {pendingCounts.topups > 0 && (
-                  <Badge variant="destructive" className="absolute -top-2 -right-2 w-5 h-5 p-0 text-xs">
-                    {pendingCounts.topups}
-                  </Badge>
-                )}
-              </TabsTrigger>
-              <TabsTrigger value="connections" className="relative">
-                Connections
-                {pendingCounts.connections > 0 && (
-                  <Badge variant="destructive" className="absolute -top-2 -right-2 w-5 h-5 p-0 text-xs">
-                    {pendingCounts.connections}
-                  </Badge>
-                )}
-              </TabsTrigger>
-              <TabsTrigger value="chat-inbox">
-                Chat Inbox
-              </TabsTrigger>
-              <TabsTrigger value="telegram">
-                Telegram
-              </TabsTrigger>
-              <TabsTrigger value="branding">
-                Branding
-              </TabsTrigger>
-            </TabsList>
+            {/* Mobile-friendly scrollable tabs */}
+            <div className="w-full overflow-x-auto">
+              <TabsList className="inline-flex h-auto p-1 space-x-1 md:grid md:grid-cols-7 md:w-full">
+                <TabsTrigger value="users" className="relative whitespace-nowrap px-3 py-2 text-xs md:text-sm">
+                  Users
+                  {pendingCounts.users > 0 && (
+                    <Badge variant="destructive" className="absolute -top-2 -right-2 w-4 h-4 p-0 text-xs">
+                      {pendingCounts.users}
+                    </Badge>
+                  )}
+                </TabsTrigger>
+                <TabsTrigger value="posts" className="relative whitespace-nowrap px-3 py-2 text-xs md:text-sm">
+                  Posts
+                  {pendingCounts.posts > 0 && (
+                    <Badge variant="destructive" className="absolute -top-2 -right-2 w-4 h-4 p-0 text-xs">
+                      {pendingCounts.posts}
+                    </Badge>
+                  )}
+                </TabsTrigger>
+                <TabsTrigger value="topups" className="relative whitespace-nowrap px-3 py-2 text-xs md:text-sm">
+                  Topups
+                  {pendingCounts.topups > 0 && (
+                    <Badge variant="destructive" className="absolute -top-2 -right-2 w-4 h-4 p-0 text-xs">
+                      {pendingCounts.topups}
+                    </Badge>
+                  )}
+                </TabsTrigger>
+                <TabsTrigger value="connections" className="relative whitespace-nowrap px-3 py-2 text-xs md:text-sm">
+                  Connect
+                  {pendingCounts.connections > 0 && (
+                    <Badge variant="destructive" className="absolute -top-2 -right-2 w-4 h-4 p-0 text-xs">
+                      {pendingCounts.connections}
+                    </Badge>
+                  )}
+                </TabsTrigger>
+                <TabsTrigger value="chat-inbox" className="whitespace-nowrap px-3 py-2 text-xs md:text-sm">
+                  Chat
+                </TabsTrigger>
+                <TabsTrigger value="telegram" className="whitespace-nowrap px-3 py-2 text-xs md:text-sm">
+                  Telegram
+                </TabsTrigger>
+                <TabsTrigger value="branding" className="whitespace-nowrap px-3 py-2 text-xs md:text-sm">
+                  Brand
+                </TabsTrigger>
+              </TabsList>
+            </div>
 
             {/* Status Filter */}
             <div className="flex items-center space-x-4 mt-4 mb-4">
@@ -411,66 +430,95 @@ export default function AdminPage() {
 
             <TabsContent value="users" className="space-y-4">
               {usersData?.users?.length > 0 ? (
-                <div className="space-y-3">
-                  {usersData.users.map((user: any) => (
-                    <Card key={user.id}>
-                      <CardContent className="pt-4">
-                        <div className="flex items-start space-x-4">
-                          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-mint to-soft-blue flex items-center justify-center">
-                            <span className="text-white font-semibold">
-                              {user.fullName.charAt(0)}
-                            </span>
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex items-start justify-between">
-                              <div>
-                                <h3 className="font-semibold">{user.fullName}</h3>
-                                <p className="text-sm text-gray-600 dark:text-gray-400">
-                                  {calculateAge(user.dateOfBirth)} years, {user.gender} • {user.island}, {user.atoll}
-                                </p>
-                                <p className="text-sm text-gray-700 dark:text-gray-300 mt-1">
-                                  {user.shortBio}
-                                </p>
+                <>
+                  <div className="space-y-3">
+                    {usersData.users
+                      .slice(usersPage * itemsPerPage, (usersPage + 1) * itemsPerPage)
+                      .map((user: any) => (
+                        <Card key={user.id}>
+                          <CardContent className="pt-4">
+                            <div className="flex items-start space-x-4">
+                              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-mint to-soft-blue flex items-center justify-center">
+                                <span className="text-white font-semibold">
+                                  {user.fullName.charAt(0)}
+                                </span>
                               </div>
-                              <Badge className={getStatusColor(user.status)}>
-                                {user.status}
-                              </Badge>
+                              <div className="flex-1">
+                                <div className="flex items-start justify-between">
+                                  <div>
+                                    <h3 className="font-semibold">{user.fullName}</h3>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                                      {calculateAge(user.dateOfBirth)} years, {user.gender} • {user.island}, {user.atoll}
+                                    </p>
+                                    <p className="text-sm text-gray-700 dark:text-gray-300 mt-1">
+                                      {user.shortBio}
+                                    </p>
+                                  </div>
+                                  <Badge className={getStatusColor(user.status)}>
+                                    {user.status}
+                                  </Badge>
+                                </div>
+                                {user.status === 'PENDING' && (
+                                  <div className="flex flex-wrap gap-2 mt-3">
+                                    <Button
+                                      size="sm"
+                                      onClick={() => setSelectedUser(user)}
+                                      className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-900/50"
+                                    >
+                                      <Check className="w-3 h-3 mr-1" />
+                                      Approve
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => setSelectedUser(user)}
+                                      className="border-red-200 text-red-700 hover:bg-red-50"
+                                    >
+                                      <X className="w-3 h-3 mr-1" />
+                                      Reject
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => setSelectedUser(user)}
+                                    >
+                                      <Eye className="w-3 h-3 mr-1" />
+                                      View
+                                    </Button>
+                                  </div>
+                                )}
+                              </div>
                             </div>
-                            {user.status === 'PENDING' && (
-                              <div className="flex space-x-2 mt-3">
-                                <Button
-                                  size="sm"
-                                  onClick={() => setSelectedUser(user)}
-                                  className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-900/50"
-                                >
-                                  <Check className="w-3 h-3 mr-1" />
-                                  Approve
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => setSelectedUser(user)}
-                                  className="border-red-200 text-red-700 hover:bg-red-50"
-                                >
-                                  <X className="w-3 h-3 mr-1" />
-                                  Reject
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => setSelectedUser(user)}
-                                >
-                                  <Eye className="w-3 h-3 mr-1" />
-                                  View Full
-                                </Button>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                  </div>
+                  
+                  {/* Pagination Controls */}
+                  <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <div className="text-sm text-gray-600 dark:text-gray-400">
+                      Showing {usersPage * itemsPerPage + 1}-{Math.min((usersPage + 1) * itemsPerPage, usersData.users.length)} of {usersData.users.length}
+                    </div>
+                    <div className="flex space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setUsersPage(Math.max(0, usersPage - 1))}
+                        disabled={usersPage === 0}
+                      >
+                        Previous
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setUsersPage(usersPage + 1)}
+                        disabled={(usersPage + 1) * itemsPerPage >= usersData.users.length}
+                      >
+                        Next
+                      </Button>
+                    </div>
+                  </div>
+                </>
               ) : (
                 <div className="text-center py-8">
                   <Users className="w-8 h-8 text-gray-400 mx-auto mb-2" />
@@ -481,51 +529,80 @@ export default function AdminPage() {
 
             <TabsContent value="posts" className="space-y-4">
               {postsData?.posts?.length > 0 ? (
-                <div className="space-y-3">
-                  {postsData.posts.map((post: any) => (
-                    <Card key={post.id}>
-                      <CardContent className="pt-4">
-                        <div className="flex items-start justify-between">
-                          <div>
-                            {post.title && (
-                              <h3 className="font-semibold">{post.title}</h3>
+                <>
+                  <div className="space-y-3">
+                    {postsData.posts
+                      .slice(postsPage * itemsPerPage, (postsPage + 1) * itemsPerPage)
+                      .map((post: any) => (
+                        <Card key={post.id}>
+                          <CardContent className="pt-4">
+                            <div className="flex items-start justify-between">
+                              <div>
+                                {post.title && (
+                                  <h3 className="font-semibold">{post.title}</h3>
+                                )}
+                                <p className="text-sm text-gray-700 dark:text-gray-300 mt-1">
+                                  {post.description}
+                                </p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                                  {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}
+                                </p>
+                              </div>
+                              <Badge className={getStatusColor(post.status)}>
+                                {post.status}
+                              </Badge>
+                            </div>
+                            {post.status === 'PENDING' && (
+                              <div className="flex flex-wrap gap-2 mt-3">
+                                <Button
+                                  size="sm"
+                                  onClick={() => setSelectedPost(post)}
+                                  className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-900/50"
+                                >
+                                  <Check className="w-3 h-3 mr-1" />
+                                  Approve
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => setSelectedPost(post)}
+                                  className="border-red-200 text-red-700 hover:bg-red-50"
+                                >
+                                  <X className="w-3 h-3 mr-1" />
+                                  Reject
+                                </Button>
+                              </div>
                             )}
-                            <p className="text-sm text-gray-700 dark:text-gray-300 mt-1">
-                              {post.description}
-                            </p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                              {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}
-                            </p>
-                          </div>
-                          <Badge className={getStatusColor(post.status)}>
-                            {post.status}
-                          </Badge>
-                        </div>
-                        {post.status === 'PENDING' && (
-                          <div className="flex space-x-2 mt-3">
-                            <Button
-                              size="sm"
-                              onClick={() => setSelectedPost(post)}
-                              className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-900/50"
-                            >
-                              <Check className="w-3 h-3 mr-1" />
-                              Approve
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => setSelectedPost(post)}
-                              className="border-red-200 text-red-700 hover:bg-red-50"
-                            >
-                              <X className="w-3 h-3 mr-1" />
-                              Reject
-                            </Button>
-                          </div>
-                        )}
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                  </div>
+                  
+                  {/* Pagination Controls */}
+                  <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <div className="text-sm text-gray-600 dark:text-gray-400">
+                      Showing {postsPage * itemsPerPage + 1}-{Math.min((postsPage + 1) * itemsPerPage, postsData.posts.length)} of {postsData.posts.length}
+                    </div>
+                    <div className="flex space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPostsPage(Math.max(0, postsPage - 1))}
+                        disabled={postsPage === 0}
+                      >
+                        Previous
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPostsPage(postsPage + 1)}
+                        disabled={(postsPage + 1) * itemsPerPage >= postsData.posts.length}
+                      >
+                        Next
+                      </Button>
+                    </div>
+                  </div>
+                </>
               ) : (
                 <div className="text-center py-8">
                   <FileText className="w-8 h-8 text-gray-400 mx-auto mb-2" />
@@ -536,60 +613,89 @@ export default function AdminPage() {
 
             <TabsContent value="topups" className="space-y-4">
               {topupsData?.topups?.length > 0 ? (
-                <div className="space-y-3">
-                  {topupsData.topups.map((topup: any) => (
-                    <Card key={topup.id}>
-                      <CardContent className="pt-4">
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <h3 className="font-semibold">MVR {topup.amountMvr}</h3>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">
-                              Price per coin: MVR {topup.pricePerCoin}
-                            </p>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">
-                              Expected coins: {Math.floor(parseFloat(topup.amountMvr) / parseFloat(topup.pricePerCoin))}
-                            </p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                              {formatDistanceToNow(new Date(topup.createdAt), { addSuffix: true })}
-                            </p>
-                          </div>
-                          <Badge className={getStatusColor(topup.status)}>
-                            {topup.status}
-                          </Badge>
-                        </div>
-                        {topup.status === 'PENDING' && (
-                          <div className="flex space-x-2 mt-3">
-                            <Button
-                              size="sm"
-                              onClick={() => setSelectedTopup(topup)}
-                              className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-900/50"
-                            >
-                              <Check className="w-3 h-3 mr-1" />
-                              Approve
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => setSelectedTopup(topup)}
-                              className="border-red-200 text-red-700 hover:bg-red-50"
-                            >
-                              <X className="w-3 h-3 mr-1" />
-                              Reject
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => setSelectedTopup(topup)}
-                            >
-                              <Eye className="w-3 h-3 mr-1" />
-                              View Slip
-                            </Button>
-                          </div>
-                        )}
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
+                <>
+                  <div className="space-y-3">
+                    {topupsData.topups
+                      .slice(topupsPage * itemsPerPage, (topupsPage + 1) * itemsPerPage)
+                      .map((topup: any) => (
+                        <Card key={topup.id}>
+                          <CardContent className="pt-4">
+                            <div className="flex items-start justify-between">
+                              <div>
+                                <h3 className="font-semibold">MVR {topup.amountMvr}</h3>
+                                <p className="text-sm text-gray-600 dark:text-gray-400">
+                                  Price per coin: MVR {topup.pricePerCoin}
+                                </p>
+                                <p className="text-sm text-gray-600 dark:text-gray-400">
+                                  Expected coins: {Math.floor(parseFloat(topup.amountMvr) / parseFloat(topup.pricePerCoin))}
+                                </p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                                  {formatDistanceToNow(new Date(topup.createdAt), { addSuffix: true })}
+                                </p>
+                              </div>
+                              <Badge className={getStatusColor(topup.status)}>
+                                {topup.status}
+                              </Badge>
+                            </div>
+                            {topup.status === 'PENDING' && (
+                              <div className="flex flex-wrap gap-2 mt-3">
+                                <Button
+                                  size="sm"
+                                  onClick={() => setSelectedTopup(topup)}
+                                  className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-900/50"
+                                >
+                                  <Check className="w-3 h-3 mr-1" />
+                                  Approve
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => setSelectedTopup(topup)}
+                                  className="border-red-200 text-red-700 hover:bg-red-50"
+                                >
+                                  <X className="w-3 h-3 mr-1" />
+                                  Reject
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => setSelectedTopup(topup)}
+                                >
+                                  <Eye className="w-3 h-3 mr-1" />
+                                  View Slip
+                                </Button>
+                              </div>
+                            )}
+                          </CardContent>
+                        </Card>
+                      ))}
+                  </div>
+                  
+                  {/* Pagination Controls */}
+                  <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <div className="text-sm text-gray-600 dark:text-gray-400">
+                      Showing {topupsPage * itemsPerPage + 1}-{Math.min((topupsPage + 1) * itemsPerPage, topupsData.topups.length)} of {topupsData.topups.length}
+                    </div>
+                    <div className="flex space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setTopupsPage(Math.max(0, topupsPage - 1))}
+                        disabled={topupsPage === 0}
+                      >
+                        Previous
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setTopupsPage(topupsPage + 1)}
+                        disabled={(topupsPage + 1) * itemsPerPage >= topupsData.topups.length}
+                      >
+                        Next
+                      </Button>
+                    </div>
+                  </div>
+                </>
               ) : (
                 <div className="text-center py-8">
                   <Coins className="w-8 h-8 text-gray-400 mx-auto mb-2" />
@@ -619,61 +725,90 @@ export default function AdminPage() {
               </div>
 
               {chatInboxData?.conversations?.length > 0 ? (
-                <div className="space-y-3">
-                  {chatInboxData.conversations.map((conv: any) => (
-                    <Card key={conv.conversation.id} className="border-l-4 border-l-soft-blue">
-                      <CardContent className="pt-4">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center space-x-3 mb-2">
-                              <div className="flex -space-x-2">
-                                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-mint to-soft-blue flex items-center justify-center border-2 border-white dark:border-gray-800">
-                                  <span className="text-white font-semibold text-xs">
-                                    {conv.user1?.fullName?.charAt(0) || 'U'}
-                                  </span>
+                <>
+                  <div className="space-y-3">
+                    {chatInboxData.conversations
+                      .slice(chatPage * itemsPerPage, (chatPage + 1) * itemsPerPage)
+                      .map((conv: any) => (
+                        <Card key={conv.conversation.id} className="border-l-4 border-l-soft-blue">
+                          <CardContent className="pt-4">
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <div className="flex items-center space-x-3 mb-2">
+                                  <div className="flex -space-x-2">
+                                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-mint to-soft-blue flex items-center justify-center border-2 border-white dark:border-gray-800">
+                                      <span className="text-white font-semibold text-xs">
+                                        {conv.user1?.fullName?.charAt(0) || 'U'}
+                                      </span>
+                                    </div>
+                                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-lavender to-blush flex items-center justify-center border-2 border-white dark:border-gray-800">
+                                      <span className="text-white font-semibold text-xs">
+                                        {conv.user2?.fullName?.charAt(0) || 'U'}
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <p className="font-medium text-sm">
+                                      {conv.user1?.fullName} ↔ {conv.user2?.fullName}
+                                    </p>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                                      ID: {conv.conversation.id} • 
+                                      {formatDistanceToNow(new Date(conv.conversation.createdAt), { addSuffix: true })}
+                                    </p>
+                                  </div>
                                 </div>
-                                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-lavender to-blush flex items-center justify-center border-2 border-white dark:border-gray-800">
-                                  <span className="text-white font-semibold text-xs">
-                                    {conv.user2?.fullName?.charAt(0) || 'U'}
-                                  </span>
+                                
+                                <div className="flex items-center justify-between">
+                                  <Badge variant={conv.conversation.status === 'ACTIVE' ? 'default' : 'secondary'}>
+                                    {conv.conversation.status}
+                                  </Badge>
+                                  
+                                  <div className="flex space-x-2">
+                                    <Button 
+                                      size="sm" 
+                                      variant="outline"
+                                      onClick={() => {
+                                        // Set selected conversation for detailed view
+                                        setSelectedConversation(conv.conversation);
+                                      }}
+                                    >
+                                      <Eye className="w-3 h-3 mr-1" />
+                                      Messages
+                                    </Button>
+                                  </div>
                                 </div>
-                              </div>
-                              <div>
-                                <p className="font-medium text-sm">
-                                  {conv.user1?.fullName} ↔ {conv.user2?.fullName}
-                                </p>
-                                <p className="text-xs text-gray-500 dark:text-gray-400">
-                                  Conversation ID: {conv.conversation.id} • 
-                                  Started {formatDistanceToNow(new Date(conv.conversation.createdAt), { addSuffix: true })}
-                                </p>
                               </div>
                             </div>
-                            
-                            <div className="flex items-center justify-between">
-                              <Badge variant={conv.conversation.status === 'ACTIVE' ? 'default' : 'secondary'}>
-                                {conv.conversation.status}
-                              </Badge>
-                              
-                              <div className="flex space-x-2">
-                                <Button 
-                                  size="sm" 
-                                  variant="outline"
-                                  onClick={() => {
-                                    // Set selected conversation for detailed view
-                                    setSelectedConversation(conv.conversation);
-                                  }}
-                                >
-                                  <Eye className="w-3 h-3 mr-1" />
-                                  View Messages
-                                </Button>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                  </div>
+                  
+                  {/* Pagination Controls */}
+                  <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <div className="text-sm text-gray-600 dark:text-gray-400">
+                      Showing {chatPage * itemsPerPage + 1}-{Math.min((chatPage + 1) * itemsPerPage, chatInboxData.conversations.length)} of {chatInboxData.conversations.length}
+                    </div>
+                    <div className="flex space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setChatPage(Math.max(0, chatPage - 1))}
+                        disabled={chatPage === 0}
+                      >
+                        Previous
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setChatPage(chatPage + 1)}
+                        disabled={(chatPage + 1) * itemsPerPage >= chatInboxData.conversations.length}
+                      >
+                        Next
+                      </Button>
+                    </div>
+                  </div>
+                </>
               ) : (
                 <div className="text-center py-8">
                   <MessageSquare className="w-8 h-8 text-gray-400 mx-auto mb-2" />
