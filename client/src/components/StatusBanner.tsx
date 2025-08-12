@@ -1,10 +1,39 @@
-import { CheckCircle, Clock, XCircle } from "lucide-react";
+import { CheckCircle, Clock, XCircle, X } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
 
 export function StatusBanner() {
   const { user } = useAuth();
+  const [isVisible, setIsVisible] = useState(true);
+  const [timeLeft, setTimeLeft] = useState(600); // 10 minutes in seconds
 
-  if (!user) return null;
+  // Auto-hide after 10 minutes
+  useEffect(() => {
+    if (!isVisible || !user) return;
+
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          setIsVisible(false);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [isVisible, user]);
+
+  // Reset visibility when user status changes
+  useEffect(() => {
+    if (user) {
+      setIsVisible(true);
+      setTimeLeft(600);
+    }
+  }, [user?.status]);
+
+  if (!user || !isVisible) return null;
 
   const getStatusConfig = () => {
     switch (user.status) {
@@ -44,21 +73,41 @@ export function StatusBanner() {
   if (!config) return null;
 
   const Icon = config.icon;
+  
+  // Format time left as MM:SS
+  const formatTime = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+  };
 
   return (
-    <div className={`mt-4 p-4 bg-gradient-to-r ${config.bgColor} rounded-2xl border ${config.borderColor}`}>
-      <div className="flex items-center space-x-3">
-        <div className={`w-8 h-8 bg-${config.color}-100 dark:bg-${config.color}-900/30 rounded-full flex items-center justify-center`}>
-          <Icon className={`w-4 h-4 text-${config.color}-600 dark:text-${config.color}-400`} />
+    <div className={`mt-4 p-4 bg-gradient-to-r ${config.bgColor} rounded-2xl border ${config.borderColor} relative`}>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-3 flex-1">
+          <div className={`w-8 h-8 bg-${config.color}-100 dark:bg-${config.color}-900/30 rounded-full flex items-center justify-center`}>
+            <Icon className={`w-4 h-4 text-${config.color}-600 dark:text-${config.color}-400`} />
+          </div>
+          <div className="flex-1">
+            <p className={`font-semibold text-${config.color}-800 dark:text-${config.color}-200`}>
+              {config.title}
+            </p>
+            <p className={`text-sm text-${config.color}-600 dark:text-${config.color}-300`}>
+              {config.message}
+            </p>
+            <p className={`text-xs text-${config.color}-500 dark:text-${config.color}-400 mt-1`}>
+              Auto-hide in {formatTime(timeLeft)}
+            </p>
+          </div>
         </div>
-        <div>
-          <p className={`font-semibold text-${config.color}-800 dark:text-${config.color}-200`}>
-            {config.title}
-          </p>
-          <p className={`text-sm text-${config.color}-600 dark:text-${config.color}-300`}>
-            {config.message}
-          </p>
-        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setIsVisible(false)}
+          className={`h-6 w-6 p-0 text-${config.color}-500 hover:text-${config.color}-700 dark:text-${config.color}-400 dark:hover:text-${config.color}-200`}
+        >
+          <X className="h-3 w-3" />
+        </Button>
       </div>
     </div>
   );
