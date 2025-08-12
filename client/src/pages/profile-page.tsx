@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { User, Settings, Edit3, LogOut, Heart, Clock, CheckCircle, XCircle, Coins, History } from "lucide-react";
+import { User, Settings, Edit3, LogOut, Heart, Clock, CheckCircle, XCircle, Coins, History, Upload, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -31,6 +31,7 @@ const updateProfileSchema = z.object({
   dateOfBirth: z.string().min(1, "Date of birth is required"),
   island: z.string().min(1, "Island is required"),
   atoll: z.string().min(1, "Atoll is required"),
+  profilePhotoPath: z.string().min(1, "Profile picture is required"),
   job: z.string().optional(),
   education: z.string().optional(),
   shortBio: z.string().optional(),
@@ -49,6 +50,7 @@ export default function ProfilePage() {
   const queryClient = useQueryClient();
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [selectedAtoll, setSelectedAtoll] = useState(user?.atoll || "");
+  const [uploadedPhotoUrl, setUploadedPhotoUrl] = useState<string>("");
 
   const atolls = getMaldivesData();
   const availableIslands = selectedAtoll ? getIslandsByAtoll(selectedAtoll) : [];
@@ -128,6 +130,7 @@ export default function ProfilePage() {
       dateOfBirth: user?.dateOfBirth ? new Date(user.dateOfBirth).toISOString().split('T')[0] : "",
       island: user?.island || "",
       atoll: user?.atoll || "",
+      profilePhotoPath: user?.profilePhotoPath || "",
       job: user?.job || "",
       education: user?.education || "",
       shortBio: user?.shortBio || "",
@@ -163,7 +166,83 @@ export default function ProfilePage() {
   });
 
   const onUpdateProfile = (data: any) => {
-    updateProfileMutation.mutate(data);
+    // Check if user has no profile photo and hasn't uploaded one
+    if (!user?.profilePhotoPath && !uploadedPhotoUrl) {
+      toast({
+        title: "Profile picture required",
+        description: "Please upload a profile picture before saving.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const formData = {
+      ...data,
+      profilePhotoPath: uploadedPhotoUrl || data.profilePhotoPath
+    };
+    updateProfileMutation.mutate(formData);
+  };
+
+  const handlePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      toast({
+        title: "Invalid file type",
+        description: "Please upload a JPEG, PNG, or WebP image.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Please upload an image smaller than 5MB.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      // Get upload URL
+      const uploadResponse = await apiRequest("POST", "/api/objects/upload");
+      const { uploadURL } = await uploadResponse.json();
+
+      // Upload file to Google Cloud Storage
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch(uploadURL, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to upload image');
+      }
+
+      const result = await response.json();
+      const imageUrl = result.url || result.publicUrl;
+      
+      setUploadedPhotoUrl(imageUrl);
+      updateProfileForm.setValue("profilePhotoPath", imageUrl);
+      
+      toast({
+        title: "Photo uploaded successfully",
+        description: "Your profile picture has been uploaded.",
+      });
+    } catch (error) {
+      console.error("Upload error:", error);
+      toast({
+        title: "Upload failed",
+        description: "Failed to upload profile picture. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const getStatusIcon = (status: string) => {
@@ -534,6 +613,43 @@ export default function ProfilePage() {
                   id="fullName"
                   {...updateProfileForm.register("fullName")}
                 />
+              </div>
+
+              {/* Profile Picture Upload */}
+              <div className="space-y-2">
+                <Label>Profile Picture *</Label>
+                <div className="flex items-center space-x-4">
+                  {(uploadedPhotoUrl || user?.profilePhotoPath) && (
+                    <div className="relative">
+                      <img
+                        src={uploadedPhotoUrl || user?.profilePhotoPath}
+                        alt="Profile"
+                        className="w-20 h-20 rounded-full object-cover border-2 border-gray-200 dark:border-gray-600"
+                      />
+                    </div>
+                  )}
+                  <div className="flex-1">
+                    <Input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      onChange={handlePhotoUpload}
+                      className="hidden"
+                      id="profilePhoto"
+                    />
+                    <Label
+                      htmlFor="profilePhoto"
+                      className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-800 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
+                    >
+                      <Camera className="w-4 h-4 mr-2" />
+                      {uploadedPhotoUrl || user?.profilePhotoPath ? 'Change Photo' : 'Upload Photo'}
+                    </Label>
+                  </div>
+                </div>
+                {updateProfileForm.formState.errors.profilePhotoPath && (
+                  <p className="text-sm text-red-600 dark:text-red-400">
+                    {updateProfileForm.formState.errors.profilePhotoPath.message}
+                  </p>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-4">

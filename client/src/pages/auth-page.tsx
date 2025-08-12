@@ -12,7 +12,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertUserSchema } from "@shared/schema";
 import { z } from "zod";
-import { Heart, Users, Shield, Sparkles, Eye, EyeOff, Check, X, AlertCircle } from "lucide-react";
+import { Heart, Users, Shield, Sparkles, Eye, EyeOff, Check, X, AlertCircle, Camera } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { getMaldivesData, getIslandsByAtoll } from "@/data/maldives-data";
 
@@ -32,6 +32,7 @@ export default function AuthPage() {
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [showRegisterPassword, setShowRegisterPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [uploadedPhotoUrl, setUploadedPhotoUrl] = useState<string>("");
 
   const atolls = getMaldivesData();
 
@@ -58,6 +59,7 @@ export default function AuthPage() {
       job: "",
       education: "",
       shortBio: "",
+      profilePhotoPath: "",
       partnerPreferences: {
         ageMin: 18,
         ageMax: 50,
@@ -113,7 +115,68 @@ export default function AuthPage() {
   };
 
   const onRegisterSubmit = (data: any) => {
-    registerMutation.mutate(data);
+    if (!uploadedPhotoUrl) {
+      alert("Please upload a profile picture before registering.");
+      return;
+    }
+    const formData = {
+      ...data,
+      profilePhotoPath: uploadedPhotoUrl
+    };
+    registerMutation.mutate(formData);
+  };
+
+  const handlePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      alert("Please upload a JPEG, PNG, or WebP image.");
+      return;
+    }
+
+    // Validate file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Please upload an image smaller than 5MB.");
+      return;
+    }
+
+    try {
+      // Get upload URL
+      const uploadResponse = await fetch("/api/objects/upload", {
+        method: "POST",
+        credentials: "include",
+      });
+      
+      if (!uploadResponse.ok) {
+        throw new Error('Failed to get upload URL');
+      }
+      
+      const { uploadURL } = await uploadResponse.json();
+
+      // Upload file to Google Cloud Storage
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch(uploadURL, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to upload image');
+      }
+
+      const result = await response.json();
+      const imageUrl = result.url || result.publicUrl;
+      
+      setUploadedPhotoUrl(imageUrl);
+      registerForm.setValue("profilePhotoPath", imageUrl);
+    } catch (error) {
+      console.error("Upload error:", error);
+      alert("Failed to upload profile picture. Please try again.");
+    }
   };
 
   return (
@@ -293,6 +356,41 @@ export default function AuthPage() {
                       {registerForm.formState.errors.fullName.message}
                     </p>
                   )}
+                </div>
+
+                {/* Profile Picture Upload */}
+                <div className="space-y-2">
+                  <Label>Profile Picture *</Label>
+                  <div className="flex items-center space-x-4">
+                    {uploadedPhotoUrl && (
+                      <div className="relative">
+                        <img
+                          src={uploadedPhotoUrl}
+                          alt="Profile"
+                          className="w-16 h-16 rounded-full object-cover border-2 border-gray-200 dark:border-gray-600"
+                        />
+                      </div>
+                    )}
+                    <div className="flex-1">
+                      <Input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        onChange={handlePhotoUpload}
+                        className="hidden"
+                        id="profilePhoto"
+                      />
+                      <Label
+                        htmlFor="profilePhoto"
+                        className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-800 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer w-full"
+                      >
+                        <Camera className="w-4 h-4 mr-2" />
+                        {uploadedPhotoUrl ? 'Change Photo' : 'Upload Photo'}
+                      </Label>
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-600 dark:text-gray-400">
+                    Upload a clear photo of yourself (JPEG, PNG, or WebP, max 5MB)
+                  </p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
