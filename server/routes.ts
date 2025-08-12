@@ -248,45 +248,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/posts", isAuthenticated, async (req, res) => {
     try {
       const user = await storage.getUser(req.user!.id);
-      if (!user || user.status !== 'APPROVED') {
+      
+      // Admin users bypass all approval and coin requirements
+      const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPERADMIN';
+      
+      if (!isAdmin && (!user || user.status !== 'APPROVED')) {
         return res.status(403).json({ message: "Your profile must be approved to create posts" });
       }
 
-      // Check post limit (3 posts per user)
+      // Check post limit (3 posts per user) - still applies to admins
       const userPosts = await storage.getUserPosts(req.user!.id);
       const activePosts = userPosts.filter(post => !post.deletedAt);
-      if (activePosts.length >= 3) {
+      if (!isAdmin && activePosts.length >= 3) {
         return res.status(400).json({ message: "You can only have 3 active posts at a time. Please delete an existing post to create a new one." });
       }
 
       const settings = await storage.getSettings();
-      if ((user.coins || 0) < (settings.costPost || 0)) {
+      
+      // Admin users don't pay coins for posts
+      if (!isAdmin && (user.coins || 0) < (settings.costPost || 0)) {
         return res.status(400).json({ message: `Insufficient coins. You need ${settings.costPost || 0} coins to create a post.` });
       }
 
       const postData = insertPostSchema.parse(req.body);
       const post = await storage.createPost({
         ...postData,
-        userId: req.user.id
+        userId: req.user.id,
+        // Admin posts are automatically approved
+        status: isAdmin ? 'APPROVED' : 'PENDING'
       });
 
-      // Deduct coins
-      await storage.updateUserCoins(req.user!.id, -(settings.costPost || 0));
-      await storage.addCoinLedgerEntry({
-        userId: req.user!.id,
-        delta: -(settings.costPost || 0),
-        reason: 'POST',
-        refTable: 'posts',
-        refId: post.id,
-        description: 'Created new post'
-      });
+      // Deduct coins only for non-admin users
+      if (!isAdmin) {
+        await storage.updateUserCoins(req.user!.id, -(settings.costPost || 0));
+        await storage.addCoinLedgerEntry({
+          userId: req.user!.id,
+          delta: -(settings.costPost || 0),
+          reason: 'POST',
+          refTable: 'posts',
+          refId: post.id,
+          description: 'Created new post'
+        });
+      }
 
-      // Send Telegram notification to admin about new post
-      await telegramService.notifyAdminNewPost(
-        user.username, 
-        post.title || 'Untitled', 
-        post.description
-      );
+      // Send Telegram notification to admin about new post (only for non-admin users)
+      if (!isAdmin) {
+        await telegramService.notifyAdminNewPost(
+          user.username, 
+          post.title || 'Untitled', 
+          post.description
+        );
+      }
 
       res.status(201).json(post);
     } catch (error) {
@@ -326,9 +338,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const updateData = insertPostSchema.partial().parse(req.body);
+      
+      // Check if user is admin
+      const user = await storage.getUser(req.user!.id);
+      const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPERADMIN';
+      
       const updatedPost = await storage.updatePost(postId, {
         ...updateData,
-        status: 'PENDING' // Re-submit for approval after editing
+        // Admin posts remain approved after editing, others go back to pending
+        status: isAdmin ? 'APPROVED' : 'PENDING'
       });
 
       res.json(updatedPost);
@@ -374,12 +392,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/connect", isAuthenticated, async (req, res) => {
     try {
       const user = await storage.getUser(req.user!.id);
-      if (!user || user.status !== 'APPROVED') {
+      
+      // Admin users bypass approval and coin requirements
+      const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPERADMIN';
+      
+      if (!isAdmin && (!user || user.status !== 'APPROVED')) {
         return res.status(403).json({ message: "Your profile must be approved to connect" });
       }
 
       const settings = await storage.getSettings();
-      if ((user.coins || 0) < (settings.costConnect || 0)) {
+      
+      // Admin users don't pay coins for connections
+      if (!isAdmin && (user.coins || 0) < (settings.costConnect || 0)) {
         return res.status(400).json({ message: `Insufficient coins. You need ${settings.costConnect || 0} coins to send a connection request.` });
       }
 
@@ -398,19 +422,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const request = await storage.createConnectionRequest({
         ...requestData,
-        requesterId: req.user.id
+        requesterId: req.user.id,
+        // Admin connection requests are automatically approved
+        status: isAdmin ? 'APPROVED' : 'PENDING'
       });
 
-      // Deduct coins
-      await storage.updateUserCoins(req.user!.id, -(settings.costConnect || 0));
-      await storage.addCoinLedgerEntry({
-        userId: req.user!.id,
-        delta: -(settings.costConnect || 0),
-        reason: 'CONNECT',
-        refTable: 'connection_requests',
-        refId: request.id,
-        description: 'Sent connection request'
-      });
+      // Deduct coins only for non-admin users
+      if (!isAdmin) {
+        await storage.updateUserCoins(req.user!.id, -(settings.costConnect || 0));
+        await storage.addCoinLedgerEntry({
+          userId: req.user!.id,
+          delta: -(settings.costConnect || 0),
+          reason: 'CONNECT',
+          refTable: 'connection_requests',
+          refId: request.id,
+          description: 'Sent connection request'
+        });
+      }
 
       // Get target user and post details for notifications
       const targetUser = await storage.getUser(requestData.targetUserId);
@@ -421,12 +449,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await telegramService.notifyConnectionRequest(targetUser.id, user.fullName);
       }
 
-      // Send admin notification
-      await telegramService.notifyAdminConnectionRequest(
-        user.fullName,
-        targetUser?.fullName || 'Unknown User',
-        post?.title
-      );
+      // Send admin notification (only for non-admin users)
+      if (!isAdmin) {
+        await telegramService.notifyAdminConnectionRequest(
+          user.fullName,
+          targetUser?.fullName || 'Unknown User',
+          post?.title
+        );
+      }
 
       res.status(201).json(request);
     } catch (error) {
