@@ -76,7 +76,7 @@ export default function AdminPage() {
   }, [statusFilter]);
 
   // Fetch pending users
-  const { data: usersData } = useQuery({
+  const { data: usersData } = useQuery<{users: any[], total: number}>({
     queryKey: ["/api/admin/queues/users", statusFilter],
     queryFn: getQueryFn({ 
       on401: "throw"
@@ -85,7 +85,7 @@ export default function AdminPage() {
   });
 
   // Fetch pending posts
-  const { data: postsData } = useQuery({
+  const { data: postsData } = useQuery<{posts: any[], total: number}>({
     queryKey: ["/api/admin/queues/posts", statusFilter],
     queryFn: getQueryFn({ 
       on401: "throw"
@@ -94,27 +94,25 @@ export default function AdminPage() {
   });
 
   // Fetch pending topups
-  const { data: topupsData } = useQuery({
+  const { data: topupsData } = useQuery<{topups: any[], total: number}>({
     queryKey: ["/api/admin/queues/topups", statusFilter],
     queryFn: getQueryFn({ 
-      on401: "throw",
-      queryParams: statusFilter !== "ALL" ? { status: statusFilter } : {}
+      on401: "throw"
     }),
     enabled: !!user && (user.role === "ADMIN" || user.role === "SUPERADMIN"),
   });
 
   // Fetch pending connection requests
-  const { data: connectionsData } = useQuery({
+  const { data: connectionsData } = useQuery<{requests: any[], total: number}>({
     queryKey: ["/api/admin/queues/connect", statusFilter],
     queryFn: getQueryFn({ 
-      on401: "throw",
-      queryParams: statusFilter !== "ALL" ? { status: statusFilter } : {}
+      on401: "throw"
     }),
     enabled: !!user && (user.role === "ADMIN" || user.role === "SUPERADMIN"),
   });
 
   // Fetch admin chat inbox
-  const { data: chatInboxData } = useQuery({
+  const { data: chatInboxData } = useQuery<{conversations: any[]}>({
     queryKey: ["/api/admin/chat/inbox"],
     queryFn: getQueryFn({ on401: "throw" }),
     enabled: !!user && (user.role === "ADMIN" || user.role === "SUPERADMIN"),
@@ -122,31 +120,30 @@ export default function AdminPage() {
   });
 
   // Fetch conversation messages when viewing details
-  const { data: conversationMessagesData } = useQuery({
+  const { data: conversationMessagesData } = useQuery<{messages: any[]}>({
     queryKey: ["/api/chat/conversations", selectedConversation?.id, "messages"],
     queryFn: getQueryFn({ 
-      on401: "throw",
-      queryParams: { adminView: 'true' }
+      on401: "throw"
     }),
     enabled: !!selectedConversation && !!user && (user.role === "ADMIN" || user.role === "SUPERADMIN"),
   });
 
   // Fetch telegram settings
-  const { data: telegramSettings } = useQuery({
+  const { data: telegramSettings } = useQuery<{telegramBotToken: string; telegramChatId: string}>({
     queryKey: ["/api/admin/telegram/settings"],
     queryFn: getQueryFn({ on401: "throw" }),
     enabled: !!user && (user.role === "ADMIN" || user.role === "SUPERADMIN"),
   });
 
   // Fetch branding settings
-  const { data: brandingSettings } = useQuery({
+  const { data: brandingSettings } = useQuery<{appName: string; logoUrl: string; primaryColor: string; tagline: string}>({
     queryKey: ["/api/admin/branding"],
     queryFn: getQueryFn({ on401: "throw" }),
     enabled: !!user && (user.role === "ADMIN" || user.role === "SUPERADMIN"),
   });
 
   // Fetch coin packages
-  const { data: packagesData } = useQuery({
+  const { data: packagesData } = useQuery<any[]>({
     queryKey: ["/api/admin/packages"],
     queryFn: getQueryFn({ on401: "throw" }),
     enabled: !!user && (user.role === "ADMIN" || user.role === "SUPERADMIN"),
@@ -160,7 +157,7 @@ export default function AdminPage() {
   });
 
   // Fetch visitor statistics
-  const { data: visitorStats } = useQuery({
+  const { data: visitorStats } = useQuery<{today: number; thisWeek: number; thisMonth: number; thisYear: number}>({
     queryKey: ["/api/admin/visitor-stats"],
     queryFn: getQueryFn({ on401: "throw" }),
     enabled: !!user && (user.role === "ADMIN" || user.role === "SUPERADMIN"),
