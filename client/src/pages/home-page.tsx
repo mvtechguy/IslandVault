@@ -20,7 +20,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertPostSchema } from "@shared/schema";
 import { z } from "zod";
-import { MultiImageUploader } from "@/components/MultiImageUploader";
+import { ImageUploader } from "@/components/ImageUploader";
 
 const createPostSchema = insertPostSchema.extend({
   preferences: z.object({
@@ -321,7 +321,7 @@ export default function HomePage() {
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
                   Add up to 5 images to make your post more attractive
                 </p>
-                <MultiImageUploader
+                <ImageUploader
                   maxImages={5}
                   onImagesChange={setPostImages}
                   currentImages={postImages}
