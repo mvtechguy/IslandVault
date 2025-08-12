@@ -14,17 +14,17 @@ declare global {
     interface User {
       id: number;
       username: string;
-      email?: string;
+      phone: string;
       password: string;
       fullName: string;
       gender: string;
       dateOfBirth: Date;
       island: string;
       atoll: string;
-      religion?: string;
-      job?: string;
-      education?: string;
-      shortBio?: string;
+
+      job?: string | null;
+      education?: string | null;
+      shortBio?: string | null;
       partnerPreferences?: any;
       profilePhotoPath?: string;
       telegramChatId?: string;
@@ -83,10 +83,10 @@ export function setupAuth(app: Express) {
       },
       async (username, password, done) => {
         try {
-          // Try to find user by username first, then by email
+          // Try to find user by username first, then by phone
           let user = await storage.getUserByUsername(username);
-          if (!user && username.includes('@')) {
-            user = await storage.getUserByEmail(username);
+          if (!user && /^[0-9]+$/.test(username)) {
+            user = await storage.getUserByPhone(username);
           }
           
           if (!user || !(await comparePasswords(password, user.password))) {
@@ -118,10 +118,10 @@ export function setupAuth(app: Express) {
         return res.status(400).json({ message: "Username already exists" });
       }
 
-      if (req.body.email) {
-        const existingEmail = await storage.getUserByEmail(req.body.email);
-        if (existingEmail) {
-          return res.status(400).json({ message: "Email already exists" });
+      if (req.body.phone) {
+        const existingPhone = await storage.getUserByPhone(req.body.phone);
+        if (existingPhone) {
+          return res.status(400).json({ message: "Phone number already exists" });
         }
       }
 

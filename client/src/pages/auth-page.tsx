@@ -12,11 +12,12 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertUserSchema } from "@shared/schema";
 import { z } from "zod";
-import { Heart, Users, Shield, Sparkles } from "lucide-react";
+import { Heart, Users, Shield, Sparkles, Eye, EyeOff, Check, X, AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { getMaldivesData, getIslandsForAtoll } from "@/data/maldives-data";
 
 const loginSchema = z.object({
-  username: z.string().min(1, "Username or email is required"),
+  username: z.string().min(1, "Username or phone number is required"),
   password: z.string().min(1, "Password is required"),
 });
 
@@ -28,6 +29,9 @@ export default function AuthPage() {
   const [isRegister, setIsRegister] = useState(false);
   const [selectedAtoll, setSelectedAtoll] = useState("");
   const [availableIslands, setAvailableIslands] = useState<string[]>([]);
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
+  const [showRegisterPassword, setShowRegisterPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const atolls = getMaldivesData();
 
@@ -43,7 +47,7 @@ export default function AuthPage() {
     resolver: zodResolver(insertUserSchema),
     defaultValues: {
       username: "",
-      email: "",
+      phone: "",
       password: "",
       confirmPassword: "",
       fullName: "",
@@ -51,7 +55,6 @@ export default function AuthPage() {
       dateOfBirth: "",
       island: "",
       atoll: "",
-      religion: "",
       job: "",
       education: "",
       shortBio: "",
@@ -59,11 +62,35 @@ export default function AuthPage() {
         ageMin: 18,
         ageMax: 50,
         gender: "",
-        religion: "",
         notes: "",
       },
     },
   });
+
+  // Password strength checker
+  const checkPasswordStrength = (password: string) => {
+    const checks = {
+      length: password.length >= 8,
+      uppercase: /[A-Z]/.test(password),
+      lowercase: /[a-z]/.test(password),
+      number: /[0-9]/.test(password),
+      special: /[!@#$%^&*(),.?":{}|<>]/.test(password),
+    };
+    
+    const score = Object.values(checks).filter(Boolean).length;
+    let strength = 'Weak';
+    let color = 'text-red-500';
+    
+    if (score >= 4) {
+      strength = 'Strong';
+      color = 'text-green-500';
+    } else if (score >= 3) {
+      strength = 'Medium';
+      color = 'text-yellow-500';
+    }
+    
+    return { checks, score, strength, color };
+  };
 
   // Update available islands when atoll changes
   useEffect(() => {
@@ -163,11 +190,11 @@ export default function AuthPage() {
               /* Login Form */
               <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4">
                 <div>
-                  <Label htmlFor="username">Username or Email</Label>
+                  <Label htmlFor="username">Username or Phone Number</Label>
                   <Input
                     id="username"
                     {...loginForm.register("username")}
-                    placeholder="Enter your username or email"
+                    placeholder="Enter your username or phone number"
                   />
                   {loginForm.formState.errors.username && (
                     <p className="text-sm text-red-600 mt-1">
@@ -178,12 +205,23 @@ export default function AuthPage() {
                 
                 <div>
                   <Label htmlFor="password">Password</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    {...loginForm.register("password")}
-                    placeholder="Enter your password"
-                  />
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      type={showLoginPassword ? "text" : "password"}
+                      {...loginForm.register("password")}
+                      placeholder="Enter your password"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-2 top-1/2 transform -translate-y-1/2 h-auto p-0"
+                      onClick={() => setShowLoginPassword(!showLoginPassword)}
+                    >
+                      {showLoginPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </Button>
+                  </div>
                   {loginForm.formState.errors.password && (
                     <p className="text-sm text-red-600 mt-1">
                       {loginForm.formState.errors.password.message}
@@ -217,13 +255,28 @@ export default function AuthPage() {
                     )}
                   </div>
                   <div>
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      {...registerForm.register("email")}
-                      placeholder="your@email.com"
-                    />
+                    <Label htmlFor="phone">Phone Number *</Label>
+                    <div className="flex">
+                      <div className="flex items-center px-3 py-2 bg-gray-100 dark:bg-gray-700 border border-r-0 rounded-l-md text-sm text-gray-600 dark:text-gray-300">
+                        +960
+                      </div>
+                      <Input
+                        id="phone"
+                        type="tel"
+                        {...registerForm.register("phone")}
+                        placeholder="7XXXXXX"
+                        className="rounded-l-none"
+                        maxLength={8}
+                      />
+                    </div>
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                      Enter your Dhiraagu or Ooredoo number without country code
+                    </p>
+                    {registerForm.formState.errors.phone && (
+                      <p className="text-sm text-red-600 mt-1">
+                        {registerForm.formState.errors.phone.message}
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -244,12 +297,60 @@ export default function AuthPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="password">Password *</Label>
-                    <Input
-                      id="password"
-                      type="password"
-                      {...registerForm.register("password")}
-                      placeholder="Create password"
-                    />
+                    <div className="relative">
+                      <Input
+                        id="password"
+                        type={showRegisterPassword ? "text" : "password"}
+                        {...registerForm.register("password")}
+                        placeholder="Create password"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-2 top-1/2 transform -translate-y-1/2 h-auto p-0"
+                        onClick={() => setShowRegisterPassword(!showRegisterPassword)}
+                      >
+                        {showRegisterPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </Button>
+                    </div>
+                    {registerForm.watch("password") && (
+                      <div className="mt-2 space-y-1">
+                        {(() => {
+                          const password = registerForm.watch("password");
+                          const { checks, strength, color } = checkPasswordStrength(password);
+                          return (
+                            <div className="space-y-1">
+                              <p className={`text-sm font-medium ${color}`}>
+                                Strength: {strength}
+                              </p>
+                              <div className="text-xs space-y-1">
+                                <div className={`flex items-center ${checks.length ? 'text-green-600' : 'text-gray-500'}`}>
+                                  {checks.length ? <Check className="w-3 h-3 mr-1" /> : <X className="w-3 h-3 mr-1" />}
+                                  At least 8 characters
+                                </div>
+                                <div className={`flex items-center ${checks.uppercase ? 'text-green-600' : 'text-gray-500'}`}>
+                                  {checks.uppercase ? <Check className="w-3 h-3 mr-1" /> : <X className="w-3 h-3 mr-1" />}
+                                  Uppercase letter
+                                </div>
+                                <div className={`flex items-center ${checks.lowercase ? 'text-green-600' : 'text-gray-500'}`}>
+                                  {checks.lowercase ? <Check className="w-3 h-3 mr-1" /> : <X className="w-3 h-3 mr-1" />}
+                                  Lowercase letter
+                                </div>
+                                <div className={`flex items-center ${checks.number ? 'text-green-600' : 'text-gray-500'}`}>
+                                  {checks.number ? <Check className="w-3 h-3 mr-1" /> : <X className="w-3 h-3 mr-1" />}
+                                  Number
+                                </div>
+                                <div className={`flex items-center ${checks.special ? 'text-green-600' : 'text-gray-500'}`}>
+                                  {checks.special ? <Check className="w-3 h-3 mr-1" /> : <X className="w-3 h-3 mr-1" />}
+                                  Special character
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    )}
                     {registerForm.formState.errors.password && (
                       <p className="text-sm text-red-600 mt-1">
                         {registerForm.formState.errors.password.message}
@@ -258,12 +359,23 @@ export default function AuthPage() {
                   </div>
                   <div>
                     <Label htmlFor="confirmPassword">Confirm Password *</Label>
-                    <Input
-                      id="confirmPassword"
-                      type="password"
-                      {...registerForm.register("confirmPassword")}
-                      placeholder="Confirm password"
-                    />
+                    <div className="relative">
+                      <Input
+                        id="confirmPassword"
+                        type={showConfirmPassword ? "text" : "password"}
+                        {...registerForm.register("confirmPassword")}
+                        placeholder="Confirm password"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-2 top-1/2 transform -translate-y-1/2 h-auto p-0"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      >
+                        {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </Button>
+                    </div>
                     {registerForm.formState.errors.confirmPassword && (
                       <p className="text-sm text-red-600 mt-1">
                         {registerForm.formState.errors.confirmPassword.message}
@@ -361,15 +473,15 @@ export default function AuthPage() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="religion">Religion</Label>
+                    <Label htmlFor="education">Education</Label>
                     <Input
-                      id="religion"
-                      {...registerForm.register("religion")}
-                      placeholder="e.g., Islam"
+                      id="education"
+                      {...registerForm.register("education")}
+                      placeholder="e.g., Bachelor's Degree"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="job">Job/Education</Label>
+                    <Label htmlFor="job">Job/Occupation</Label>
                     <Input
                       id="job"
                       {...registerForm.register("job")}

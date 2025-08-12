@@ -115,14 +115,13 @@ export const chatReports = pgTable("chat_reports", {
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: varchar("username", { length: 50 }).notNull().unique(),
-  email: varchar("email", { length: 255 }),
+  phone: varchar("phone", { length: 20 }).notNull().unique(),
   password: varchar("password", { length: 255 }).notNull(),
   fullName: varchar("full_name", { length: 255 }).notNull(),
   gender: genderEnum("gender").notNull(),
   dateOfBirth: timestamp("date_of_birth").notNull(),
   island: varchar("island", { length: 64 }).notNull(),
   atoll: varchar("atoll", { length: 64 }).notNull(),
-  religion: varchar("religion", { length: 64 }),
   job: varchar("job", { length: 128 }),
   education: varchar("education", { length: 128 }),
   shortBio: text("short_bio"),
@@ -260,20 +259,28 @@ export const audits = pgTable("audits", {
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
-  email: true,
+  phone: true,
   password: true,
   fullName: true,
   gender: true,
   dateOfBirth: true,
   island: true,
   atoll: true,
-  religion: true,
   job: true,
   education: true,
   shortBio: true,
   partnerPreferences: true
 }).extend({
-  confirmPassword: z.string().min(8, "Password must be at least 8 characters")
+  confirmPassword: z.string().min(8, "Password must be at least 8 characters"),
+  phone: z.string()
+    .min(7, "Phone number must be at least 7 digits")
+    .max(8, "Phone number must be at most 8 digits")
+    .regex(/^[0-9]+$/, "Phone number must contain only digits")
+    .refine((phone) => {
+      // Dhiraagu numbers start with 7, 9 or 3
+      // Ooredoo numbers start with 7, 9, or 8
+      return /^[37-9]/.test(phone);
+    }, "Invalid Maldivian phone number")
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
