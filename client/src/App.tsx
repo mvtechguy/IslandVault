@@ -17,6 +17,7 @@ import OnboardPage from "@/pages/onboard-page";
 import PostDetailPage from "@/pages/post-detail-page";
 import BrowsePostsPage from "@/pages/browse-posts-page";
 import CreatePostPage from "@/pages/create-post-page";
+import DebugCreate from "@/pages/debug-create";
 
 
 function Router() {
@@ -59,6 +60,11 @@ function Router() {
         </ProtectedRoute>
       </Route>
       <Route path="/create">
+        <ProtectedRoute>
+          <DebugCreate />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/create-full">
         <ProtectedRoute>
           <CreatePostPage />
         </ProtectedRoute>
