@@ -132,6 +132,8 @@ export function setupAuth(app: Express) {
         ...userData,
         password: await hashPassword(userData.password),
         dateOfBirth: new Date(dateOfBirth), // Convert string to Date object
+        // Auto-approve admin and superadmin users
+        status: (userData.role === 'ADMIN' || userData.role === 'SUPERADMIN') ? 'APPROVED' : 'PENDING'
       });
 
       // Send Telegram notification to admin about new user registration
