@@ -18,6 +18,7 @@ interface ObjectUploaderProps {
   onComplete?: (
     result: UploadResult<Record<string, unknown>, Record<string, unknown>>
   ) => void;
+  onUploadStart?: () => void;
   buttonClassName?: string;
   children: ReactNode;
 }
@@ -27,6 +28,7 @@ export function ObjectUploader({
   maxFileSize = 5242880, // 5MB default
   onGetUploadParameters,
   onComplete,
+  onUploadStart,
   buttonClassName,
   children,
 }: ObjectUploaderProps) {
@@ -44,11 +46,14 @@ export function ObjectUploader({
         shouldUseMultipart: false,
         getUploadParameters: onGetUploadParameters,
       })
+      .on("upload", () => {
+        onUploadStart?.();
+      })
       .on("complete", (result) => {
         onComplete?.(result);
         setShowModal(false);
         // Clear all files after successful upload
-        uppy.reset();
+        uppy.getFiles().forEach(file => uppy.removeFile(file.id));
       })
   );
 
