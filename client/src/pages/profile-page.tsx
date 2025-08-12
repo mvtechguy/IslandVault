@@ -19,19 +19,18 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertUserSchema } from "@shared/schema";
 import { z } from "zod";
-import { getMaldivesData, getIslandsForAtoll } from "@/data/maldives-data";
+import { getMaldivesData, getIslandsByAtoll } from "@/data/maldives-data";
 import { formatDistanceToNow } from "date-fns";
 
 // Create update profile schema without password fields
 const updateProfileSchema = z.object({
   username: z.string().min(1, "Username is required"),
-  email: z.string().email().optional(),
+  phone: z.string().optional(),
   fullName: z.string().min(1, "Full name is required"),
   gender: z.enum(["male", "female", "other"]),
   dateOfBirth: z.string().min(1, "Date of birth is required"),
   island: z.string().min(1, "Island is required"),
   atoll: z.string().min(1, "Atoll is required"),
-  religion: z.string().optional(),
   job: z.string().optional(),
   education: z.string().optional(),
   shortBio: z.string().optional(),
@@ -39,7 +38,6 @@ const updateProfileSchema = z.object({
     ageMin: z.number().min(18).max(80).optional(),
     ageMax: z.number().min(18).max(80).optional(),
     gender: z.string().optional(),
-    religion: z.string().optional(),
     notes: z.string().optional(),
   }).optional(),
 });
@@ -53,7 +51,7 @@ export default function ProfilePage() {
   const [selectedAtoll, setSelectedAtoll] = useState(user?.atoll || "");
 
   const atolls = getMaldivesData();
-  const availableIslands = selectedAtoll ? getIslandsForAtoll(selectedAtoll) : [];
+  const availableIslands = selectedAtoll ? getIslandsByAtoll(selectedAtoll) : [];
 
   // Fetch user posts
   const { data: userPosts } = useQuery({
@@ -124,13 +122,12 @@ export default function ProfilePage() {
     resolver: zodResolver(updateProfileSchema),
     defaultValues: {
       username: user?.username || "",
-      email: user?.email || "",
+      phone: user?.phone || "",
       fullName: user?.fullName || "",
       gender: user?.gender || "",
       dateOfBirth: user?.dateOfBirth ? new Date(user.dateOfBirth).toISOString().split('T')[0] : "",
       island: user?.island || "",
       atoll: user?.atoll || "",
-      religion: user?.religion || "",
       job: user?.job || "",
       education: user?.education || "",
       shortBio: user?.shortBio || "",
@@ -138,7 +135,6 @@ export default function ProfilePage() {
         ageMin: 18,
         ageMax: 50,
         gender: "",
-        religion: "",
         notes: "",
       },
     },
@@ -522,11 +518,12 @@ export default function ProfilePage() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="phone">Phone Number</Label>
                   <Input
-                    id="email"
-                    type="email"
-                    {...updateProfileForm.register("email")}
+                    id="phone"
+                    type="tel"
+                    placeholder="+960 XXX-XXXX"
+                    {...updateProfileForm.register("phone")}
                   />
                 </div>
               </div>
@@ -582,7 +579,7 @@ export default function ProfilePage() {
                     <SelectContent>
                       {atolls.map((atoll) => (
                         <SelectItem key={atoll.code} value={atoll.code}>
-                          {atoll.name}
+                          {atoll.fullName}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -599,8 +596,8 @@ export default function ProfilePage() {
                     </SelectTrigger>
                     <SelectContent>
                       {availableIslands.map((island) => (
-                        <SelectItem key={island} value={island.toLowerCase().replace(/\s+/g, '_')}>
-                          {island}
+                        <SelectItem key={island.name} value={island.name.toLowerCase().replace(/\s+/g, '_')}>
+                          {island.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -608,21 +605,12 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="religion">Religion</Label>
-                  <Input
-                    id="religion"
-                    {...updateProfileForm.register("religion")}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="job">Job/Education</Label>
-                  <Input
-                    id="job"
-                    {...updateProfileForm.register("job")}
-                  />
-                </div>
+              <div>
+                <Label htmlFor="job">Job/Education</Label>
+                <Input
+                  id="job"
+                  {...updateProfileForm.register("job")}
+                />
               </div>
 
               <div>
