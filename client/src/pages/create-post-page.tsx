@@ -49,7 +49,20 @@ export default function CreatePostPage() {
       <div className="container mx-auto p-4 max-w-2xl">
         <div className="text-center py-12">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-mint mx-auto"></div>
-          <p className="mt-4 text-gray-600 dark:text-gray-400">Loading...</p>
+          <p className="mt-4 text-gray-600 dark:text-gray-400">Loading user data...</p>
+          <p className="text-xs text-gray-500 mt-2">Debug: User is {JSON.stringify(user)}</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show message if user is not approved
+  if (user.status !== 'APPROVED') {
+    return (
+      <div className="container mx-auto p-4 max-w-2xl">
+        <div className="text-center py-12">
+          <p className="text-gray-600 dark:text-gray-400">Your account is pending approval.</p>
+          <p className="text-sm text-gray-500 mt-2">You cannot create posts until an admin approves your account.</p>
         </div>
       </div>
     );
