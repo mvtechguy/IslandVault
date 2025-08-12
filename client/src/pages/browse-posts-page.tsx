@@ -160,13 +160,13 @@ export default function BrowsePostsPage() {
                   </label>
                   <Select 
                     value={filters.atoll} 
-                    onValueChange={(value) => setFilters(prev => ({ ...prev, atoll: value, island: "" }))}
+                    onValueChange={(value) => setFilters(prev => ({ ...prev, atoll: value === "all" ? "" : value, island: "" }))}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="All atolls" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">All atolls</SelectItem>
+                      <SelectItem value="all">All atolls</SelectItem>
                       {atolls.map((atoll) => (
                         <SelectItem key={atoll} value={atoll}>
                           {atoll}
@@ -182,14 +182,14 @@ export default function BrowsePostsPage() {
                   </label>
                   <Select 
                     value={filters.island} 
-                    onValueChange={(value) => setFilters(prev => ({ ...prev, island: value }))}
+                    onValueChange={(value) => setFilters(prev => ({ ...prev, island: value === "all" ? "" : value }))}
                     disabled={!filters.atoll}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="All islands" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">All islands</SelectItem>
+                      <SelectItem value="all">All islands</SelectItem>
                       {selectedAtollIslands.map((island) => (
                         <SelectItem key={island} value={island}>
                           {island}
@@ -208,7 +208,7 @@ export default function BrowsePostsPage() {
                       <SelectValue placeholder="Any gender" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Any gender</SelectItem>
+                      <SelectItem value="any">Any gender</SelectItem>
                       <SelectItem value="MALE">Male</SelectItem>
                       <SelectItem value="FEMALE">Female</SelectItem>
                     </SelectContent>
@@ -224,7 +224,7 @@ export default function BrowsePostsPage() {
                       <SelectValue placeholder="Any type" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Any type</SelectItem>
+                      <SelectItem value="any">Any type</SelectItem>
                       <SelectItem value="PARTNER">Partner</SelectItem>
                       <SelectItem value="MARRIAGE">Marriage</SelectItem>
                       <SelectItem value="FRIENDSHIP">Friendship</SelectItem>
