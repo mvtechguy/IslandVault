@@ -192,6 +192,19 @@ export const coinTopups = pgTable("coin_topups", {
   topupStatusIdx: index("topup_status_idx").on(table.status)
 }));
 
+// Coin packages table (admin-managed)
+export const coinPackages = pgTable("coin_packages", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 100 }).notNull(),
+  coins: integer("coins").notNull(),
+  priceMvr: decimal("price_mvr", { precision: 10, scale: 2 }).notNull(),
+  isActive: boolean("is_active").default(true),
+  isPopular: boolean("is_popular").default(false),
+  description: varchar("description", { length: 255 }),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
+});
+
 // Coin ledger table
 export const coinLedger = pgTable("coin_ledger", {
   id: serial("id").primaryKey(),
@@ -297,6 +310,15 @@ export const insertCoinTopupSchema = createInsertSchema(coinTopups).pick({
   amountMvr: true
 });
 
+export const insertCoinPackageSchema = createInsertSchema(coinPackages).pick({
+  name: true,
+  coins: true,
+  priceMvr: true,
+  isActive: true,
+  isPopular: true,
+  description: true
+});
+
 export const insertConnectionRequestSchema = createInsertSchema(connectionRequests).pick({
   targetUserId: true,
   postId: true
@@ -311,6 +333,8 @@ export type ConnectionRequest = typeof connectionRequests.$inferSelect;
 export type InsertConnectionRequest = z.infer<typeof insertConnectionRequestSchema>;
 export type CoinTopup = typeof coinTopups.$inferSelect;
 export type InsertCoinTopup = z.infer<typeof insertCoinTopupSchema>;
+export type CoinPackage = typeof coinPackages.$inferSelect;
+export type InsertCoinPackage = z.infer<typeof insertCoinPackageSchema>;
 export type CoinLedgerEntry = typeof coinLedger.$inferSelect;
 export type Settings = typeof settings.$inferSelect;
 export type Notification = typeof notifications.$inferSelect;

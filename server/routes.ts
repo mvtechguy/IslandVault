@@ -359,6 +359,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get coin packages
+  app.get("/api/coins/packages", async (req, res) => {
+    try {
+      const packages = await storage.getCoinPackages(true); // Only active packages for users
+      res.json(packages);
+    } catch (error) {
+      console.error("Error fetching coin packages:", error);
+      res.status(500).json({ message: "Failed to fetch coin packages" });
+    }
+  });
+
   // Coin system
   app.post("/api/coins/topups", isAuthenticated, upload.single('slip'), async (req, res) => {
     try {
@@ -366,8 +377,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Bank slip file is required" });
       }
 
-      const { amountMvr } = insertCoinTopupSchema.parse(req.body);
-      const settings = await storage.getSettings();
+      const { packageId } = req.body;
+      
+      if (!packageId) {
+        return res.status(400).json({ message: "Package selection is required" });
+      }
+
+      // Get the selected package
+      const packages = await storage.getCoinPackages(true);
+      const selectedPackage = packages.find(pkg => pkg.id === parseInt(packageId));
+      
+      if (!selectedPackage) {
+        return res.status(400).json({ message: "Invalid package selected" });
+      }
 
       // Upload slip to object storage
       const objectStorageService = new ObjectStorageService();
@@ -379,21 +401,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const topup = await storage.createCoinTopup({
         userId: req.user!.id,
-        amountMvr: amountMvr,
-        pricePerCoin: settings.coinPriceMvr || "10.00",
-        slipPath: slipPath
+        amountMvr: selectedPackage.priceMvr,
+        pricePerCoin: (parseFloat(selectedPackage.priceMvr.toString()) / selectedPackage.coins).toFixed(2),
+        slipPath: slipPath,
+        computedCoins: selectedPackage.coins
       });
 
       // Get user details for notification
       const user = await storage.getUser(req.user.id);
-      const computedCoins = Math.floor(parseFloat(amountMvr.toString()) / parseFloat(settings.coinPriceMvr.toString()));
 
       // Send Telegram notification to admin about new coin request
       if (user) {
         await telegramService.notifyAdminCoinRequest(
           user.username,
-          amountMvr.toString(),
-          computedCoins
+          selectedPackage.priceMvr.toString(),
+          selectedPackage.coins
         );
       }
 
@@ -805,6 +827,104 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching public branding:", error);
       res.status(500).json({ message: "Failed to fetch branding" });
+    }
+  });
+
+  // ================== COIN PACKAGE MANAGEMENT ==================
+  
+  // Admin coin package management
+  app.get("/api/admin/packages", isAdmin, async (req, res) => {
+    try {
+      const packages = await storage.getCoinPackages(); // Get all packages for admin
+      res.json(packages);
+    } catch (error) {
+      console.error("Error fetching coin packages for admin:", error);
+      res.status(500).json({ message: "Failed to fetch coin packages" });
+    }
+  });
+
+  app.post("/api/admin/packages", isAdmin, async (req, res) => {
+    try {
+      const { name, coins, priceMvr, isActive, isPopular, description } = req.body;
+      
+      const newPackage = await storage.createCoinPackage({
+        name,
+        coins,
+        priceMvr,
+        isActive: isActive !== undefined ? isActive : true,
+        isPopular: isPopular !== undefined ? isPopular : false,
+        description
+      });
+
+      await storage.createAudit({
+        adminId: req.user!.id,
+        action: 'PACKAGE_CREATED',
+        entity: 'packages',
+        entityId: newPackage.id,
+        meta: { name, coins, priceMvr },
+        ip: req.ip || null
+      });
+
+      res.status(201).json(newPackage);
+    } catch (error) {
+      console.error("Error creating coin package:", error);
+      res.status(500).json({ message: "Failed to create coin package" });
+    }
+  });
+
+  app.put("/api/admin/packages/:id", isAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { name, coins, priceMvr, isActive, isPopular, description } = req.body;
+      
+      const updatedPackage = await storage.updateCoinPackage(id, {
+        name,
+        coins,
+        priceMvr,
+        isActive,
+        isPopular,
+        description
+      });
+
+      if (!updatedPackage) {
+        return res.status(404).json({ message: "Package not found" });
+      }
+
+      await storage.createAudit({
+        adminId: req.user!.id,
+        action: 'PACKAGE_UPDATED',
+        entity: 'packages',
+        entityId: id,
+        meta: { name, coins, priceMvr },
+        ip: req.ip || null
+      });
+
+      res.json(updatedPackage);
+    } catch (error) {
+      console.error("Error updating coin package:", error);
+      res.status(500).json({ message: "Failed to update coin package" });
+    }
+  });
+
+  app.delete("/api/admin/packages/:id", isAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      
+      await storage.deleteCoinPackage(id);
+
+      await storage.createAudit({
+        adminId: req.user!.id,
+        action: 'PACKAGE_DELETED',
+        entity: 'packages',
+        entityId: id,
+        meta: {},
+        ip: req.ip || null
+      });
+
+      res.json({ message: "Package deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting coin package:", error);
+      res.status(500).json({ message: "Failed to delete coin package" });
     }
   });
 

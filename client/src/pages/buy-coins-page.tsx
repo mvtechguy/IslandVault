@@ -2,8 +2,6 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Coins, CreditCard, Upload, Clock, CheckCircle, XCircle, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -15,21 +13,20 @@ import { apiRequest, getQueryFn } from "@/lib/queryClient";
 import { formatDistanceToNow } from "date-fns";
 import type { UploadResult } from '@uppy/core';
 
-const COIN_PACKAGES = [
-  { coins: 10, amount: 100, popular: false },
-  { coins: 30, amount: 300, popular: true },
-  { coins: 50, amount: 500, popular: false },
-];
-
 export default function BuyCoinsPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [selectedPackage, setSelectedPackage] = useState<number | null>(null);
-  const [customAmount, setCustomAmount] = useState("");
+  const [selectedPackageId, setSelectedPackageId] = useState<number | null>(null);
   const [uploadedSlipUrl, setUploadedSlipUrl] = useState("");
 
-  // Fetch settings for coin price and bank details
+  // Fetch coin packages
+  const { data: packages } = useQuery({
+    queryKey: ["/api/coins/packages"],
+    queryFn: getQueryFn({ on401: "throw" }),
+  });
+
+  // Fetch settings for bank details
   const { data: settings } = useQuery({
     queryKey: ["/api/settings"],
     queryFn: getQueryFn({ on401: "throw" }),
@@ -48,18 +45,17 @@ export default function BuyCoinsPage() {
   });
 
   const submitTopupMutation = useMutation({
-    mutationFn: async (data: { amountMvr: number; slipUrl: string }) => {
+    mutationFn: async (data: { packageId: number; slipUrl: string }) => {
       const formData = new FormData();
-      formData.append('amountMvr', data.amountMvr.toString());
-      // Note: In a real implementation, you'd handle the file upload properly
-      // For now, we'll just send the slip URL
+      formData.append('packageId', data.packageId.toString());
+      // For file upload - add the slip file here in real implementation
       const res = await fetch('/api/coins/topups', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
-        body: JSON.stringify({ amountMvr: data.amountMvr }),
+        body: JSON.stringify({ packageId: data.packageId }),
       });
       if (!res.ok) {
         const errorText = await res.text();
@@ -72,8 +68,7 @@ export default function BuyCoinsPage() {
         title: "Topup request submitted!",
         description: "Your request will be reviewed within 24 hours.",
       });
-      setSelectedPackage(null);
-      setCustomAmount("");
+      setSelectedPackageId(null);
       setUploadedSlipUrl("");
       queryClient.invalidateQueries({ queryKey: ["/api/coins/topups"] });
     },
@@ -107,11 +102,10 @@ export default function BuyCoinsPage() {
   };
 
   const handleSubmitTopup = () => {
-    const amount = selectedPackage || parseFloat(customAmount);
-    if (!amount || amount < 50) {
+    if (!selectedPackageId) {
       toast({
-        title: "Invalid amount",
-        description: "Minimum topup amount is MVR 50.",
+        title: "Package required",
+        description: "Please select a coin package.",
         variant: "destructive",
       });
       return;
@@ -127,7 +121,7 @@ export default function BuyCoinsPage() {
     }
 
     submitTopupMutation.mutate({
-      amountMvr: amount,
+      packageId: selectedPackageId,
       slipUrl: uploadedSlipUrl,
     });
   };
@@ -158,7 +152,7 @@ export default function BuyCoinsPage() {
     }
   };
 
-  const coinPrice = parseFloat(settings?.coinPriceMvr || "10");
+
 
   return (
     <div className="min-h-screen bg-warm-white dark:bg-dark-navy text-gray-800 dark:text-gray-200 transition-colors duration-300">
@@ -193,83 +187,61 @@ export default function BuyCoinsPage() {
               <CardTitle>Choose a Package</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 gap-3">
-                {COIN_PACKAGES.map((pkg) => (
-                  <button
-                    key={pkg.coins}
-                    onClick={() => {
-                      setSelectedPackage(pkg.amount);
-                      setCustomAmount("");
-                    }}
-                    className={`p-4 border-2 rounded-xl text-left transition-all ${
-                      selectedPackage === pkg.amount
-                        ? "border-mint bg-mint/5 dark:bg-mint/10"
-                        : "border-gray-200 dark:border-gray-600 hover:border-mint"
-                    } ${pkg.popular ? "relative" : ""}`}
-                  >
-                    {pkg.popular && (
-                      <div className="absolute -top-2 left-4">
-                        <Badge className="bg-mint text-white">Most Popular</Badge>
-                      </div>
-                    )}
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className={`font-semibold ${selectedPackage === pkg.amount ? "text-mint" : ""}`}>
-                          {pkg.coins} Coins
+              {!packages ? (
+                <div className="text-center py-4">
+                  <p className="text-gray-500">Loading packages...</p>
+                </div>
+              ) : packages.length === 0 ? (
+                <div className="text-center py-4">
+                  <p className="text-gray-500">No coin packages available</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 gap-3">
+                  {packages.map((pkg: any) => (
+                    <button
+                      key={pkg.id}
+                      onClick={() => {
+                        setSelectedPackageId(pkg.id);
+                      }}
+                      className={`p-4 border-2 rounded-xl text-left transition-all ${
+                        selectedPackageId === pkg.id
+                          ? "border-mint bg-mint/5 dark:bg-mint/10"
+                          : "border-gray-200 dark:border-gray-600 hover:border-mint"
+                      } ${pkg.isPopular ? "relative" : ""}`}
+                    >
+                      {pkg.isPopular && (
+                        <div className="absolute -top-2 left-4">
+                          <Badge className="bg-mint text-white">Most Popular</Badge>
                         </div>
-                        <div className="text-sm text-gray-600 dark:text-gray-400">
-                          MVR {pkg.amount.toFixed(2)}
+                      )}
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className={`font-semibold ${selectedPackageId === pkg.id ? "text-mint" : ""}`}>
+                            {pkg.name}
+                          </div>
+                          <div className="text-sm text-gray-600 dark:text-gray-400">
+                            {pkg.coins} Coins • MVR {parseFloat(pkg.priceMvr).toFixed(2)}
+                          </div>
+                          {pkg.description && (
+                            <div className="text-xs text-gray-500 mt-1">
+                              {pkg.description}
+                            </div>
+                          )}
+                        </div>
+                        <div className="text-2xl">
+                          {pkg.coins <= 15 && "🪙"}
+                          {pkg.coins > 15 && pkg.coins <= 35 && "💰"}
+                          {pkg.coins > 35 && "💎"}
                         </div>
                       </div>
-                      <div className="text-2xl">
-                        {pkg.coins === 10 && "🪙"}
-                        {pkg.coins === 30 && "💰"}
-                        {pkg.coins === 50 && "💎"}
-                      </div>
-                    </div>
-                  </button>
-                ))}
-              </div>
+                    </button>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
 
-          {/* Custom Amount */}
-          <Card className="mt-6">
-            <CardHeader>
-              <CardTitle>Custom Amount</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div>
-                <Label htmlFor="customAmount">Enter Amount (MVR)</Label>
-                <div className="relative mt-1">
-                  <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400 font-medium">
-                    MVR
-                  </div>
-                  <Input
-                    id="customAmount"
-                    type="number"
-                    min="50"
-                    step="10"
-                    value={customAmount}
-                    onChange={(e) => {
-                      setCustomAmount(e.target.value);
-                      setSelectedPackage(null);
-                    }}
-                    className="pl-12"
-                    placeholder="Enter amount"
-                  />
-                </div>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  Minimum: MVR 50 • Rate: 1 coin = MVR {coinPrice}
-                  {customAmount && parseFloat(customAmount) >= 50 && (
-                    <span className="ml-2 font-medium text-mint">
-                      = {Math.floor(parseFloat(customAmount) / coinPrice)} coins
-                    </span>
-                  )}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+
 
           {/* Bank Details */}
           <Card className="mt-6">
@@ -348,9 +320,8 @@ export default function BuyCoinsPage() {
               onClick={handleSubmitTopup}
               disabled={
                 submitTopupMutation.isPending ||
-                (!selectedPackage && !customAmount) ||
-                !uploadedSlipUrl ||
-                (customAmount && parseFloat(customAmount) < 50)
+                !selectedPackageId ||
+                !uploadedSlipUrl
               }
               className="w-full py-3 bg-gradient-to-r from-mint to-soft-blue text-white rounded-xl font-semibold hover:shadow-lg transform hover:scale-105 transition-all duration-200"
             >

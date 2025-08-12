@@ -7,6 +7,8 @@ import {
   InsertConnectionRequest,
   CoinTopup,
   InsertCoinTopup,
+  CoinPackage,
+  InsertCoinPackage,
   CoinLedgerEntry,
   Settings,
   Notification,
@@ -26,6 +28,7 @@ import {
   posts, 
   connectionRequests, 
   coinTopups, 
+  coinPackages,
   coinLedger, 
   settings, 
   notifications, 
@@ -72,6 +75,12 @@ export interface IStorage {
   addCoinLedgerEntry(entry: Omit<CoinLedgerEntry, 'id' | 'createdAt'>): Promise<void>;
   getCoinLedger(userId: number, limit?: number): Promise<CoinLedgerEntry[]>;
   updateUserCoins(userId: number, delta: number): Promise<void>;
+  
+  // Coin Packages
+  getCoinPackages(activeOnly?: boolean): Promise<CoinPackage[]>;
+  createCoinPackage(pkg: InsertCoinPackage): Promise<CoinPackage>;
+  updateCoinPackage(id: number, pkg: Partial<CoinPackage>): Promise<CoinPackage | undefined>;
+  deleteCoinPackage(id: number): Promise<void>;
   
   // Settings
   getSettings(): Promise<Settings>;
@@ -377,6 +386,39 @@ export class DatabaseStorage implements IStorage {
       .update(users)
       .set({ coins: sql`${users.coins} + ${delta}` })
       .where(eq(users.id, userId));
+  }
+
+  // Coin Packages
+  async getCoinPackages(activeOnly = false): Promise<CoinPackage[]> {
+    const conditions = activeOnly ? eq(coinPackages.isActive, true) : undefined;
+    return await db
+      .select()
+      .from(coinPackages)
+      .where(conditions)
+      .orderBy(asc(coinPackages.coins));
+  }
+
+  async createCoinPackage(packageData: InsertCoinPackage): Promise<CoinPackage> {
+    const [pkg] = await db
+      .insert(coinPackages)
+      .values(packageData)
+      .returning();
+    return pkg;
+  }
+
+  async updateCoinPackage(id: number, packageData: Partial<CoinPackage>): Promise<CoinPackage | undefined> {
+    const [pkg] = await db
+      .update(coinPackages)
+      .set(packageData)
+      .where(eq(coinPackages.id, id))
+      .returning();
+    return pkg || undefined;
+  }
+
+  async deleteCoinPackage(id: number): Promise<void> {
+    await db
+      .delete(coinPackages)
+      .where(eq(coinPackages.id, id));
   }
 
   // Settings

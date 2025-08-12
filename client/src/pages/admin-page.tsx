@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Shield, Users, FileText, Coins, MessageSquare, Check, X, Eye, Search, Filter, Palette, Save, RotateCcw, Download, Upload } from "lucide-react";
+import { Shield, Users, FileText, Coins, MessageSquare, Check, X, Eye, Search, Filter, Palette, Save, RotateCcw, Download, Upload, Package, Plus, Edit, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
