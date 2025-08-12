@@ -251,12 +251,27 @@ export class DatabaseStorage implements IStorage {
     return post || undefined;
   }
 
-  async getPostsForAdmin(status?: string, limit = 50, offset = 0): Promise<{ posts: Post[], total: number }> {
+  async getPostsForAdmin(status?: string, limit = 50, offset = 0): Promise<{ posts: any[], total: number }> {
     const conditions = status ? eq(posts.status, status as any) : undefined;
     
     const postsList = await db
-      .select()
+      .select({
+        id: posts.id,
+        title: posts.title,
+        description: posts.description,
+        images: posts.images,
+        preferences: posts.preferences,
+        status: posts.status,
+        createdAt: posts.createdAt,
+        userId: posts.userId,
+        user: {
+          id: users.id,
+          fullName: users.fullName,
+          username: users.username
+        }
+      })
       .from(posts)
+      .leftJoin(users, eq(posts.userId, users.id))
       .where(conditions)
       .orderBy(desc(posts.createdAt))
       .limit(limit)
