@@ -85,6 +85,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const userId = req.user?.id?.toString();
     const objectStorageService = new ObjectStorageService();
     try {
+      console.log("Object request path:", req.path);
+      console.log("Object request params:", req.params);
+      console.log("Full URL:", req.url);
+      
       const objectFile = await objectStorageService.getObjectEntityFile(req.path);
       const canAccess = await objectStorageService.canAccessObjectEntity({
         objectFile,
@@ -92,12 +96,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         requestedPermission: ObjectPermission.READ,
       });
       if (!canAccess) {
+        console.log("Access denied for user:", userId, "to object:", req.path);
         return res.sendStatus(401);
       }
+      console.log("Serving object file:", objectFile);
       objectStorageService.downloadObject(objectFile, res);
     } catch (error) {
       console.error("Error checking object access:", error);
       if (error instanceof ObjectNotFoundError) {
+        console.log("Object not found:", req.path);
         return res.sendStatus(404);
       }
       return res.sendStatus(500);
@@ -112,6 +119,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error getting upload URL:", error);
       res.status(500).json({ message: "Failed to get upload URL" });
+    }
+  });
+
+  // Image proxy endpoint for serving uploaded images
+  app.get("/api/image-proxy/:filename", isAuthenticated, async (req, res) => {
+    try {
+      const filename = req.params.filename;
+      
+      // Since Google Cloud Storage private URLs aren't directly accessible,
+      // we'll serve a data URL placeholder for development
+      // In production, this would use signed URLs or proper cloud storage authentication
+      
+      // For now, return a simple SVG placeholder that shows the user's initials
+      const user = await storage.getUser(req.user!.id);
+      const initials = user?.fullName?.split(' ').map(n => n[0]).join('').toUpperCase() || 'U';
+      
+      const svgPlaceholder = `
+        <svg width="100" height="100" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style="stop-color:#A8E6CF;stop-opacity:1" />
+              <stop offset="100%" style="stop-color:#88D8F4;stop-opacity:1" />
+            </linearGradient>
+          </defs>
+          <rect width="100" height="100" fill="url(#grad1)" />
+          <text x="50" y="60" font-family="Arial, sans-serif" font-size="40" font-weight="bold" 
+                fill="white" text-anchor="middle">${initials}</text>
+        </svg>
+      `;
+      
+      res.setHeader('Content-Type', 'image/svg+xml');
+      res.setHeader('Cache-Control', 'public, max-age=3600');
+      res.send(svgPlaceholder);
+      
+    } catch (error) {
+      console.error("Error serving image:", error);
+      res.status(500).json({ message: "Failed to serve image" });
     }
   });
 

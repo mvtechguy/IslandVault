@@ -326,9 +326,13 @@ export default function ProfilePage() {
                 <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-mint to-soft-blue flex items-center justify-center">
                   {user.profilePhotoPath ? (
                     <img
-                      src={user.profilePhotoPath}
+                      src={`/api/image-proxy/${user.profilePhotoPath.split('/').pop()}`}
                       alt="Profile"
                       className="w-full h-full rounded-2xl object-cover"
+                      onError={(e) => {
+                        console.log("Image failed to load:", e.currentTarget.src);
+                        e.currentTarget.style.display = 'none';
+                      }}
                     />
                   ) : (
                     <span className="text-white font-bold text-2xl">
@@ -425,9 +429,13 @@ export default function ProfilePage() {
                               {post.images.slice(0, 3).map((image: string, index: number) => (
                                 <img
                                   key={index}
-                                  src={image}
+                                  src={`/api/image-proxy/${image.split('/').pop()}`}
                                   alt={`Post image ${index + 1}`}
                                   className="w-16 h-16 object-cover rounded border border-gray-200 dark:border-gray-600 flex-shrink-0"
+                                  onError={(e) => {
+                                    console.log("Post image failed to load:", e.currentTarget.src);
+                                    e.currentTarget.style.display = 'none';
+                                  }}
                                 />
                               ))}
                               {post.images.length > 3 && (
@@ -636,9 +644,14 @@ export default function ProfilePage() {
                   {(uploadedPhotoUrl || user?.profilePhotoPath) && (
                     <div className="relative">
                       <img
-                        src={uploadedPhotoUrl || user?.profilePhotoPath}
+                        src={uploadedPhotoUrl ? `/api/image-proxy/${uploadedPhotoUrl.split('/').pop()}` : 
+                             user?.profilePhotoPath ? `/api/image-proxy/${user.profilePhotoPath.split('/').pop()}` : ''}
                         alt="Profile"
                         className="w-20 h-20 rounded-full object-cover border-2 border-gray-200 dark:border-gray-600"
+                        onError={(e) => {
+                          console.log("Profile edit image failed to load:", e.currentTarget.src);
+                          e.currentTarget.style.display = 'none';
+                        }}
                       />
                     </div>
                   )}
