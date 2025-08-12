@@ -27,7 +27,6 @@ const createPostSchema = insertPostSchema.extend({
     ageMin: z.number().min(18).max(80).optional(),
     ageMax: z.number().min(18).max(80).optional(),
     gender: z.string().optional(),
-    religion: z.string().optional(),
     notes: z.string().optional(),
   }).optional(),
   images: z.array(z.string()).max(5).optional(),
@@ -375,14 +374,7 @@ export default function HomePage() {
                   </Select>
                 </div>
 
-                <div className="mt-4">
-                  <Label htmlFor="religion">Preferred Religion</Label>
-                  <Input
-                    id="religion"
-                    {...createPostForm.register("preferences.religion")}
-                    placeholder="e.g., Islam"
-                  />
-                </div>
+
 
                 <div className="mt-4">
                   <Label htmlFor="notes">Additional Notes</Label>
