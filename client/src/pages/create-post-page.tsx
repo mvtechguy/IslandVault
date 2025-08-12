@@ -39,9 +39,26 @@ export default function CreatePostPage() {
   const [postImages, setPostImages] = useState<string[]>([]);
   const [wantToPinPost, setWantToPinPost] = useState(false);
 
+  // Add debug logs to help diagnose the issue
+  console.log("CreatePostPage - User:", user);
+  console.log("CreatePostPage - Component rendered");
+
+  // If user is not loaded yet, show loading state
+  if (!user) {
+    return (
+      <div className="container mx-auto p-4 max-w-2xl">
+        <div className="text-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-mint mx-auto"></div>
+          <p className="mt-4 text-gray-600 dark:text-gray-400">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   // Fetch coin balance and settings
   const { data: coinBalance } = useQuery<{ coins: number }>({
     queryKey: ["/api/coins/balance"],
+    retry: false,
   });
 
   const { data: settings } = useQuery<{
@@ -49,6 +66,7 @@ export default function CreatePostPage() {
     costConnect: number;
   }>({
     queryKey: ["/api/settings"],
+    retry: false,
   });
 
   const {
@@ -110,8 +128,8 @@ export default function CreatePostPage() {
     createPostMutation.mutate(data);
   };
 
-  const totalCost = (settings?.costPost || 0) + (wantToPinPost ? 3 : 0);
-  const canAfford = (coinBalance?.coins || 0) >= totalCost;
+  const totalCost = (settings?.costPost || 2) + (wantToPinPost ? 3 : 0);
+  const canAfford = user?.role === 'ADMIN' || user?.role === 'SUPERADMIN' || (coinBalance?.coins || 0) >= totalCost;
 
   return (
     <div className="container mx-auto p-4 max-w-2xl">
@@ -291,7 +309,7 @@ export default function CreatePostPage() {
             <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
               <div className="flex items-center justify-between text-sm">
                 <span>Post creation:</span>
-                <span>{user?.role === 'ADMIN' || user?.role === 'SUPERADMIN' ? 'Free' : `${settings?.costPost || 0} coins`}</span>
+                <span>{user?.role === 'ADMIN' || user?.role === 'SUPERADMIN' ? 'Free' : `${settings?.costPost || 2} coins`}</span>
               </div>
               {wantToPinPost && (
                 <div className="flex items-center justify-between text-sm">
