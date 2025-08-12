@@ -125,12 +125,13 @@ export function setupAuth(app: Express) {
         }
       }
 
-      // Remove confirmPassword from data before saving
-      const { confirmPassword, ...userData } = req.body;
+      // Remove confirmPassword from data before saving and convert dateOfBirth to Date
+      const { confirmPassword, dateOfBirth, ...userData } = req.body;
       
       const user = await storage.createUser({
         ...userData,
         password: await hashPassword(userData.password),
+        dateOfBirth: new Date(dateOfBirth), // Convert string to Date object
       });
 
       // Send Telegram notification to admin about new user registration

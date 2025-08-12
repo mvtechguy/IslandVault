@@ -138,9 +138,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/me", isAuthenticated, async (req, res) => {
     try {
+      const { dateOfBirth, ...otherData } = req.body;
       const updateData = {
-        ...req.body,
-        status: 'PENDING' as const // Reset status to pending on profile update
+        ...otherData,
+        status: 'PENDING' as const, // Reset status to pending on profile update
+        ...(dateOfBirth && { dateOfBirth: new Date(dateOfBirth) }) // Convert string to Date if provided
       };
       delete updateData.id;
       delete updateData.password;
