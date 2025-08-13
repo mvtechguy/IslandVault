@@ -1,0 +1,145 @@
+GET
+https://island-vault-mvtechguys.replit.app/
+[HTTP/1.1 200  0ms]
+
+GET
+https://releases.transloadit.com/uppy/v3.19.1/uppy.min.css
+[HTTP/2 200 OK 0ms]
+
+GET
+https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap
+[HTTP/2 200 OK 0ms]
+
+GET
+https://island-vault-mvtechguys.replit.app/assets/index-s2zzM1V-.js
+[HTTP/1.1 200  0ms]
+
+GET
+https://island-vault-mvtechguys.replit.app/assets/index-QAHyD9vP.css
+[HTTP/1.1 200  0ms]
+
+Unknown property ‘-moz-osx-font-smoothing’.  Declaration dropped. index-QAHyD9vP.css:1:410
+Unknown pseudo-class or pseudo-element ‘-moz-focus-inner’.  Ruleset ignored due to bad selector. index-QAHyD9vP.css:1:1884
+Unknown pseudo-class or pseudo-element ‘-moz-focus-inner’.  Ruleset ignored due to bad selector. index-QAHyD9vP.css:1:2369
+Unknown pseudo-class or pseudo-element ‘-moz-focus-inner’.  Ruleset ignored due to bad selector. index-QAHyD9vP.css:1:2967
+Unknown pseudo-class or pseudo-element ‘-moz-focus-inner’.  Ruleset ignored due to bad selector. index-QAHyD9vP.css:1:13377
+Unknown pseudo-class or pseudo-element ‘-moz-focus-inner’.  Ruleset ignored due to bad selector. index-QAHyD9vP.css:1:13602
+Unknown pseudo-class or pseudo-element ‘-moz-focus-inner’.  Ruleset ignored due to bad selector. index-QAHyD9vP.css:1:14437
+Unknown pseudo-class or pseudo-element ‘-moz-focus-inner’.  Ruleset ignored due to bad selector. index-QAHyD9vP.css:1:14665
+Unknown pseudo-class or pseudo-element ‘-moz-focus-inner’.  Ruleset ignored due to bad selector. index-QAHyD9vP.css:1:16149
+Unknown pseudo-class or pseudo-element ‘-moz-focus-inner’.  Ruleset ignored due to bad selector. index-QAHyD9vP.css:1:16410
+Unknown pseudo-class or pseudo-element ‘-moz-focus-inner’.  Ruleset ignored due to bad selector. index-QAHyD9vP.css:1:16872
+Unknown pseudo-class or pseudo-element ‘-moz-focus-inner’.  Ruleset ignored due to bad selector. index-QAHyD9vP.css:1:24312
+Unknown pseudo-class or pseudo-element ‘-moz-focus-inner’.  Ruleset ignored due to bad selector. index-QAHyD9vP.css:1:30055
+Error in parsing value for ‘cursor’.  Declaration dropped. index-QAHyD9vP.css:1:30430
+GET
+https://replit.com/public/js/replit-dev-banner.js
+[HTTP/1.1 200  0ms]
+
+Unknown pseudo-class or pseudo-element ‘-moz-focus-inner’.  Ruleset ignored due to bad selector. index-QAHyD9vP.css:1:33115
+Unknown pseudo-class or pseudo-element ‘-moz-focus-inner’.  Ruleset ignored due to bad selector. index-QAHyD9vP.css:1:33544
+Error in parsing value for ‘transition’.  Declaration dropped. index-QAHyD9vP.css:1:36399
+Unknown pseudo-class or pseudo-element ‘-moz-focus-inner’.  Ruleset ignored due to bad selector. index-QAHyD9vP.css:1:36785
+Unknown pseudo-class or pseudo-element ‘-moz-focus-inner’.  Ruleset ignored due to bad selector. index-QAHyD9vP.css:1:40365
+Unknown pseudo-class or pseudo-element ‘-moz-focus-inner’.  Ruleset ignored due to bad selector. index-QAHyD9vP.css:1:40701
+Unknown pseudo-class or pseudo-element ‘-moz-focus-inner’.  Ruleset ignored due to bad selector. index-QAHyD9vP.css:1:47202
+Unknown pseudo-class or pseudo-element ‘-moz-focus-inner’.  Ruleset ignored due to bad selector. index-QAHyD9vP.css:1:52447
+Unknown pseudo-class or pseudo-element ‘-moz-focus-inner’.  Ruleset ignored due to bad selector. index-QAHyD9vP.css:1:54459
+Unknown pseudo-class or pseudo-element ‘-moz-focus-inner’.  Ruleset ignored due to bad selector. index-QAHyD9vP.css:1:56075
+Unknown pseudo-class or pseudo-element ‘-moz-focus-inner’.  Ruleset ignored due to bad selector. index-QAHyD9vP.css:1:59271
+Unknown pseudo-class or pseudo-element ‘-moz-focus-inner’.  Ruleset ignored due to bad selector. index-QAHyD9vP.css:1:60233
+Error in parsing value for ‘text-align’.  Declaration dropped. index-QAHyD9vP.css:1:64132
+Error in parsing value for ‘-webkit-text-size-adjust’.  Declaration dropped. index-QAHyD9vP.css:1:68676
+Unknown property ‘-moz-osx-font-smoothing’.  Declaration dropped. index-QAHyD9vP.css:1:71138
+Ruleset ignored due to bad selector. index-QAHyD9vP.css:1:111160
+SW registered:  
+ServiceWorkerRegistration { installing: null, waiting: null, active: ServiceWorker, navigationPreload: NavigationPreloadManager, scope: "https://island-vault-mvtechguys.replit.app/", updateViaCache: "imports", onupdatefound: null, pushManager: PushManager, cookies: CookieStoreManager }
+island-vault-mvtechguys.replit.app:40:23
+GET
+https://island-vault-mvtechguys.replit.app/favicon.ico
+[HTTP/1.1 200  0ms]
+
+XHRGET
+https://island-vault-mvtechguys.replit.app/api/me
+[HTTP/1.1 200  0ms]
+
+XHRGET
+https://island-vault-mvtechguys.replit.app/api/branding
+[HTTP/1.1 200  0ms]
+
+XHRGET
+https://island-vault-mvtechguys.replit.app/api/coins/balance
+[HTTP/1.1 200  0ms]
+
+XHRGET
+https://island-vault-mvtechguys.replit.app/api/notifications
+[HTTP/1.1 200  0ms]
+
+XHRGET
+https://island-vault-mvtechguys.replit.app/api/settings
+[HTTP/1.1 200  0ms]
+
+XHRGET
+https://island-vault-mvtechguys.replit.app/api/posts
+[HTTP/1.1 200  0ms]
+
+GET
+https://island-vault-mvtechguys.replit.app/uploads/posts/58d3e001-a704-45b4-88c3-68ad4339db25.png
+[HTTP/1.1 404  0ms]
+
+GET
+https://island-vault-mvtechguys.replit.app/uploads/posts/a35c314f-c5e6-47fa-bc81-b471ca323430.png
+[HTTP/1.1 404  0ms]
+
+GET
+https://island-vault-mvtechguys.replit.app/uploads/posts/0a3d72ac-7858-4501-8a7d-ef2a6a8ff532.png
+[HTTP/1.1 404  0ms]
+
+GET
+https://storage.googleapis.com/replit-objstore-6dd8660a-4484-4c88-b464-d018fd8f6aeb/.private/uploads/f1ed4cc1-fb35-4110-908d-f19f462b9c9f
+[HTTP/1.1 403  0ms]
+
+XHRPOST
+https://island-vault-mvtechguys.replit.app/api/posts/5/like
+[HTTP/3 200  508ms]
+
+XHRGET
+https://island-vault-mvtechguys.replit.app/api/posts
+[HTTP/1.1 200  0ms]
+
+XHRGET
+https://island-vault-mvtechguys.replit.app/api/posts/search?limit=12&offset=0
+[HTTP/1.1 200  0ms]
+
+GET
+https://island-vault-mvtechguys.replit.app/uploads/posts/58d3e001-a704-45b4-88c3-68ad4339db25.png
+[HTTP/1.1 404  0ms]
+
+GET
+https://storage.googleapis.com/replit-objstore-6dd8660a-4484-4c88-b464-d018fd8f6aeb/.private/uploads/f1ed4cc1-fb35-4110-908d-f19f462b9c9f
+[HTTP/1.1 403  0ms]
+
+XHRGET
+https://island-vault-mvtechguys.replit.app/api/posts/4/like-status
+[HTTP/1.1 200  0ms]
+
+XHRGET
+https://island-vault-mvtechguys.replit.app/api/posts/4
+[HTTP/1.1 200  0ms]
+
+GET
+https://storage.googleapis.com/replit-objstore-6dd8660a-4484-4c88-b464-d018fd8f6aeb/.private/uploads/f1ed4cc1-fb35-4110-908d-f19f462b9c9f
+[HTTP/1.1 403  0ms]
+
+XHRGET
+https://island-vault-mvtechguys.replit.app/api/connect/status/2
+[HTTP/1.1 200  0ms]
+
+GET
+https://island-vault-mvtechguys.replit.app/uploads/posts/58d3e001-a704-45b4-88c3-68ad4339db25.png
+[HTTP/1.1 404  0ms]
+
+GET
+https://storage.googleapis.com/replit-objstore-6dd8660a-4484-4c88-b464-d018fd8f6aeb/.private/uploads/f1ed4cc1-fb35-4110-908d-f19f462b9c9f
+[HTTP/1.1 403  0ms]
+

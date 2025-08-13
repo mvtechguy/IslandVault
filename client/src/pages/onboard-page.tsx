@@ -1,5 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useBranding } from "@/hooks/use-branding";
+import { useAuth } from "@/hooks/use-auth";
+import { Redirect } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -25,7 +27,13 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function OnboardPage() {
   const { appName, logoUrl } = useBranding();
+  const { user, isLoading } = useAuth();
   const [currentStep, setCurrentStep] = useState(0);
+
+  // Redirect to home if user is approved
+  if (!isLoading && user && user.status === 'ACTIVE') {
+    return <Redirect to="/" />;
+  }
 
   const steps = [
     {
@@ -312,18 +320,22 @@ export default function OnboardPage() {
                 {currentStep + 1} of {steps.length}
               </span>
               
-              <Button
-                onClick={() => setCurrentStep(Math.min(steps.length - 1, currentStep + 1))}
-                disabled={currentStep === steps.length - 1}
-                className="min-w-[100px] bg-gradient-to-r from-mint to-soft-blue hover:from-mint/90 hover:to-soft-blue/90"
-              >
-                {currentStep === steps.length - 1 ? 'Complete' : (
-                  <>
-                    Next
-                    <ArrowRight className="w-4 h-4 ml-1" />
-                  </>
-                )}
-              </Button>
+              {currentStep === steps.length - 1 ? (
+                <Button
+                  disabled
+                  className="min-w-[100px] bg-gray-400 cursor-not-allowed"
+                >
+                  Waiting for Approval
+                </Button>
+              ) : (
+                <Button
+                  onClick={() => setCurrentStep(Math.min(steps.length - 1, currentStep + 1))}
+                  className="min-w-[100px] bg-gradient-to-r from-mint to-soft-blue hover:from-mint/90 hover:to-soft-blue/90"
+                >
+                  Next
+                  <ArrowRight className="w-4 h-4 ml-1" />
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>
