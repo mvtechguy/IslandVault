@@ -739,7 +739,7 @@ export default function ProfilePage() {
                     </SelectTrigger>
                     <SelectContent>
                       {availableIslands.map((island) => (
-                        <SelectItem key={island.name} value={island.name.toLowerCase().replace(/\s+/g, '_')}>
+                        <SelectItem key={island.name} value={island.name?.toLowerCase().replace(/\s+/g, '_') || island.name}>
                           {island.name}
                         </SelectItem>
                       ))}

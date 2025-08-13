@@ -374,7 +374,7 @@ export default function BrowsePostsPage() {
                                 </Badge>
                               )}
                               <Badge variant="secondary" className="capitalize">
-                                {post.relationshipType.toLowerCase()}
+                                {post.relationshipType?.toLowerCase() || 'general'}
                               </Badge>
                             </div>
 

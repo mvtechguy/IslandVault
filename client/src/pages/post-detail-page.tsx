@@ -166,7 +166,7 @@ export default function PostDetailPage() {
                     </Button>
                   )}
                   <Badge variant="outline" className="capitalize">
-                    {post.relationshipType.toLowerCase()}
+                    {post.relationshipType?.toLowerCase() || 'general'}
                   </Badge>
                 </div>
               </div>
@@ -362,7 +362,7 @@ export default function PostDetailPage() {
                 <div className="flex justify-between">
                   <span className="text-gray-600 dark:text-gray-400">Type:</span>
                   <span className="text-gray-900 dark:text-white capitalize">
-                    {post.relationshipType.toLowerCase()}
+                    {post.relationshipType?.toLowerCase() || 'general'}
                   </span>
                 </div>
               </div>
