@@ -14,6 +14,10 @@ export class TelegramService {
     this.initializeBot();
   }
 
+  async initialize(): Promise<void> {
+    await this.initializeBot();
+  }
+
   private async initializeBot() {
     try {
       const settings = await storage.getSettings();
@@ -162,6 +166,23 @@ export class TelegramService {
                    `${postTitle ? `• Post: ${postTitle}\n` : ''}` +
                    `\nConnection request created for admin review.`;
     await this.sendAdminNotification(message);
+  }
+
+  async sendTestMessage(): Promise<void> {
+    if (!this.adminChatId) {
+      throw new Error('Admin chat ID not configured');
+    }
+    
+    const message = `🤖 <b>Test Message</b>\n\nTelegram bot is working correctly!\n\nTime: ${new Date().toLocaleString()}`;
+    const success = await this.sendMessage({
+      chat_id: this.adminChatId,
+      text: message,
+      parse_mode: 'HTML'
+    });
+    
+    if (!success) {
+      throw new Error('Failed to send test message');
+    }
   }
 
   async updateBotConfiguration(botToken?: string, adminChatId?: string): Promise<void> {

@@ -743,8 +743,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId: req.user!.id,
         amountMvr: selectedPackage.priceMvr,
         computedCoins: selectedPackage.coins,
-        slipPath: slipPath,
-        computedCoins: selectedPackage.coins
+        pricePerCoin: (parseFloat(selectedPackage.priceMvr.toString()) / selectedPackage.coins).toFixed(2),
+        slipPath: slipPath
       });
 
       // Get user details for notification
@@ -1073,7 +1073,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const settings = await storage.getSettings();
       res.json({
         telegramBotToken: settings.telegramBotToken ? '***' : null,
-        telegramChatId: settings.telegramChatId
+        telegramChatId: settings.telegramAdminChatId
       });
     } catch (error) {
       console.error("Error fetching telegram settings:", error);
@@ -1087,7 +1087,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       await storage.updateSettings({
         telegramBotToken,
-        telegramChatId
+        telegramAdminChatId: telegramChatId
       });
 
       // Reinitialize telegram service with new settings
@@ -1777,6 +1777,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId: id,
         delta: amount,
         reason: 'OTHER',
+        refTable: null,
+        refId: null,
         description: reason || `Admin added ${amount} coins`,
       });
 
@@ -1827,6 +1829,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId: id,
         delta: -amount,
         reason: 'OTHER',
+        refTable: null,
+        refId: null,
         description: reason || `Admin removed ${amount} coins`,
       });
 
@@ -1887,12 +1891,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const connectionRequest = await storage.createConnectionRequest({
         requesterId,
         targetUserId,
-        postId: postId || null,
-        status: 'PENDING'
+        postId: postId || null
       });
 
       // Deduct coins
-      await storage.deductCoins(requesterId, costConnect, 'CONNECT');
+      await storage.deductCoins(requesterId, costConnect);
 
       res.json(connectionRequest);
     } catch (error) {

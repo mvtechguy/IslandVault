@@ -348,7 +348,10 @@ export const insertPostSchema = createInsertSchema(posts).pick({
 });
 
 export const insertCoinTopupSchema = createInsertSchema(coinTopups).pick({
-  amountMvr: true
+  amountMvr: true,
+  computedCoins: true,
+  pricePerCoin: true,
+  slipPath: true
 });
 
 export const insertCoinPackageSchema = createInsertSchema(coinPackages).pick({

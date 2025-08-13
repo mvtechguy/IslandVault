@@ -91,6 +91,8 @@ export interface IStorage {
   addCoinLedgerEntry(entry: Omit<CoinLedgerEntry, 'id' | 'createdAt'>): Promise<void>;
   getCoinLedger(userId: number, limit?: number): Promise<CoinLedgerEntry[]>;
   updateUserCoins(userId: number, delta: number): Promise<void>;
+  getUserCoinBalance(userId: number): Promise<number>;
+  deductCoins(userId: number, amount: number): Promise<void>;
   
   // Coin Packages
   getCoinPackages(activeOnly?: boolean): Promise<CoinPackage[]>;
@@ -122,6 +124,7 @@ export interface IStorage {
   createConversation(data: any): Promise<any>;
   getConversation(id: number): Promise<any>;
   getConversationByParticipants(userId1: number, userId2: number): Promise<any>;
+  getConversationParticipants(conversationId: number): Promise<any[]>;
   getUserConversations(userId: number): Promise<any[]>;
   addConversationParticipant(data: any): Promise<any>;
   isConversationParticipant(conversationId: number, userId: number): Promise<boolean>;
@@ -173,9 +176,17 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
+    // Convert dateOfBirth string to Date object
+    const userData = {
+      ...insertUser,
+      dateOfBirth: new Date(insertUser.dateOfBirth)
+    };
+    // Remove confirmPassword as it's not part of the database schema
+    const { confirmPassword, ...userDataForDb } = userData;
+    
     const [user] = await db
       .insert(users)
-      .values([insertUser])
+      .values(userDataForDb)
       .returning();
     return user;
   }
@@ -310,7 +321,7 @@ export class DatabaseStorage implements IStorage {
   async createConnectionRequest(requestData: InsertConnectionRequest & { requesterId: number }): Promise<ConnectionRequest> {
     const [request] = await db
       .insert(connectionRequests)
-      .values(requestData)
+      .values({ ...requestData, status: 'PENDING' })
       .returning();
     return request;
   }
@@ -423,6 +434,21 @@ export class DatabaseStorage implements IStorage {
     await db
       .update(users)
       .set({ coins: sql`${users.coins} + ${delta}` })
+      .where(eq(users.id, userId));
+  }
+
+  async getUserCoinBalance(userId: number): Promise<number> {
+    const [user] = await db
+      .select({ coins: users.coins })
+      .from(users)
+      .where(eq(users.id, userId));
+    return user?.coins || 0;
+  }
+
+  async deductCoins(userId: number, amount: number): Promise<void> {
+    await db
+      .update(users)
+      .set({ coins: sql`${users.coins} - ${amount}` })
       .where(eq(users.id, userId));
   }
 
@@ -637,6 +663,13 @@ export class DatabaseStorage implements IStorage {
       .where(eq(conversations.id, commonConvIds[0]));
 
     return conversation || undefined;
+  }
+
+  async getConversationParticipants(conversationId: number): Promise<any[]> {
+    return await db
+      .select()
+      .from(conversationParticipants)
+      .where(eq(conversationParticipants.conversationId, conversationId));
   }
 
   async getUserConversations(userId: number): Promise<any[]> {
@@ -948,7 +981,7 @@ export class DatabaseStorage implements IStorage {
         .where(eq(posts.id, postId));
     } catch (error) {
       // Ignore duplicate key errors (user already liked)
-      if (!error.message?.includes('duplicate')) {
+      if (!(error as any)?.message?.includes('duplicate')) {
         throw error;
       }
     }
@@ -1020,14 +1053,15 @@ export class DatabaseStorage implements IStorage {
 
     // Add search conditions
     if (query) {
-      conditions.push(
-        or(
-          sql`${posts.title} ILIKE ${`%${query}%`}`,
-          sql`${posts.description} ILIKE ${`%${query}%`}`,
-          sql`${posts.aboutYourself} ILIKE ${`%${query}%`}`,
-          sql`${posts.lookingFor} ILIKE ${`%${query}%`}`
-        )
+      const searchCondition = or(
+        sql`${posts.title} ILIKE ${`%${query}%`}`,
+        sql`${posts.description} ILIKE ${`%${query}%`}`,
+        sql`${posts.aboutYourself} ILIKE ${`%${query}%`}`,
+        sql`${posts.lookingFor} ILIKE ${`%${query}%`}`
       );
+      if (searchCondition) {
+        conditions.push(searchCondition);
+      }
     }
 
     // Add filters
