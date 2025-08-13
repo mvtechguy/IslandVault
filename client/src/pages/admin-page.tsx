@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -55,6 +55,11 @@ export default function AdminPage() {
     swiftCode: "",
     isActive: true,
     isPrimary: false
+  });
+  const [bankAccountErrors, setBankAccountErrors] = useState({
+    bankName: "",
+    accountNumber: "",
+    accountName: ""
   });
   const [isEditingBankAccount, setIsEditingBankAccount] = useState(false);
   const [showAddBank, setShowAddBank] = useState(false);
@@ -1943,12 +1948,21 @@ export default function AdminPage() {
 
       {/* Bank Account Dialog */}
       <Dialog open={showAddBank} onOpenChange={setShowAddBank}>
-        <DialogContent className="max-w-md">
+        <DialogContent 
+          className="max-w-md"
+          aria-labelledby="bank-dialog-title"
+          aria-describedby="bank-dialog-desc"
+        >
           <DialogHeader>
-            <DialogTitle className="flex items-center space-x-2">
+            <DialogTitle id="bank-dialog-title" className="flex items-center space-x-2">
               <Landmark className="w-5 h-5" />
               <span>{isEditingBankAccount ? 'Edit Bank Account' : 'Add Bank Account'}</span>
             </DialogTitle>
+            <DialogDescription id="bank-dialog-desc">
+              {isEditingBankAccount 
+                ? 'Update the bank account information below.'
+                : 'Enter the bank account details to add a new payment method.'}
+            </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-4">
@@ -1956,10 +1970,13 @@ export default function AdminPage() {
               <Label htmlFor="bankName">Bank Name</Label>
               <Input
                 id="bankName"
+                autoFocus
                 value={bankAccountForm.bankName}
                 onChange={(e) => setBankAccountForm({ ...bankAccountForm, bankName: e.target.value })}
                 placeholder="e.g., Bank of Maldives"
+                className={bankAccountErrors.bankName ? "border-red-500" : ""}
               />
+              {bankAccountErrors.bankName && <p className="text-sm text-red-500 mt-1">{bankAccountErrors.bankName}</p>}
             </div>
 
             <div>
@@ -1969,7 +1986,9 @@ export default function AdminPage() {
                 value={bankAccountForm.accountName}
                 onChange={(e) => setBankAccountForm({ ...bankAccountForm, accountName: e.target.value })}
                 placeholder="Account holder name"
+                className={bankAccountErrors.accountName ? "border-red-500" : ""}
               />
+              {bankAccountErrors.accountName && <p className="text-sm text-red-500 mt-1">{bankAccountErrors.accountName}</p>}
             </div>
 
             <div>
@@ -1979,7 +1998,9 @@ export default function AdminPage() {
                 value={bankAccountForm.accountNumber}
                 onChange={(e) => setBankAccountForm({ ...bankAccountForm, accountNumber: e.target.value })}
                 placeholder="Account number"
+                className={bankAccountErrors.accountNumber ? "border-red-500" : ""}
               />
+              {bankAccountErrors.accountNumber && <p className="text-sm text-red-500 mt-1">{bankAccountErrors.accountNumber}</p>}
             </div>
 
 
@@ -2039,16 +2060,46 @@ export default function AdminPage() {
             </Button>
             <Button
               onClick={async () => {
+                // WHY: Reset validation errors before attempting submission
+                setBankAccountErrors({ bankName: "", accountNumber: "", accountName: "" });
+                
+                // WHY: Basic form validation - check required fields
+                const errors = {
+                  bankName: !bankAccountForm.bankName.trim() ? "Bank name is required" : "",
+                  accountNumber: !bankAccountForm.accountNumber.trim() ? "Account number is required" : "",
+                  accountName: !bankAccountForm.accountName.trim() ? "Account name is required" : ""
+                };
+                
+                setBankAccountErrors(errors);
+                const hasErrors = Object.values(errors).some(error => error);
+                
+                if (hasErrors) {
+                  toast({ 
+                    title: "Please fix the validation errors", 
+                    variant: "destructive" 
+                  });
+                  return;
+                }
+
                 try {
                   const endpoint = isEditingBankAccount 
                     ? `/api/admin/bank-accounts/${selectedBankAccount.id}`
                     : "/api/admin/bank-accounts";
                   const method = isEditingBankAccount ? "PUT" : "POST";
                   
-                  await apiRequest(endpoint, {
+                  // WHY: Network logging for debugging bank account creation
+                  if (process.env.NODE_ENV === 'development') {
+                    console.log(`[DEBUG] ${method} ${endpoint}`, bankAccountForm);
+                  }
+                  
+                  const response = await apiRequest(endpoint, {
                     method,
                     body: JSON.stringify(bankAccountForm)
                   });
+                  
+                  if (process.env.NODE_ENV === 'development') {
+                    console.log('[DEBUG] Bank account response:', response);
+                  }
                   
                   queryClient.invalidateQueries({ queryKey: ["/api/admin/bank-accounts"] });
                   toast({ 
@@ -2062,18 +2113,26 @@ export default function AdminPage() {
                     bankName: "",
                     accountNumber: "",
                     accountName: "",
-                    branchName: "",
                     swiftCode: "",
                     isActive: true,
                     isPrimary: false
                   });
-                } catch (error) {
+                  setBankAccountErrors({ bankName: "", accountNumber: "", accountName: "" });
+                } catch (error: any) {
+                  // WHY: Enhanced error logging for debugging
+                  if (process.env.NODE_ENV === 'development') {
+                    console.error('[DEBUG] Bank account error:', error);
+                  }
+                  
+                  const errorMessage = error?.message || "Unknown error occurred";
                   toast({ 
                     title: isEditingBankAccount ? "Failed to update bank account" : "Failed to add bank account", 
+                    description: errorMessage,
                     variant: "destructive" 
                   });
                 }
               }}
+              disabled={!bankAccountForm.bankName || !bankAccountForm.accountNumber || !bankAccountForm.accountName}
             >
               {isEditingBankAccount ? 'Update' : 'Add'} Bank Account
             </Button>
