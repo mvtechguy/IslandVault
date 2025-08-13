@@ -5,6 +5,7 @@ import { setupAuth, isAuthenticated, isAdmin } from "./auth";
 import { storage } from "./storage";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { ObjectPermission } from "./objectAcl";
+import { localFileStorage } from "./localFileStorage";
 import { telegramService } from "./telegram";
 import multer from "multer";
 import { z } from "zod";
@@ -2474,6 +2475,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
     });
+  });
+
+  // ================== LOCAL FILE STORAGE ENDPOINTS ==================
+  
+  // File upload endpoint for VPS deployment
+  app.post("/api/upload", isAuthenticated, upload.single('file'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+
+      const category = (req.body.category || 'temp') as 'profiles' | 'posts' | 'slips' | 'temp';
+      const filePath = await localFileStorage.saveFile(
+        req.file.buffer, 
+        req.file.originalname, 
+        category
+      );
+
+      res.json({ 
+        filePath,
+        url: `${req.protocol}://${req.get('host')}${filePath}`
+      });
+    } catch (error) {
+      console.error("Error uploading file:", error);
+      res.status(500).json({ message: "Failed to upload file" });
+    }
+  });
+
+  // Serve uploaded files directly from local storage
+  app.get("/uploads/:category/:filename", async (req, res) => {
+    try {
+      const { category, filename } = req.params;
+      const filePath = `/uploads/${category}/${filename}`;
+      
+      if (await localFileStorage.fileExists(filePath)) {
+        await localFileStorage.serveFile(filePath, res);
+      } else {
+        res.status(404).json({ error: 'File not found' });
+      }
+    } catch (error) {
+      console.error("Error serving file:", error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
   });
 
   return httpServer;

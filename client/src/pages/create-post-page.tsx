@@ -17,7 +17,7 @@ import { z } from "zod";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
-import { ImageUploader } from "@/components/ImageUploader";
+import { LocalFileUploader } from "@/components/LocalFileUploader";
 import { MobileHeader } from "@/components/MobileHeader";
 import { BottomNavigation } from "@/components/BottomNavigation";
 
@@ -202,11 +202,50 @@ export default function CreatePostPage() {
             {/* Images */}
             <div className="space-y-2">
               <Label>Photos (up to 5)</Label>
-              <ImageUploader
-                currentImages={postImages}
-                onImagesChange={setPostImages}
-                maxImages={5}
+              <LocalFileUploader
+                category="posts"
+                multiple={true}
+                maxSizeMB={10}
+                accept="image/*"
+                onUploadComplete={(files) => {
+                  const newImages = [...postImages, ...files.map(f => f.filePath)];
+                  setPostImages(newImages.slice(0, 5)); // Limit to 5 images
+                }}
+                onUploadError={(error) => {
+                  toast({
+                    title: "Upload Error",
+                    description: error,
+                    variant: "destructive",
+                  });
+                }}
               />
+              
+              {/* Display uploaded images */}
+              {postImages.length > 0 && (
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
+                  {postImages.map((imagePath, index) => (
+                    <div key={index} className="relative">
+                      <img
+                        src={imagePath}
+                        alt={`Post image ${index + 1}`}
+                        className="w-full h-24 object-cover rounded-lg border"
+                      />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => {
+                          const newImages = postImages.filter((_, i) => i !== index);
+                          setPostImages(newImages);
+                        }}
+                        className="absolute -top-2 -right-2 w-6 h-6 rounded-full p-0"
+                      >
+                        <X className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Preferences */}

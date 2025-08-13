@@ -14,14 +14,14 @@ Preferred communication style: Simple, everyday language.
 - **UI Components**: Radix UI primitives with shadcn/ui component system
 - **State Management**: TanStack Query for server state, React Context for auth and theme
 - **PWA Features**: Service worker, manifest.json, offline support, and mobile-first responsive design
-- **File Uploads**: Uppy.js integration with Google Cloud Storage via replit sidecar
+- **File Uploads**: LocalFileUploader component with progress tracking for VPS deployment
 - **Mobile Optimization**: Responsive admin interface with horizontal scrolling tabs and pagination system
 
 ## Backend Architecture
 - **Runtime**: Node.js with Express.js and TypeScript
 - **Database**: PostgreSQL with Drizzle ORM for type-safe database operations
 - **Authentication**: Session-based auth with Passport.js using local strategy and scrypt password hashing
-- **File Storage**: Google Cloud Storage through replit sidecar with custom ACL system
+- **File Storage**: Local file storage system with multer for VPS deployment, organized in /uploads directories (profiles, posts, slips, temp)
 - **API Design**: RESTful JSON APIs with CORS configuration and comprehensive error handling
 - **Real-time Communication**: WebSocket server for instant messaging with admin monitoring capabilities
 
@@ -47,9 +47,9 @@ Preferred communication style: Simple, everyday language.
 # External Dependencies
 
 ## Cloud Infrastructure
-- **Replit Hosting**: Primary deployment platform with integrated database and storage
-- **Google Cloud Storage**: File storage service accessed through replit sidecar for security
-- **Neon Database**: PostgreSQL database service with connection pooling
+- **VPS Deployment**: Local file storage system ready for Linux VPS deployment
+- **PostgreSQL Database**: Database service with connection pooling for VPS deployment
+- **Local Storage**: Complete file management system with /uploads directories for images and documents
 
 ## Frontend Libraries
 - **Radix UI**: Headless component primitives for accessibility and customization

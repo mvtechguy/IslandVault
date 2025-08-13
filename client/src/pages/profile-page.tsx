@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { User, Settings, Edit3, LogOut, Heart, Clock, CheckCircle, XCircle, Coins, History, Upload, Camera } from "lucide-react";
+import { LocalFileUploader } from "@/components/LocalFileUploader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -183,78 +184,15 @@ export default function ProfilePage() {
     updateProfileMutation.mutate(formData);
   };
 
-  const handlePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+  const handlePhotoUpload = (files: Array<{ filePath: string; url: string }>) => {
+    if (files.length > 0) {
+      const uploadedFile = files[0];
+      setUploadedPhotoUrl(uploadedFile.filePath);
+      updateProfileForm.setValue("profilePhotoPath", uploadedFile.filePath);
 
-    // Validate file type
-    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
       toast({
-        title: "Invalid file type",
-        description: "Please upload a JPEG, PNG, or WebP image.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Validate file size (5MB max)
-    if (file.size > 5 * 1024 * 1024) {
-      toast({
-        title: "File too large",
-        description: "Please upload an image smaller than 5MB.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      // Get upload URL
-      const uploadResponse = await apiRequest("POST", "/api/objects/upload");
-      const { uploadURL } = await uploadResponse.json();
-      
-      console.log("Upload URL:", uploadURL);
-
-      // Create FormData for file upload
-      const formData = new FormData();
-      formData.append('file', file);
-
-      // Upload file to Google Cloud Storage
-      const response = await fetch(uploadURL, {
-        method: 'PUT',
-        body: file,
-        headers: {
-          'Content-Type': file.type,
-        },
-      });
-
-      console.log("Upload response status:", response.status);
-      console.log("Upload response:", response);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Upload failed:", errorText);
-        throw new Error(`Upload failed: ${response.status} ${errorText}`);
-      }
-
-      // Google Cloud Storage typically returns the public URL in the location header
-      // or we can construct it from the upload URL
-      const imageUrl = uploadURL.split('?')[0]; // Remove query parameters to get public URL
-      
-      console.log("Image URL:", imageUrl);
-      
-      setUploadedPhotoUrl(imageUrl);
-      updateProfileForm.setValue("profilePhotoPath", imageUrl);
-      
-      toast({
-        title: "Photo uploaded successfully",
-        description: "Your profile picture has been uploaded.",
-      });
-    } catch (error: any) {
-      console.error("Upload error:", error);
-      toast({
-        title: "Upload failed",
-        description: error.message || "Failed to upload profile picture. Please try again.",
-        variant: "destructive",
+        title: "Photo uploaded successfully!",
+        description: "Your profile picture has been updated.",
       });
     }
   };
@@ -640,38 +578,43 @@ export default function ProfilePage() {
               {/* Profile Picture Upload */}
               <div className="space-y-2">
                 <Label>Profile Picture *</Label>
-                <div className="flex items-center space-x-4">
-                  {(uploadedPhotoUrl || user?.profilePhotoPath) && (
-                    <div className="relative">
-                      <img
-                        src={uploadedPhotoUrl ? `/api/image-proxy/${uploadedPhotoUrl.split('/').pop()}` : 
-                             user?.profilePhotoPath ? `/api/image-proxy/${user.profilePhotoPath.split('/').pop()}` : ''}
-                        alt="Profile"
-                        className="w-20 h-20 rounded-full object-cover border-2 border-gray-200 dark:border-gray-600"
-                        onError={(e) => {
-                          console.log("Profile edit image failed to load:", e.currentTarget.src);
-                          e.currentTarget.style.display = 'none';
-                        }}
-                      />
-                    </div>
-                  )}
-                  <div className="flex-1">
-                    <Input
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp"
-                      onChange={handlePhotoUpload}
-                      className="hidden"
-                      id="profilePhoto"
+                
+                {/* Current profile picture preview */}
+                {(uploadedPhotoUrl || user?.profilePhotoPath) && (
+                  <div className="flex justify-center mb-4">
+                    <img
+                      src={uploadedPhotoUrl || user?.profilePhotoPath || ''}
+                      alt="Profile"
+                      className="w-20 h-20 rounded-full object-cover border-2 border-gray-200 dark:border-gray-600"
+                      onError={(e) => {
+                        console.log("Profile edit image failed to load:", e.currentTarget.src);
+                        e.currentTarget.style.display = 'none';
+                      }}
                     />
-                    <Label
-                      htmlFor="profilePhoto"
-                      className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-800 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
-                    >
-                      <Camera className="w-4 h-4 mr-2" />
-                      {uploadedPhotoUrl || user?.profilePhotoPath ? 'Change Photo' : 'Upload Photo'}
-                    </Label>
                   </div>
-                </div>
+                )}
+                
+                {/* File uploader */}
+                <LocalFileUploader
+                  category="profiles"
+                  multiple={false}
+                  maxSizeMB={5}
+                  accept="image/jpeg,image/png,image/webp"
+                  onUploadComplete={handlePhotoUpload}
+                  onUploadError={(error) => {
+                    toast({
+                      title: "Upload Error",
+                      description: error,
+                      variant: "destructive",
+                    });
+                  }}
+                >
+                  <div className="flex items-center gap-2">
+                    <Camera className="w-4 h-4" />
+                    <span>{uploadedPhotoUrl || user?.profilePhotoPath ? 'Change Photo' : 'Upload Photo'}</span>
+                  </div>
+                </LocalFileUploader>
+                
                 {updateProfileForm.formState.errors.profilePhotoPath && (
                   <p className="text-sm text-red-600 dark:text-red-400">
                     {updateProfileForm.formState.errors.profilePhotoPath.message}
