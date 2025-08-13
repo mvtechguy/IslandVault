@@ -926,4 +926,227 @@ Image upload functionality has several issues:
    - Fix ACL policy setting
    - Update image URL handling
 
+10. **Admin Panel Bank Details**:
+   - Implement dialog component for adding/editing bank accounts
+   - Add mutation functions for bank account operations
+   - Connect dialog to the "Add Bank Details" button
+
 By addressing these issues, the Kaiveni application will have improved stability, better user experience, and more reliable functionality across all its features.
+
+## 10. Admin Panel Bank Details Issue
+
+### Problem
+Users cannot click the "Add Bank Details" button in the admin panel.
+
+### Root Cause
+The "Add Bank Details" button sets the `showAddBank` state to true (line 1186 in admin-page.tsx), but there's no corresponding dialog component that uses this state to display the bank details form.
+
+### Recommendation
+1. Implement a dialog component for adding bank details:
+   ```tsx
+   {/* Bank Account Dialog */}
+   <Dialog open={showAddBank} onOpenChange={setShowAddBank}>
+     <DialogContent className="max-w-md">
+       <DialogHeader>
+         <DialogTitle className="flex items-center space-x-2">
+           <Landmark className="w-5 h-5" />
+           <span>{isEditingBankAccount ? 'Edit Bank Account' : 'Add Bank Account'}</span>
+         </DialogTitle>
+       </DialogHeader>
+       
+       <div className="space-y-4">
+         <div>
+           <Label htmlFor="bankName">Bank Name</Label>
+           <Input
+             id="bankName"
+             value={bankAccountForm.bankName}
+             onChange={(e) => setBankAccountForm({ ...bankAccountForm, bankName: e.target.value })}
+             placeholder="e.g., Bank of Maldives"
+           />
+         </div>
+
+         <div>
+           <Label htmlFor="accountNumber">Account Number</Label>
+           <Input
+             id="accountNumber"
+             value={bankAccountForm.accountNumber}
+             onChange={(e) => setBankAccountForm({ ...bankAccountForm, accountNumber: e.target.value })}
+             placeholder="e.g., 7701-123456-001"
+           />
+         </div>
+
+         <div>
+           <Label htmlFor="accountName">Account Name</Label>
+           <Input
+             id="accountName"
+             value={bankAccountForm.accountName}
+             onChange={(e) => setBankAccountForm({ ...bankAccountForm, accountName: e.target.value })}
+             placeholder="e.g., Kaiveni Ltd"
+           />
+         </div>
+
+         <div>
+           <Label htmlFor="branchName">Branch Name</Label>
+           <Input
+             id="branchName"
+             value={bankAccountForm.branchName}
+             onChange={(e) => setBankAccountForm({ ...bankAccountForm, branchName: e.target.value })}
+             placeholder="e.g., Male Branch"
+           />
+         </div>
+
+         <div>
+           <Label htmlFor="swiftCode">SWIFT Code (Optional)</Label>
+           <Input
+             id="swiftCode"
+             value={bankAccountForm.swiftCode}
+             onChange={(e) => setBankAccountForm({ ...bankAccountForm, swiftCode: e.target.value })}
+             placeholder="e.g., MALBMVMV"
+           />
+         </div>
+
+         <div className="flex items-center space-x-4">
+           <div className="flex items-center space-x-2">
+             <input
+               type="checkbox"
+               id="bankActive"
+               checked={bankAccountForm.isActive}
+               onChange={(e) => setBankAccountForm({ ...bankAccountForm, isActive: e.target.checked })}
+               className="rounded"
+             />
+             <Label htmlFor="bankActive">Active</Label>
+           </div>
+           <div className="flex items-center space-x-2">
+             <input
+               type="checkbox"
+               id="bankPrimary"
+               checked={bankAccountForm.isPrimary}
+               onChange={(e) => setBankAccountForm({ ...bankAccountForm, isPrimary: e.target.checked })}
+               className="rounded"
+             />
+             <Label htmlFor="bankPrimary">Primary Account</Label>
+           </div>
+         </div>
+
+         <div className="flex justify-end space-x-2 pt-4">
+           <Button
+             variant="outline"
+             onClick={() => setShowAddBank(false)}
+           >
+             Cancel
+           </Button>
+           <Button
+             onClick={() => {
+               const bankData = {
+                 bankName: bankAccountForm.bankName,
+                 accountNumber: bankAccountForm.accountNumber,
+                 accountName: bankAccountForm.accountName,
+                 branchName: bankAccountForm.branchName,
+                 swiftCode: bankAccountForm.swiftCode || null,
+                 isActive: bankAccountForm.isActive,
+                 isPrimary: bankAccountForm.isPrimary
+               };
+
+               if (isEditingBankAccount && selectedBankAccount?.id) {
+                 // Update existing bank account
+                 apiRequest("PUT", `/api/admin/bank-accounts/${selectedBankAccount.id}`, bankData)
+                   .then(() => {
+                     queryClient.invalidateQueries({ queryKey: ["/api/admin/bank-accounts"] });
+                     toast({ title: "Bank account updated successfully" });
+                     setShowAddBank(false);
+                   })
+                   .catch(() => {
+                     toast({ title: "Failed to update bank account", variant: "destructive" });
+                   });
+               } else {
+                 // Create new bank account
+                 apiRequest("POST", "/api/admin/bank-accounts", bankData)
+                   .then(() => {
+                     queryClient.invalidateQueries({ queryKey: ["/api/admin/bank-accounts"] });
+                     toast({ title: "Bank account created successfully" });
+                     setShowAddBank(false);
+                   })
+                   .catch(() => {
+                     toast({ title: "Failed to create bank account", variant: "destructive" });
+                   });
+               }
+             }}
+             disabled={!bankAccountForm.bankName || !bankAccountForm.accountNumber || !bankAccountForm.accountName}
+             className="bg-mint hover:bg-mint/90"
+           >
+             {isEditingBankAccount ? (
+               <>
+                 <Edit className="w-4 h-4 mr-1" />
+                 Update Bank Account
+               </>
+             ) : (
+               <>
+                 <Plus className="w-4 h-4 mr-1" />
+                 Add Bank Account
+               </>
+             )}
+           </Button>
+         </div>
+       </div>
+     </DialogContent>
+   </Dialog>
+   ```
+
+2. Add the dialog component to the admin-page.tsx file, just before the closing `</div>` tag at the end of the component.
+
+3. Implement the necessary mutation functions for creating and updating bank accounts:
+   ```typescript
+   const createBankAccountMutation = useMutation({
+     mutationFn: async (data: any) => {
+       const res = await apiRequest("POST", "/api/admin/bank-accounts", data);
+       return res.json();
+     },
+     onSuccess: () => {
+       toast({ title: "Bank account created successfully" });
+       queryClient.invalidateQueries({ queryKey: ["/api/admin/bank-accounts"] });
+       setShowAddBank(false);
+       setBankAccountForm({
+         bankName: "",
+         accountNumber: "",
+         accountName: "",
+         branchName: "",
+         swiftCode: "",
+         isActive: true,
+         isPrimary: false
+       });
+     },
+     onError: (error: Error) => {
+       toast({
+         title: "Failed to create bank account",
+         description: error.message,
+         variant: "destructive",
+       });
+     },
+   });
+
+   const updateBankAccountMutation = useMutation({
+     mutationFn: async ({ id, data }: { id: number; data: any }) => {
+       const res = await apiRequest("PUT", `/api/admin/bank-accounts/${id}`, data);
+       return res.json();
+     },
+     onSuccess: () => {
+       toast({ title: "Bank account updated successfully" });
+       queryClient.invalidateQueries({ queryKey: ["/api/admin/bank-accounts"] });
+       setShowAddBank(false);
+       setSelectedBankAccount(null);
+     },
+     onError: (error: Error) => {
+       toast({
+         title: "Failed to update bank account",
+         description: error.message,
+         variant: "destructive",
+       });
+     },
+   });
+   ```
+
+4. Update the Summary of Recommendations section to include this fix:
+
+## Summary of Recommendations
+
+1. **Authentication**:

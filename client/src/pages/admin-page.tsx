@@ -432,6 +432,21 @@ export default function AdminPage() {
   const totalPending = Object.values(pendingCounts).reduce((sum, count) => sum + count, 0);
 
   // Bank account handlers
+  const handleAddBank = () => {
+    setSelectedBankAccount(null);
+    setBankAccountForm({
+      bankName: "",
+      accountNumber: "",
+      accountName: "",
+      branchName: "",
+      swiftCode: "",
+      isActive: true,
+      isPrimary: false
+    });
+    setIsEditingBankAccount(false);
+    setShowAddBank(true);
+  };
+
   const handleEditBank = (bank: any) => {
     setSelectedBankAccount(bank);
     setBankAccountForm({
@@ -1181,7 +1196,7 @@ export default function AdminPage() {
                 <CardContent className="space-y-4">
                   <div className="flex justify-between items-center">
                     <h3 className="text-lg font-semibold">Bank Accounts</h3>
-                    <Button onClick={() => setShowAddBank(true)}>
+                    <Button onClick={handleAddBank}>
                       <Plus className="w-4 h-4 mr-2" />
                       Add Bank Details
                     </Button>
@@ -1923,6 +1938,155 @@ export default function AdminPage() {
                 )}
               </Button>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bank Account Dialog */}
+      <Dialog open={showAddBank} onOpenChange={setShowAddBank}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center space-x-2">
+              <Landmark className="w-5 h-5" />
+              <span>{isEditingBankAccount ? 'Edit Bank Account' : 'Add Bank Account'}</span>
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="bankName">Bank Name</Label>
+              <Input
+                id="bankName"
+                value={bankAccountForm.bankName}
+                onChange={(e) => setBankAccountForm({ ...bankAccountForm, bankName: e.target.value })}
+                placeholder="e.g., Bank of Maldives"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="accountName">Account Name</Label>
+              <Input
+                id="accountName"
+                value={bankAccountForm.accountName}
+                onChange={(e) => setBankAccountForm({ ...bankAccountForm, accountName: e.target.value })}
+                placeholder="Account holder name"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="accountNumber">Account Number</Label>
+              <Input
+                id="accountNumber"
+                value={bankAccountForm.accountNumber}
+                onChange={(e) => setBankAccountForm({ ...bankAccountForm, accountNumber: e.target.value })}
+                placeholder="Account number"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="branchName">Branch Name</Label>
+              <Input
+                id="branchName"
+                value={bankAccountForm.branchName}
+                onChange={(e) => setBankAccountForm({ ...bankAccountForm, branchName: e.target.value })}
+                placeholder="Branch name"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="swiftCode">SWIFT Code (Optional)</Label>
+              <Input
+                id="swiftCode"
+                value={bankAccountForm.swiftCode}
+                onChange={(e) => setBankAccountForm({ ...bankAccountForm, swiftCode: e.target.value })}
+                placeholder="SWIFT/BIC code"
+              />
+            </div>
+
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="bankActive"
+                  checked={bankAccountForm.isActive}
+                  onChange={(e) => setBankAccountForm({ ...bankAccountForm, isActive: e.target.checked })}
+                  className="rounded"
+                />
+                <Label htmlFor="bankActive">Active</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="bankPrimary"
+                  checked={bankAccountForm.isPrimary}
+                  onChange={(e) => setBankAccountForm({ ...bankAccountForm, isPrimary: e.target.checked })}
+                  className="rounded"
+                />
+                <Label htmlFor="bankPrimary">Primary Account</Label>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end space-x-2 pt-4">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowAddBank(false);
+                setIsEditingBankAccount(false);
+                setSelectedBankAccount(null);
+                setBankAccountForm({
+                  bankName: "",
+                  accountNumber: "",
+                  accountName: "",
+                  branchName: "",
+                  swiftCode: "",
+                  isActive: true,
+                  isPrimary: false
+                });
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={async () => {
+                try {
+                  const endpoint = isEditingBankAccount 
+                    ? `/api/admin/bank-accounts/${selectedBankAccount.id}`
+                    : "/api/admin/bank-accounts";
+                  const method = isEditingBankAccount ? "PUT" : "POST";
+                  
+                  await apiRequest(endpoint, {
+                    method,
+                    body: JSON.stringify(bankAccountForm)
+                  });
+                  
+                  queryClient.invalidateQueries({ queryKey: ["/api/admin/bank-accounts"] });
+                  toast({ 
+                    title: isEditingBankAccount ? "Bank account updated successfully" : "Bank account added successfully"
+                  });
+                  
+                  setShowAddBank(false);
+                  setIsEditingBankAccount(false);
+                  setSelectedBankAccount(null);
+                  setBankAccountForm({
+                    bankName: "",
+                    accountNumber: "",
+                    accountName: "",
+                    branchName: "",
+                    swiftCode: "",
+                    isActive: true,
+                    isPrimary: false
+                  });
+                } catch (error) {
+                  toast({ 
+                    title: isEditingBankAccount ? "Failed to update bank account" : "Failed to add bank account", 
+                    variant: "destructive" 
+                  });
+                }
+              }}
+            >
+              {isEditingBankAccount ? 'Update' : 'Add'} Bank Account
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
