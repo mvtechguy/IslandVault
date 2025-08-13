@@ -1,0 +1,98 @@
+inbox:40 SW registered:  ServiceWorkerRegistration {installing: null, waiting: null, active: ServiceWorker, navigationPreload: NavigationPreloadManager, scope: 'https://island-vault-mvtechguys.replit.app/', …}
+inbox:1 <meta name="apple-mobile-web-app-capable" content="yes"> is deprecated. Please include <meta name="mobile-web-app-capable" content="yes">
+index-B7C202Nu.js:40 TypeError: Cannot read properties of undefined (reading 'filter')
+    at gQ (index-B7C202Nu.js:420:80894)
+    at Yv (index-B7C202Nu.js:38:16998)
+    at P2 (index-B7C202Nu.js:40:44030)
+    at _2 (index-B7C202Nu.js:40:39766)
+    at VR (index-B7C202Nu.js:40:39694)
+    at Nf (index-B7C202Nu.js:40:39547)
+    at ey (index-B7C202Nu.js:40:35914)
+    at Ib (index-B7C202Nu.js:40:36717)
+    at fa (index-B7C202Nu.js:38:3274)
+    at index-B7C202Nu.js:40:34246
+overrideMethod @ hook.js:608
+zg @ index-B7C202Nu.js:40
+r.callback @ index-B7C202Nu.js:40
+pb @ index-B7C202Nu.js:38
+Eb @ index-B7C202Nu.js:40
+w2 @ index-B7C202Nu.js:40
+$R @ index-B7C202Nu.js:40
+HR @ index-B7C202Nu.js:40
+ba @ index-B7C202Nu.js:40
+Ib @ index-B7C202Nu.js:40
+fa @ index-B7C202Nu.js:38
+(anonymous) @ index-B7C202Nu.js:40
+setTimeout
+s @ index-B7C202Nu.js:48
+o @ index-B7C202Nu.js:48
+batch @ index-B7C202Nu.js:48
+Ls @ index-B7C202Nu.js:48
+setData @ index-B7C202Nu.js:48
+onSuccess @ index-B7C202Nu.js:48
+h @ index-B7C202Nu.js:48
+Promise.then
+N @ index-B7C202Nu.js:48
+start @ index-B7C202Nu.js:48
+fetch @ index-B7C202Nu.js:48
+Lc @ index-B7C202Nu.js:48
+onSubscribe @ index-B7C202Nu.js:48
+subscribe @ index-B7C202Nu.js:48
+(anonymous) @ index-B7C202Nu.js:48
+qC @ index-B7C202Nu.js:38
+Sp @ index-B7C202Nu.js:40
+Xo @ index-B7C202Nu.js:40
+Ib @ index-B7C202Nu.js:40
+fa @ index-B7C202Nu.js:38
+HR @ index-B7C202Nu.js:40
+ba @ index-B7C202Nu.js:40
+N2 @ index-B7C202Nu.js:40
+_ @ index-B7C202Nu.js:25
+M @ index-B7C202Nu.js:25
+index-B7C202Nu.js:420 Uncaught TypeError: Cannot read properties of undefined (reading 'filter')
+    at gQ (index-B7C202Nu.js:420:80894)
+    at Yv (index-B7C202Nu.js:38:16998)
+    at P2 (index-B7C202Nu.js:40:44030)
+    at _2 (index-B7C202Nu.js:40:39766)
+    at VR (index-B7C202Nu.js:40:39694)
+    at Nf (index-B7C202Nu.js:40:39547)
+    at ey (index-B7C202Nu.js:40:35914)
+    at Ib (index-B7C202Nu.js:40:36717)
+    at fa (index-B7C202Nu.js:38:3274)
+    at index-B7C202Nu.js:40:34246
+gQ @ index-B7C202Nu.js:420
+Yv @ index-B7C202Nu.js:38
+P2 @ index-B7C202Nu.js:40
+_2 @ index-B7C202Nu.js:40
+VR @ index-B7C202Nu.js:40
+Nf @ index-B7C202Nu.js:40
+ey @ index-B7C202Nu.js:40
+Ib @ index-B7C202Nu.js:40
+fa @ index-B7C202Nu.js:38
+(anonymous) @ index-B7C202Nu.js:40
+setTimeout
+s @ index-B7C202Nu.js:48
+o @ index-B7C202Nu.js:48
+batch @ index-B7C202Nu.js:48
+Ls @ index-B7C202Nu.js:48
+setData @ index-B7C202Nu.js:48
+onSuccess @ index-B7C202Nu.js:48
+h @ index-B7C202Nu.js:48
+Promise.then
+N @ index-B7C202Nu.js:48
+start @ index-B7C202Nu.js:48
+fetch @ index-B7C202Nu.js:48
+Lc @ index-B7C202Nu.js:48
+onSubscribe @ index-B7C202Nu.js:48
+subscribe @ index-B7C202Nu.js:48
+(anonymous) @ index-B7C202Nu.js:48
+qC @ index-B7C202Nu.js:38
+Sp @ index-B7C202Nu.js:40
+Xo @ index-B7C202Nu.js:40
+Ib @ index-B7C202Nu.js:40
+fa @ index-B7C202Nu.js:38
+HR @ index-B7C202Nu.js:40
+ba @ index-B7C202Nu.js:40
+N2 @ index-B7C202Nu.js:40
+_ @ index-B7C202Nu.js:25
+M @ index-B7C202Nu.js:25

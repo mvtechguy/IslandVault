@@ -27,16 +27,19 @@ export default function InboxPage() {
   const { data: conversations, isLoading: conversationsLoading } = useQuery({
     queryKey: ["/api/conversations"],
     enabled: !!user,
+    retry: false,
   });
 
   const { data: sentRequests } = useQuery({
     queryKey: ["/api/connect/sent"],
     enabled: !!user,
+    retry: false,
   });
 
   const { data: receivedRequests } = useQuery({
     queryKey: ["/api/connect/received"],
     enabled: !!user,
+    retry: false,
   });
 
   const handleConnectionMutation = useMutation({
@@ -191,7 +194,7 @@ export default function InboxPage() {
                 Requests
                 {receivedRequests?.filter((r: any) => r.status === 'PENDING').length > 0 && (
                   <Badge variant="destructive" className="ml-1 px-1 py-0 text-xs">
-                    {receivedRequests.filter((r: any) => r.status === 'PENDING').length}
+                    {receivedRequests?.filter((r: any) => r.status === 'PENDING').length || 0}
                   </Badge>
                 )}
               </TabsTrigger>
@@ -219,7 +222,7 @@ export default function InboxPage() {
                         </div>
                       ))}
                     </div>
-                  ) : conversations?.length === 0 ? (
+                  ) : !conversations || conversations?.length === 0 ? (
                     <div className="text-center py-8">
                       <MessageCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                       <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
@@ -234,7 +237,7 @@ export default function InboxPage() {
                     </div>
                   ) : (
                     <div className="space-y-2">
-                      {conversations.map((conv: any) => (
+                      {conversations?.map((conv: any) => (
                         <div
                           key={conv.conversation.id}
                           className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
@@ -274,7 +277,7 @@ export default function InboxPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {receivedRequests?.length === 0 ? (
+                  {!receivedRequests || receivedRequests?.length === 0 ? (
                     <div className="text-center py-8">
                       <User className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                       <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
@@ -287,8 +290,8 @@ export default function InboxPage() {
                   ) : (
                     <div className="space-y-3">
                       {receivedRequests
-                        .filter((request: any) => request.status === 'PENDING')
-                        .map((request: any) => (
+                        ?.filter((request: any) => request.status === 'PENDING')
+                        ?.map((request: any) => (
                         <div key={request.id} className="flex items-center space-x-3 p-4 border rounded-lg">
                           <Avatar className="w-10 h-10">
                             <AvatarImage src={request.requester?.profilePhotoPath} />
@@ -349,7 +352,7 @@ export default function InboxPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {sentRequests?.length === 0 ? (
+                  {!sentRequests || sentRequests?.length === 0 ? (
                     <div className="text-center py-8">
                       <Clock className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                       <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
@@ -364,7 +367,7 @@ export default function InboxPage() {
                     </div>
                   ) : (
                     <div className="space-y-3">
-                      {sentRequests.map((request: any) => (
+                      {sentRequests?.map((request: any) => (
                         <div key={request.id} className="flex items-center space-x-3 p-4 border rounded-lg">
                           <Avatar className="w-10 h-10">
                             <AvatarImage src={request.targetUser?.profilePhotoPath} />
