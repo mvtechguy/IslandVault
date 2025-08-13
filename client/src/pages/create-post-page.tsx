@@ -18,6 +18,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { ImageUploader } from "@/components/ImageUploader";
+import { MobileHeader } from "@/components/MobileHeader";
 import { BottomNavigation } from "@/components/BottomNavigation";
 
 const createPostSchema = insertPostSchema.extend({
@@ -65,6 +66,7 @@ export default function CreatePostPage() {
   const { data: settings } = useQuery<{
     costPost: number;
     costConnect: number;
+    costPinPost: number;
   }>({
     queryKey: ["/api/settings"],
     retry: false,
@@ -135,19 +137,14 @@ export default function CreatePostPage() {
 
 
   return (
-    <div className="container mx-auto p-4 max-w-2xl">
-
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <Button variant="ghost" onClick={() => setLocation("/")}>
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back
-        </Button>
-        <div className="flex items-center space-x-2">
-          <Coins className="w-4 h-4 text-mint" />
-          <span className="text-sm font-medium">{coinBalance?.coins || 0} coins</span>
-        </div>
-      </div>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <MobileHeader 
+        title="Create Post" 
+        showBackButton={true} 
+        onBackClick={() => setLocation("/")} 
+      />
+      
+      <div className="container mx-auto p-4 max-w-2xl pb-20">
 
       <Card>
         <CardHeader>
@@ -343,6 +340,8 @@ export default function CreatePostPage() {
           </form>
         </CardContent>
       </Card>
+      </div>
+      
       <BottomNavigation />
     </div>
   );

@@ -9,6 +9,8 @@ import { Search, Filter, Heart, MapPin, Calendar, User } from "lucide-react";
 import { Link } from "wouter";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { calculateAge } from "@/lib/utils";
+import { MobileHeader } from "@/components/MobileHeader";
+import { BottomNavigation } from "@/components/BottomNavigation";
 
 // Import the Maldives data
 const maldivesData = [
@@ -115,25 +117,28 @@ export default function BrowsePostsPage() {
   };
 
   return (
-    <div className="container mx-auto p-4 max-w-6xl">
-      <div className="flex flex-col space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Browse All Posts
-          </h1>
-          <Button
-            variant="outline"
-            onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center space-x-2"
-          >
-            <Filter className="w-4 h-4" />
-            <span>Filters</span>
-          </Button>
-        </div>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <MobileHeader title="Browse Posts" />
+      
+      <div className="container mx-auto p-4 max-w-6xl pb-20">
+        <div className="flex flex-col space-y-6">
+          {/* Mobile Header */}
+          <div className="flex items-center justify-between">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+              All Posts
+            </h1>
+            <Button
+              variant="outline"
+              onClick={() => setShowFilters(!showFilters)}
+              className="flex items-center space-x-2"
+            >
+              <Filter className="w-4 h-4" />
+              <span>Filters</span>
+            </Button>
+          </div>
 
-        {/* Search Bar */}
-        <div className="flex space-x-2">
+          {/* Search Bar */}
+          <div className="flex space-x-2">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
             <Input
@@ -147,12 +152,12 @@ export default function BrowsePostsPage() {
           <Button onClick={handleSearch} className="bg-mint-600 hover:bg-mint-700 text-white">
             Search
           </Button>
-        </div>
+          </div>
 
-        {/* Advanced Filters */}
-        {showFilters && (
-          <Card>
-            <CardContent className="p-6">
+          {/* Advanced Filters */}
+          {showFilters && (
+            <Card>
+              <CardContent className="p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -269,13 +274,13 @@ export default function BrowsePostsPage() {
                   Apply Filters
                 </Button>
               </div>
-            </CardContent>
-          </Card>
-        )}
+              </CardContent>
+            </Card>
+          )}
 
-        {/* Results */}
-        <div>
-          {isLoading && (
+          {/* Results */}
+          <div>
+            {isLoading && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {[...Array(6)].map((_, i) => (
                 <Card key={i} className="animate-pulse">
@@ -291,9 +296,9 @@ export default function BrowsePostsPage() {
                 </Card>
               ))}
             </div>
-          )}
+            )}
 
-          {error && (
+            {error && (
             <Card>
               <CardContent className="text-center py-8">
                 <p className="text-red-600 dark:text-red-400">
@@ -301,9 +306,9 @@ export default function BrowsePostsPage() {
                 </p>
               </CardContent>
             </Card>
-          )}
+            )}
 
-          {data && (
+            {data && (
             <>
               <div className="flex items-center justify-between mb-4">
                 <p className="text-gray-600 dark:text-gray-400">
@@ -454,9 +459,12 @@ export default function BrowsePostsPage() {
                 </>
               )}
             </>
-          )}
+            )}
+          </div>
         </div>
       </div>
+      
+      <BottomNavigation />
     </div>
   );
 }
