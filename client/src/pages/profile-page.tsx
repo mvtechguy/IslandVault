@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { User, Settings, Edit3, LogOut, Heart, Clock, CheckCircle, XCircle, Coins, History, Upload, Camera } from "lucide-react";
+import { CoinBalance } from "@/components/CoinBalance";
 import { LocalFileUploader } from "@/components/LocalFileUploader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -232,6 +233,7 @@ export default function ProfilePage() {
         <div className="flex items-center justify-between px-4 py-3">
           <h1 className="text-xl font-bold">My Profile</h1>
           <div className="flex items-center space-x-2">
+            <CoinBalance />
             <Button
               variant="ghost"
               size="sm"

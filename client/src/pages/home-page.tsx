@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Heart, Bell, Moon, Sun, Coins, Plus, Filter, Search, Shield } from "lucide-react";
-import { Redirect } from "wouter";
+import { Redirect, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -36,6 +36,7 @@ type CreatePostFormData = z.infer<typeof createPostSchema>;
 
 export default function HomePage() {
   const { user } = useAuth();
+  const [, setLocation] = useLocation();
   
   // Redirect users with PENDING status to onboard page
   if (user && user.status === 'PENDING') {
@@ -151,13 +152,23 @@ export default function HomePage() {
             </h1>
           </div>
           <div className="flex items-center space-x-3">
-            {/* Coin Balance */}
-            <div className="flex items-center space-x-1 bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-900/20 dark:to-yellow-900/20 px-3 py-1.5 rounded-full border border-amber-200 dark:border-amber-700">
-              <Coins className="w-4 h-4 text-amber-500" />
-              <span className="text-sm font-semibold text-amber-700 dark:text-amber-300">
-                {coinBalance?.coins || 0}
-              </span>
-            </div>
+            {/* Coin Balance with Plus Button */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setLocation('/coins')}
+              className="flex items-center space-x-2 bg-gradient-to-r from-mint/10 to-soft-blue/10 hover:from-mint/20 hover:to-soft-blue/20 border border-mint/20 rounded-full px-3 py-1"
+            >
+              <div className="flex items-center space-x-1">
+                <Coins className="w-4 h-4 text-mint" />
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  {coinBalance?.coins || 0}
+                </span>
+              </div>
+              <div className="w-5 h-5 bg-gradient-to-r from-mint to-soft-blue rounded-full flex items-center justify-center">
+                <Plus className="w-3 h-3 text-white" />
+              </div>
+            </Button>
             {/* Theme Toggle */}
             <Button
               variant="ghost"

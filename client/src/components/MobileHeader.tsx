@@ -1,6 +1,7 @@
 import { ArrowLeft } from "lucide-react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
+import { CoinBalance } from "@/components/CoinBalance";
 
 interface MobileHeaderProps {
   title: string;
@@ -29,11 +30,10 @@ export function MobileHeader({ title, showBack = false, rightContent }: MobileHe
             {title}
           </h1>
         </div>
-        {rightContent && (
-          <div className="flex items-center space-x-2">
-            {rightContent}
-          </div>
-        )}
+        <div className="flex items-center space-x-2">
+          <CoinBalance />
+          {rightContent && rightContent}
+        </div>
       </div>
     </header>
   );
