@@ -1462,9 +1462,12 @@ export default function AdminPage() {
 
         {/* User Review Modal */}
         <Dialog open={!!selectedUser} onOpenChange={() => setSelectedUser(null)}>
-          <DialogContent className="max-w-lg">
+          <DialogContent className="max-w-lg" aria-labelledby="user-review-title" aria-describedby="user-review-desc">
             <DialogHeader>
-              <DialogTitle>Review User: {selectedUser?.fullName}</DialogTitle>
+              <DialogTitle id="user-review-title">Review User: {selectedUser?.fullName}</DialogTitle>
+              <DialogDescription id="user-review-desc">
+                Review and approve or reject this user's registration request.
+              </DialogDescription>
             </DialogHeader>
             {selectedUser && (
               <div className="space-y-4">
@@ -1547,9 +1550,12 @@ export default function AdminPage() {
 
         {/* Post Review Modal */}
         <Dialog open={!!selectedPost} onOpenChange={() => setSelectedPost(null)}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" aria-labelledby="post-review-title" aria-describedby="post-review-desc">
             <DialogHeader>
-              <DialogTitle>Review Post</DialogTitle>
+              <DialogTitle id="post-review-title">Review Post</DialogTitle>
+              <DialogDescription id="post-review-desc">
+                Review and moderate this post for approval or rejection.
+              </DialogDescription>
             </DialogHeader>
             {selectedPost && (
               <div className="space-y-6">
@@ -1676,9 +1682,12 @@ export default function AdminPage() {
 
         {/* Topup Review Modal */}
         <Dialog open={!!selectedTopup} onOpenChange={() => setSelectedTopup(null)}>
-          <DialogContent className="max-w-lg">
+          <DialogContent className="max-w-lg" aria-labelledby="topup-review-title" aria-describedby="topup-review-desc">
             <DialogHeader>
-              <DialogTitle>Review Topup: MVR {selectedTopup?.amountMvr}</DialogTitle>
+              <DialogTitle id="topup-review-title">Review Topup: MVR {selectedTopup?.amountMvr}</DialogTitle>
+              <DialogDescription id="topup-review-desc">
+                Review the payment slip and approve or reject this coin topup request.
+              </DialogDescription>
             </DialogHeader>
             {selectedTopup && (
               <div className="space-y-4">
@@ -1746,12 +1755,15 @@ export default function AdminPage() {
 
         {/* Conversation Detail Modal for Admin Monitoring */}
         <Dialog open={!!selectedConversation} onOpenChange={() => setSelectedConversation(null)}>
-          <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden">
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden" aria-labelledby="chat-monitor-title" aria-describedby="chat-monitor-desc">
             <DialogHeader>
-              <DialogTitle className="flex items-center space-x-2">
+              <DialogTitle id="chat-monitor-title" className="flex items-center space-x-2">
                 <MessageSquare className="w-5 h-5" />
                 <span>Admin Chat Monitoring - Conversation {selectedConversation?.id}</span>
               </DialogTitle>
+              <DialogDescription id="chat-monitor-desc">
+                Monitor and moderate this conversation between users.
+              </DialogDescription>
             </DialogHeader>
             
             {selectedConversation && (
@@ -1825,12 +1837,17 @@ export default function AdminPage() {
 
       {/* Package Creation/Edit Dialog */}
       <Dialog open={!!selectedPackage} onOpenChange={() => setSelectedPackage(null)}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md" aria-labelledby="package-dialog-title" aria-describedby="package-dialog-desc">
           <DialogHeader>
-            <DialogTitle className="flex items-center space-x-2">
+            <DialogTitle id="package-dialog-title" className="flex items-center space-x-2">
               <Package className="w-5 h-5" />
               <span>{isEditingPackage ? 'Edit Package' : 'Create Package'}</span>
             </DialogTitle>
+            <DialogDescription id="package-dialog-desc">
+              {isEditingPackage 
+                ? 'Update the coin package details below.'
+                : 'Create a new coin package with pricing and description.'}
+            </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-4">
@@ -2092,10 +2109,7 @@ export default function AdminPage() {
                     console.log(`[DEBUG] ${method} ${endpoint}`, bankAccountForm);
                   }
                   
-                  const response = await apiRequest(endpoint, {
-                    method,
-                    body: JSON.stringify(bankAccountForm)
-                  });
+                  const response = await apiRequest(method, endpoint, bankAccountForm);
                   
                   if (process.env.NODE_ENV === 'development') {
                     console.log('[DEBUG] Bank account response:', response);
