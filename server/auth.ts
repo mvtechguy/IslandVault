@@ -4,9 +4,10 @@ import { Express } from "express";
 import session from "express-session";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
+import { z } from "zod";
 import { storage } from "./storage";
 import { telegramService } from "./telegram";
-import { User } from "@shared/schema";
+import { User, insertUserSchema } from "@shared/schema";
 import createMemoryStore from "memorystore";
 
 declare global {
@@ -124,27 +125,30 @@ export function setupAuth(app: Express) {
 
   app.post("/api/register", async (req, res, next) => {
     try {
-      const existingUser = await storage.getUserByUsername(req.body.username);
+      // Validate request body against Zod schema
+      const validatedData = insertUserSchema.parse(req.body);
+
+      const existingUser = await storage.getUserByUsername(validatedData.username);
       if (existingUser) {
         return res.status(400).json({ message: "Username already exists" });
       }
 
-      if (req.body.phone) {
-        const existingPhone = await storage.getUserByPhone(req.body.phone);
+      if (validatedData.phone) {
+        const existingPhone = await storage.getUserByPhone(validatedData.phone);
         if (existingPhone) {
           return res.status(400).json({ message: "Phone number already exists" });
         }
       }
 
-      // Remove confirmPassword from data before saving and convert dateOfBirth to Date
-      const { confirmPassword, dateOfBirth, ...userData } = req.body;
+      // Data is already validated, so we can use it directly
+      const { confirmPassword, ...userData } = validatedData;
       
       const user = await storage.createUser({
         ...userData,
         password: await hashPassword(userData.password),
-        dateOfBirth: new Date(dateOfBirth), // Convert string to Date object
+        dateOfBirth: new Date(userData.dateOfBirth), // Convert string to Date object
         // Auto-approve admin and superadmin users
-        status: (userData.role === 'ADMIN' || userData.role === 'SUPERADMIN') ? 'APPROVED' : 'PENDING'
+        status: (validatedData.role === 'ADMIN' || validatedData.role === 'SUPERADMIN') ? 'APPROVED' : 'PENDING'
       });
 
       // Send Telegram notification to admin about new user registration
@@ -163,6 +167,9 @@ export function setupAuth(app: Express) {
         res.status(201).json(safeUser);
       });
     } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid registration data", errors: error.errors });
+      }
       console.error("Registration error:", error);
       res.status(500).json({ message: "Registration failed" });
     }
@@ -194,11 +201,6 @@ export function setupAuth(app: Express) {
     });
   });
 
-  app.get("/api/user", (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
-    const { password, ...safeUser } = req.user!;
-    res.json(safeUser);
-  });
 }
 
 export function isAuthenticated(req: any, res: any, next: any) {

@@ -156,7 +156,7 @@ export default function ProfilePage() {
         description: "Your profile is now pending admin approval.",
       });
       setShowEditProfile(false);
-      queryClient.setQueryData(["/api/user"], updatedUser);
+      queryClient.setQueryData(["/api/me"], updatedUser);
     },
     onError: (error: Error) => {
       toast({
