@@ -1,0 +1,116 @@
+sw.js:362 [SW] Service Worker loaded successfully
+(index):40 SW registered:  ServiceWorkerRegistration
+island-vault-mvtechguys.replit.app/:1 <meta name="apple-mobile-web-app-capable" content="yes"> is deprecated. Please include <meta name="mobile-web-app-capable" content="yes">
+Node cannot be found in the current page.
+f1ed4cc1-fb35-4110-908d-f19f462b9c9f:1  GET https://storage.googleapis.com/replit-objstore-6dd8660a-4484-4c88-b464-d018fd8f6aeb/.private/uploads/f1ed4cc1-fb35-4110-908d-f19f462b9c9f 403 (Forbidden)
+Image
+mb @ index-C-0zoa-P.js:40
+n2 @ index-C-0zoa-P.js:40
+gR @ index-C-0zoa-P.js:40
+wR @ index-C-0zoa-P.js:40
+pa @ index-C-0zoa-P.js:40
+vb @ index-C-0zoa-P.js:40
+ia @ index-C-0zoa-P.js:38
+(anonymous) @ index-C-0zoa-P.js:40
+setTimeout
+s @ index-C-0zoa-P.js:48
+o @ index-C-0zoa-P.js:48
+batch @ index-C-0zoa-P.js:48
+Fs @ index-C-0zoa-P.js:48
+setData @ index-C-0zoa-P.js:48
+onSuccess @ index-C-0zoa-P.js:48
+h @ index-C-0zoa-P.js:48
+index-C-0zoa-P.js:40 TypeError: Cannot read properties of null (reading 'toLowerCase')
+    at index-C-0zoa-P.js:405:62192
+    at Array.map (<anonymous>)
+    at CG (index-C-0zoa-P.js:405:61381)
+    at Uv (index-C-0zoa-P.js:38:16998)
+    at Tg (index-C-0zoa-P.js:40:3139)
+    at u2 (index-C-0zoa-P.js:40:44804)
+    at o2 (index-C-0zoa-P.js:40:39766)
+    at xR (index-C-0zoa-P.js:40:39694)
+    at cf (index-C-0zoa-P.js:40:39547)
+    at $g (index-C-0zoa-P.js:40:35914)
+overrideMethod @ hook.js:608
+Pg @ index-C-0zoa-P.js:40
+r.callback @ index-C-0zoa-P.js:40
+Jx @ index-C-0zoa-P.js:38
+mb @ index-C-0zoa-P.js:40
+n2 @ index-C-0zoa-P.js:40
+gR @ index-C-0zoa-P.js:40
+wR @ index-C-0zoa-P.js:40
+pa @ index-C-0zoa-P.js:40
+vb @ index-C-0zoa-P.js:40
+ia @ index-C-0zoa-P.js:38
+(anonymous) @ index-C-0zoa-P.js:40
+setTimeout
+s @ index-C-0zoa-P.js:48
+o @ index-C-0zoa-P.js:48
+batch @ index-C-0zoa-P.js:48
+Fs @ index-C-0zoa-P.js:48
+setData @ index-C-0zoa-P.js:48
+onSuccess @ index-C-0zoa-P.js:48
+h @ index-C-0zoa-P.js:48
+Promise.then
+N @ index-C-0zoa-P.js:48
+start @ index-C-0zoa-P.js:48
+fetch @ index-C-0zoa-P.js:48
+Cc @ index-C-0zoa-P.js:48
+onSubscribe @ index-C-0zoa-P.js:48
+subscribe @ index-C-0zoa-P.js:48
+(anonymous) @ index-C-0zoa-P.js:48
+kC @ index-C-0zoa-P.js:38
+dp @ index-C-0zoa-P.js:40
+$o @ index-C-0zoa-P.js:40
+wR @ index-C-0zoa-P.js:40
+pa @ index-C-0zoa-P.js:40
+vb @ index-C-0zoa-P.js:40
+ia @ index-C-0zoa-P.js:38
+(anonymous) @ index-C-0zoa-P.js:40
+index-C-0zoa-P.js:405 Uncaught TypeError: Cannot read properties of null (reading 'toLowerCase')
+    at index-C-0zoa-P.js:405:62192
+    at Array.map (<anonymous>)
+    at CG (index-C-0zoa-P.js:405:61381)
+    at Uv (index-C-0zoa-P.js:38:16998)
+    at Tg (index-C-0zoa-P.js:40:3139)
+    at u2 (index-C-0zoa-P.js:40:44804)
+    at o2 (index-C-0zoa-P.js:40:39766)
+    at xR (index-C-0zoa-P.js:40:39694)
+    at cf (index-C-0zoa-P.js:40:39547)
+    at $g (index-C-0zoa-P.js:40:35914)
+(anonymous) @ index-C-0zoa-P.js:405
+CG @ index-C-0zoa-P.js:405
+Uv @ index-C-0zoa-P.js:38
+Tg @ index-C-0zoa-P.js:40
+u2 @ index-C-0zoa-P.js:40
+o2 @ index-C-0zoa-P.js:40
+xR @ index-C-0zoa-P.js:40
+cf @ index-C-0zoa-P.js:40
+$g @ index-C-0zoa-P.js:40
+vb @ index-C-0zoa-P.js:40
+ia @ index-C-0zoa-P.js:38
+(anonymous) @ index-C-0zoa-P.js:40
+setTimeout
+s @ index-C-0zoa-P.js:48
+o @ index-C-0zoa-P.js:48
+batch @ index-C-0zoa-P.js:48
+Fs @ index-C-0zoa-P.js:48
+setData @ index-C-0zoa-P.js:48
+onSuccess @ index-C-0zoa-P.js:48
+h @ index-C-0zoa-P.js:48
+Promise.then
+N @ index-C-0zoa-P.js:48
+start @ index-C-0zoa-P.js:48
+fetch @ index-C-0zoa-P.js:48
+Cc @ index-C-0zoa-P.js:48
+onSubscribe @ index-C-0zoa-P.js:48
+subscribe @ index-C-0zoa-P.js:48
+(anonymous) @ index-C-0zoa-P.js:48
+kC @ index-C-0zoa-P.js:38
+dp @ index-C-0zoa-P.js:40
+$o @ index-C-0zoa-P.js:40
+wR @ index-C-0zoa-P.js:40
+pa @ index-C-0zoa-P.js:40
+vb @ index-C-0zoa-P.js:40
+ia @ index-C-0zoa-P.js:38
+(anonymous) @ index-C-0zoa-P.js:40

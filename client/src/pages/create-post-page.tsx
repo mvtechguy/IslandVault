@@ -18,6 +18,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { ImageUploader } from "@/components/ImageUploader";
+import { BottomNavigation } from "@/components/BottomNavigation";
 
 const createPostSchema = insertPostSchema.extend({
   preferences: z.object({
@@ -342,6 +343,7 @@ export default function CreatePostPage() {
           </form>
         </CardContent>
       </Card>
+      <BottomNavigation />
     </div>
   );
 }
