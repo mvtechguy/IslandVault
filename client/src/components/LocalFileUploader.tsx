@@ -14,6 +14,7 @@ interface LocalFileUploaderProps {
   disabled?: boolean;
   children?: React.ReactNode;
   className?: string;
+  requireAuth?: boolean; // Whether authentication is required for upload
 }
 
 export function LocalFileUploader({
@@ -25,7 +26,8 @@ export function LocalFileUploader({
   onUploadError,
   disabled = false,
   children,
-  className = ""
+  className = "",
+  requireAuth = true
 }: LocalFileUploaderProps) {
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -75,7 +77,8 @@ export function LocalFileUploader({
         formData.append('file', file);
         formData.append('category', category);
 
-        const response = await fetch('/api/upload', {
+        const uploadEndpoint = requireAuth ? '/api/upload' : '/api/upload-public';
+        const response = await fetch(uploadEndpoint, {
           method: 'POST',
           body: formData,
         });

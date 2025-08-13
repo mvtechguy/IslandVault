@@ -143,25 +143,15 @@ export default function AuthPage() {
     }
 
     try {
-      // Get upload URL
-      const uploadResponse = await fetch("/api/objects/upload", {
-        method: "POST",
-        credentials: "include",
-      });
-      
-      if (!uploadResponse.ok) {
-        throw new Error('Failed to get upload URL');
-      }
-      
-      const { uploadURL } = await uploadResponse.json();
+      // Create form data for local file upload
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('category', 'profiles');
 
-      // Upload file to Google Cloud Storage
-      const response = await fetch(uploadURL, {
-        method: 'PUT',
-        body: file,
-        headers: {
-          'Content-Type': file.type,
-        },
+      // Upload file to local storage (no auth required during registration)
+      const response = await fetch("/api/upload-public", {
+        method: 'POST',
+        body: formData,
       });
 
       console.log("Upload response status:", response.status);
@@ -172,11 +162,10 @@ export default function AuthPage() {
         throw new Error(`Upload failed: ${response.status}`);
       }
 
-      // Get public URL by removing query parameters
-      const imageUrl = uploadURL.split('?')[0];
+      const result = await response.json();
       
-      setUploadedPhotoUrl(imageUrl);
-      registerForm.setValue("profilePhotoPath", imageUrl);
+      setUploadedPhotoUrl(result.url);
+      registerForm.setValue("profilePhotoPath", result.filePath);
     } catch (error) {
       console.error("Upload error:", error);
       alert("Failed to upload profile picture. Please try again.");

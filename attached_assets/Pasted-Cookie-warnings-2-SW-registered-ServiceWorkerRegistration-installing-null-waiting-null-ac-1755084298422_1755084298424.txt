@@ -1,0 +1,87 @@
+Cookie warnings 2
+SW registered:  
+ServiceWorkerRegistration { installing: null, waiting: null, active: ServiceWorker, navigationPreload: NavigationPreloadManager, scope: "https://island-vault-mvtechguys.replit.app/", updateViaCache: "imports", onupdatefound: null, pushManager: PushManager, cookies: CookieStoreManager }
+auth:40:23
+A resource is blocked by OpaqueResponseBlocking, please check browser console for details. logo.png
+Upload error: Error: Failed to get upload URL
+    z https://island-vault-mvtechguys.replit.app/assets/index-BpQcfTpA.js:382
+index-BpQcfTpA.js:382:168527
+Upload error: Error: Failed to get upload URL
+    z https://island-vault-mvtechguys.replit.app/assets/index-BpQcfTpA.js:382
+index-BpQcfTpA.js:382:168527
+Unknown property ‘-moz-osx-font-smoothing’.  Declaration dropped. uppy.min.css:1:88
+Unknown pseudo-class or pseudo-element ‘-moz-focus-inner’.  Ruleset ignored due to bad selector. uppy.min.css:1:1747
+Unknown pseudo-class or pseudo-element ‘-moz-focus-inner’.  Ruleset ignored due to bad selector. uppy.min.css:1:2217
+Unknown pseudo-class or pseudo-element ‘-moz-focus-inner’.  Ruleset ignored due to bad selector. uppy.min.css:1:2749
+Unknown pseudo-class or pseudo-element ‘-moz-focus-inner’.  Ruleset ignored due to bad selector. uppy.min.css:1:13960
+Unknown pseudo-class or pseudo-element ‘-moz-focus-inner’.  Ruleset ignored due to bad selector. uppy.min.css:1:14185
+Unknown pseudo-class or pseudo-element ‘-moz-focus-inner’.  Ruleset ignored due to bad selector. uppy.min.css:1:15117
+Unknown pseudo-class or pseudo-element ‘-moz-focus-inner’.  Ruleset ignored due to bad selector. uppy.min.css:1:15345
+Unknown pseudo-class or pseudo-element ‘-moz-focus-inner’.  Ruleset ignored due to bad selector. uppy.min.css:1:17140
+Unknown pseudo-class or pseudo-element ‘-moz-focus-inner’.  Ruleset ignored due to bad selector. uppy.min.css:1:17401
+Unknown pseudo-class or pseudo-element ‘-moz-focus-inner’.  Ruleset ignored due to bad selector. uppy.min.css:1:17863
+Unknown pseudo-class or pseudo-element ‘-moz-focus-inner’.  Ruleset ignored due to bad selector. uppy.min.css:1:25713
+Unknown pseudo-class or pseudo-element ‘-moz-focus-inner’.  Ruleset ignored due to bad selector. uppy.min.css:1:31593
+Error in parsing value for ‘cursor’.  Declaration dropped. uppy.min.css:1:31968
+Unknown pseudo-class or pseudo-element ‘-moz-focus-inner’.  Ruleset ignored due to bad selector. uppy.min.css:1:35052
+Unknown pseudo-class or pseudo-element ‘-moz-focus-inner’.  Ruleset ignored due to bad selector. uppy.min.css:1:35481
+Error in parsing value for ‘transition’.  Declaration dropped. uppy.min.css:1:37989
+Unknown pseudo-class or pseudo-element ‘-moz-focus-inner’.  Ruleset ignored due to bad selector. uppy.min.css:1:38375
+Unknown pseudo-class or pseudo-element ‘-moz-focus-inner’.  Ruleset ignored due to bad selector. uppy.min.css:1:42501
+Unknown pseudo-class or pseudo-element ‘-moz-focus-inner’.  Ruleset ignored due to bad selector. uppy.min.css:1:42837
+Unknown pseudo-class or pseudo-element ‘-moz-focus-inner’.  Ruleset ignored due to bad selector. uppy.min.css:1:50282
+Unknown pseudo-class or pseudo-element ‘-moz-focus-inner’.  Ruleset ignored due to bad selector. uppy.min.css:1:55636
+Unknown pseudo-class or pseudo-element ‘-moz-focus-inner’.  Ruleset ignored due to bad selector. uppy.min.css:1:57712
+Unknown pseudo-class or pseudo-element ‘-moz-focus-inner’.  Ruleset ignored due to bad selector. uppy.min.css:1:59414
+Unknown pseudo-class or pseudo-element ‘-moz-focus-inner’.  Ruleset ignored due to bad selector. uppy.min.css:1:62827
+Unknown pseudo-class or pseudo-element ‘-moz-focus-inner’.  Ruleset ignored due to bad selector. uppy.min.css:1:63883
+Error in parsing value for ‘text-align’.  Declaration dropped. uppy.min.css:1:68013
+Unknown pseudo-class or pseudo-element ‘-moz-focus-inner’.  Ruleset ignored due to bad selector. uppy.min.css:1:70513
+Unknown pseudo-class or pseudo-element ‘-ms-expand’.  Ruleset ignored due to bad selector. uppy.min.css:1:73921
+Unknown pseudo-class or pseudo-element ‘-moz-focus-inner’.  Ruleset ignored due to bad selector. uppy.min.css:1:74500
+Unknown pseudo-class or pseudo-element ‘-moz-focus-inner’.  Ruleset ignored due to bad selector. uppy.min.css:1:74740
+Unknown pseudo-class or pseudo-element ‘-ms-expand’.  Ruleset ignored due to bad selector. uppy.min.css:1:77318
+Unknown pseudo-class or pseudo-element ‘-moz-focus-inner’.  Ruleset ignored due to bad selector. uppy.min.css:1:77897
+Unknown pseudo-class or pseudo-element ‘-moz-focus-inner’.  Ruleset ignored due to bad selector. uppy.min.css:1:78133
+Unknown pseudo-class or pseudo-element ‘-moz-focus-inner’.  Ruleset ignored due to bad selector. uppy.min.css:1:80041
+Unknown pseudo-class or pseudo-element ‘-moz-focus-inner’.  Ruleset ignored due to bad selector. uppy.min.css:1:80251
+Unknown pseudo-class or pseudo-element ‘-moz-focus-outer’.  Ruleset ignored due to bad selector. uppy.min.css:1:81700
+Unknown pseudo-class or pseudo-element ‘-ms-fill-lower’.  Ruleset ignored due to bad selector. uppy.min.css:1:81878
+Unknown pseudo-class or pseudo-element ‘-ms-track’.  Ruleset ignored due to bad selector. uppy.min.css:1:82897
+Unknown pseudo-class or pseudo-element ‘-ms-fill-lower’.  Ruleset ignored due to bad selector. uppy.min.css:1:83089
+Unknown pseudo-class or pseudo-element ‘-ms-fill-upper’.  Ruleset ignored due to bad selector. uppy.min.css:1:83230
+Unknown pseudo-class or pseudo-element ‘-ms-thumb’.  Ruleset ignored due to bad selector. uppy.min.css:1:83367
+Unknown pseudo-class or pseudo-element ‘-ms-fill-lower’.  Ruleset ignored due to bad selector. uppy.min.css:1:83635
+Error in parsing value for ‘image-orientation’.  Declaration dropped. uppy.min.css:11:208
+Unknown pseudo-class or pseudo-element ‘-ms-fill-lower’.  Ruleset ignored due to bad selector. uppy.min.css:11:5361
+Unknown property ‘-moz-osx-font-smoothing’.  Declaration dropped. index-QAHyD9vP.css:1:410
+Unknown pseudo-class or pseudo-element ‘-moz-focus-inner’.  Ruleset ignored due to bad selector. index-QAHyD9vP.css:1:1884
+Unknown pseudo-class or pseudo-element ‘-moz-focus-inner’.  Ruleset ignored due to bad selector. index-QAHyD9vP.css:1:2369
+Unknown pseudo-class or pseudo-element ‘-moz-focus-inner’.  Ruleset ignored due to bad selector. index-QAHyD9vP.css:1:2967
+Unknown pseudo-class or pseudo-element ‘-moz-focus-inner’.  Ruleset ignored due to bad selector. index-QAHyD9vP.css:1:13377
+Unknown pseudo-class or pseudo-element ‘-moz-focus-inner’.  Ruleset ignored due to bad selector. index-QAHyD9vP.css:1:13602
+Unknown pseudo-class or pseudo-element ‘-moz-focus-inner’.  Ruleset ignored due to bad selector. index-QAHyD9vP.css:1:14437
+Unknown pseudo-class or pseudo-element ‘-moz-focus-inner’.  Ruleset ignored due to bad selector. index-QAHyD9vP.css:1:14665
+Unknown pseudo-class or pseudo-element ‘-moz-focus-inner’.  Ruleset ignored due to bad selector. index-QAHyD9vP.css:1:16149
+Unknown pseudo-class or pseudo-element ‘-moz-focus-inner’.  Ruleset ignored due to bad selector. index-QAHyD9vP.css:1:16410
+Unknown pseudo-class or pseudo-element ‘-moz-focus-inner’.  Ruleset ignored due to bad selector. index-QAHyD9vP.css:1:16872
+Unknown pseudo-class or pseudo-element ‘-moz-focus-inner’.  Ruleset ignored due to bad selector. index-QAHyD9vP.css:1:24312
+Unknown pseudo-class or pseudo-element ‘-moz-focus-inner’.  Ruleset ignored due to bad selector. index-QAHyD9vP.css:1:30055
+Error in parsing value for ‘cursor’.  Declaration dropped. index-QAHyD9vP.css:1:30430
+Unknown pseudo-class or pseudo-element ‘-moz-focus-inner’.  Ruleset ignored due to bad selector. index-QAHyD9vP.css:1:33115
+Unknown pseudo-class or pseudo-element ‘-moz-focus-inner’.  Ruleset ignored due to bad selector. index-QAHyD9vP.css:1:33544
+Error in parsing value for ‘transition’.  Declaration dropped. index-QAHyD9vP.css:1:36399
+Unknown pseudo-class or pseudo-element ‘-moz-focus-inner’.  Ruleset ignored due to bad selector. index-QAHyD9vP.css:1:36785
+Unknown pseudo-class or pseudo-element ‘-moz-focus-inner’.  Ruleset ignored due to bad selector. index-QAHyD9vP.css:1:40365
+Unknown pseudo-class or pseudo-element ‘-moz-focus-inner’.  Ruleset ignored due to bad selector. index-QAHyD9vP.css:1:40701
+Unknown pseudo-class or pseudo-element ‘-moz-focus-inner’.  Ruleset ignored due to bad selector. index-QAHyD9vP.css:1:47202
+Unknown pseudo-class or pseudo-element ‘-moz-focus-inner’.  Ruleset ignored due to bad selector. index-QAHyD9vP.css:1:52447
+Unknown pseudo-class or pseudo-element ‘-moz-focus-inner’.  Ruleset ignored due to bad selector. index-QAHyD9vP.css:1:54459
+Unknown pseudo-class or pseudo-element ‘-moz-focus-inner’.  Ruleset ignored due to bad selector. index-QAHyD9vP.css:1:56075
+Unknown pseudo-class or pseudo-element ‘-moz-focus-inner’.  Ruleset ignored due to bad selector. index-QAHyD9vP.css:1:59271
+Unknown pseudo-class or pseudo-element ‘-moz-focus-inner’.  Ruleset ignored due to bad selector. index-QAHyD9vP.css:1:60233
+Error in parsing value for ‘text-align’.  Declaration dropped. index-QAHyD9vP.css:1:64132
+Error in parsing value for ‘-webkit-text-size-adjust’.  Declaration dropped. index-QAHyD9vP.css:1:68676
+Unknown property ‘-moz-osx-font-smoothing’.  Declaration dropped. index-QAHyD9vP.css:1:71138
+Ruleset ignored due to bad selector. index-QAHyD9vP.css:1:111160
+Error in parsing value for ‘transform’.  Declaration dropped. auth:4:25

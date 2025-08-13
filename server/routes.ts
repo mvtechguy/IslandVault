@@ -2503,6 +2503,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Public file upload endpoint for account creation (no auth required)
+  app.post("/api/upload-public", upload.single('file'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+
+      const category = (req.body.category || 'temp') as 'profiles' | 'posts' | 'slips' | 'temp';
+      const filePath = await localFileStorage.saveFile(
+        req.file.buffer, 
+        req.file.originalname, 
+        category
+      );
+
+      res.json({ 
+        filePath,
+        url: `${req.protocol}://${req.get('host')}${filePath}`
+      });
+    } catch (error) {
+      console.error("Error uploading file:", error);
+      res.status(500).json({ message: "Failed to upload file" });
+    }
+  });
+
   // Serve uploaded files directly from local storage
   app.get("/uploads/:category/:filename", async (req, res) => {
     try {
