@@ -743,8 +743,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId: req.user!.id,
         amountMvr: selectedPackage.priceMvr,
         computedCoins: selectedPackage.coins,
-        slipPath: slipPath,
-        computedCoins: selectedPackage.coins
+        slipPath: slipPath
       });
 
       // Get user details for notification

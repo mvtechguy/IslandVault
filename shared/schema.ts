@@ -321,7 +321,6 @@ export const insertUserSchema = createInsertSchema(users).pick({
   shortBio: true,
   partnerPreferences: true
 }).extend({
-  dateOfBirth: z.string().min(1, "Date of birth is required"),
   confirmPassword: z.string().min(8, "Password must be at least 8 characters"),
   phone: z.string()
     .min(7, "Phone number must be at least 7 digits")
