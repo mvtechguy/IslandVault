@@ -66,12 +66,23 @@ export function setupAuth(app: Express) {
     cookie: {
       secure: process.env.NODE_ENV === 'production',
       httpOnly: true,
-      maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      sameSite: "lax"
     }
   };
 
   app.set("trust proxy", 1);
   app.use(session(sessionSettings));
+  
+  // Session refresh middleware
+  app.use((req, res, next) => {
+    if (req.session && req.user) {
+      // Refresh session expiration on activity
+      req.session.touch();
+    }
+    next();
+  });
+  
   app.use(passport.initialize());
   app.use(passport.session());
 

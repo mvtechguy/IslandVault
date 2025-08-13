@@ -97,7 +97,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       if (!canAccess) {
         console.log("Access denied for user:", userId, "to object:", req.path);
-        return res.sendStatus(401);
+        return res.sendStatus(403);
       }
       console.log("Serving object file:", objectFile);
       objectStorageService.downloadObject(objectFile, res);
@@ -115,10 +115,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const objectStorageService = new ObjectStorageService();
       const uploadURL = await objectStorageService.getObjectEntityUploadURL();
-      res.json({ uploadURL });
+      
+      // Return both upload URL and object path for later access
+      const objectPath = objectStorageService.normalizeObjectEntityPath(uploadURL);
+      
+      res.json({ uploadURL, objectPath });
     } catch (error) {
       console.error("Error getting upload URL:", error);
       res.status(500).json({ message: "Failed to get upload URL" });
+    }
+  });
+  
+  // Add new endpoint to set ACL policy after upload
+  app.post("/api/objects/:objectId/acl", isAuthenticated, async (req, res) => {
+    try {
+      const objectId = req.params.objectId;
+      const { visibility = "private" } = req.body;
+      
+      const objectStorageService = new ObjectStorageService();
+      const objectPath = `/objects/${objectId}`;
+      
+      await objectStorageService.trySetObjectEntityAclPolicy(objectPath, {
+        owner: req.user!.id.toString(),
+        visibility: visibility as "public" | "private",
+        aclRules: [
+          {
+            group: {
+              type: ObjectAccessGroupType.ADMIN_ONLY,
+              id: "admins"
+            },
+            permission: ObjectPermission.READ
+          }
+        ]
+      });
+      
+      res.json({ success: true, objectPath });
+    } catch (error) {
+      console.error("Error setting ACL policy:", error);
+      res.status(500).json({ message: "Failed to set ACL policy" });
     }
   });
 
@@ -2085,6 +2119,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Store active WebSocket connections
   const activeConnections = new Map<number, Set<WebSocket>>();
 
+  // Broadcast message to conversation participants
+  const broadcastToConversation = async (conversationId: number, message: any) => {
+    try {
+      const participants = await storage.getConversationParticipants(conversationId);
+      
+      participants.forEach(participant => {
+        const userConnections = activeConnections.get(participant.userId);
+        if (userConnections) {
+          userConnections.forEach(ws => {
+            if (ws.readyState === WebSocket.OPEN) {
+              ws.send(JSON.stringify(message));
+            }
+          });
+        }
+      });
+    } catch (error) {
+      console.error('Error broadcasting message:', error);
+    }
+  };
+
   wss.on('connection', (ws: WebSocket, req) => {
     let userId: number | null = null;
 
@@ -2100,6 +2154,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
             activeConnections.get(userId)!.add(ws);
             ws.send(JSON.stringify({ type: 'authenticated', success: true }));
+            break;
+            
+          case 'chat_message':
+            if (!userId) {
+              ws.send(JSON.stringify({ 
+                type: 'error', 
+                error: 'Not authenticated' 
+              }));
+              return;
+            }
+            
+            const { conversationId, body, attachments } = data;
+            
+            // Verify user is participant in conversation
+            const isParticipant = await storage.isConversationParticipant(
+              conversationId, 
+              userId
+            );
+            
+            if (!isParticipant) {
+              ws.send(JSON.stringify({ 
+                type: 'error', 
+                error: 'Not authorized for this conversation' 
+              }));
+              return;
+            }
+            
+            // Save message to database
+            const newMessage = await storage.createMessage({
+              conversationId,
+              senderId: userId,
+              body,
+              attachments
+            });
+            
+            // Broadcast to all participants
+            await broadcastToConversation(conversationId, {
+              type: 'new_message',
+              message: newMessage
+            });
             break;
         }
       } catch (error) {

@@ -25,7 +25,29 @@ export function MultiImageUploader({
   const handleImageUpload = async (result: any) => {
     setIsUploading(false);
     if (result.successful && result.successful.length > 0) {
-      const newImageUrls = result.successful.map((file: any) => file.uploadURL);
+      // Process each uploaded file to set ACL policy
+      const newImageUrls = await Promise.all(
+        result.successful.map(async (file: any) => {
+          try {
+            // Extract object ID from upload URL
+            const objectId = file.uploadURL.split('/').pop()?.split('?')[0];
+            if (objectId) {
+              // Set ACL policy for public access
+              await fetch(`/api/objects/${objectId}/acl`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ visibility: "public" }),
+              });
+              return `/objects/${objectId}`; // Return object path instead of upload URL
+            }
+            return file.uploadURL; // Fallback to upload URL
+          } catch (error) {
+            console.error("Error setting ACL policy:", error);
+            return file.uploadURL; // Fallback to upload URL
+          }
+        })
+      );
+      
       const updatedImages = [...images, ...newImageUrls].slice(0, maxImages);
       setImages(updatedImages);
       onImagesChange(updatedImages);
@@ -51,6 +73,7 @@ export function MultiImageUploader({
     return {
       method: "PUT" as const,
       url: data.uploadURL,
+      objectPath: data.objectPath, // Store for later ACL setting
     };
   };
 
