@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Heart, MapPin, Calendar, MessageCircle, User, Share2, Flag } from "lucide-react";
@@ -14,6 +14,37 @@ import { formatDistanceToNow } from "date-fns";
 import { MobileHeader } from "@/components/MobileHeader";
 import { BottomNavigation } from "@/components/BottomNavigation";
 
+interface PostDetailsData {
+  id: number;
+  userId: number;
+  title?: string;
+  description: string;
+  images?: string[];
+  preferences?: {
+    ageMin?: number;
+    ageMax?: number;
+    gender?: string;
+    location?: string;
+    interests?: string[];
+  };
+  relationshipType?: string;
+  status: string;
+  isPinned: boolean;
+  likes: number;
+  createdAt: string;
+  user: {
+    id: number;
+    fullName: string;
+    island: string;
+    atoll: string;
+    profilePhotoPath?: string;
+    shortBio?: string;
+    dateOfBirth: string;
+    job?: string;
+    education?: string;
+  };
+}
+
 export default function PostDetailsPage() {
   const { id } = useParams();
   const { user } = useAuth();
@@ -21,7 +52,7 @@ export default function PostDetailsPage() {
   const queryClient = useQueryClient();
   const [isLiked, setIsLiked] = useState(false);
 
-  const { data: post, isLoading } = useQuery({
+  const { data: post, isLoading } = useQuery<PostDetailsData>({
     queryKey: [`/api/posts/${id}`],
     enabled: !!id,
   });
@@ -36,6 +67,12 @@ export default function PostDetailsPage() {
     enabled: !!post?.userId && !!user && post?.userId !== user?.id,
   });
 
+  useEffect(() => {
+    if (likeStatus?.liked) {
+      setIsLiked(true);
+    }
+  }, [likeStatus]);
+
   const likeMutation = useMutation({
     mutationFn: async () => {
       return await apiRequest("POST", `/api/posts/${id}/like`);
@@ -49,30 +86,22 @@ export default function PostDetailsPage() {
 
   const connectMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest("POST", "/api/connect/request", {
+      return await apiRequest("POST", "/api/connections", {
         targetUserId: post?.userId,
-        postId: post?.id,
       });
     },
     onSuccess: () => {
-      toast({
-        title: "Connection request sent!",
-        description: "The user will be notified of your request.",
-      });
       queryClient.invalidateQueries({ queryKey: [`/api/connect/status/${post?.userId}`] });
-    },
-    onError: (error: any) => {
       toast({
-        title: "Failed to send connection request",
-        description: error.message || "Please try again.",
-        variant: "destructive",
+        title: "Connection sent!",
+        description: "Your connection request has been sent.",
       });
     },
   });
 
   const calculateAge = (dateOfBirth: string) => {
-    const birthDate = new Date(dateOfBirth);
     const today = new Date();
+    const birthDate = new Date(dateOfBirth);
     let age = today.getFullYear() - birthDate.getFullYear();
     const monthDiff = today.getMonth() - birthDate.getMonth();
     if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
@@ -83,209 +112,258 @@ export default function PostDetailsPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <MobileHeader title="Post Details" showBack />
-        <div className="container mx-auto p-4 max-w-4xl pb-20">
-          <div className="animate-pulse">
-            <div className="h-64 bg-gray-200 dark:bg-gray-800 rounded-lg mb-4"></div>
-            <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded mb-2"></div>
-            <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-2/3"></div>
-          </div>
+      <div className="min-h-screen bg-warm-white dark:bg-dark-navy">
+        <MobileHeader />
+        <div className="flex items-center justify-center h-screen">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-mint"></div>
         </div>
+        <BottomNavigation />
       </div>
     );
   }
 
   if (!post) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <MobileHeader title="Post Not Found" showBack />
-        <div className="container mx-auto p-4 max-w-4xl pb-20">
-          <Card>
-            <CardContent className="text-center py-12">
-              <h2 className="text-xl font-semibold mb-2">Post not found</h2>
-              <p className="text-gray-600 dark:text-gray-400 mb-4">
-                This post may have been removed or doesn't exist.
-              </p>
-              <Link href="/browse">
-                <Button>Browse Other Posts</Button>
-              </Link>
-            </CardContent>
-          </Card>
+      <div className="min-h-screen bg-warm-white dark:bg-dark-navy">
+        <MobileHeader />
+        <div className="flex items-center justify-center h-screen">
+          <div className="text-center">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Post not found</h2>
+            <p className="text-gray-600 dark:text-gray-400 mb-4">This post may have been removed or doesn't exist.</p>
+            <Link href="/">
+              <Button>Go Home</Button>
+            </Link>
+          </div>
         </div>
+        <BottomNavigation />
       </div>
     );
   }
 
   const isOwnPost = user?.id === post.userId;
-  const canConnect = !isOwnPost && user && !connectionStatus?.connected && connectionStatus?.status !== 'PENDING';
+  const canConnect = user?.status === 'APPROVED' && !isOwnPost;
+  const age = calculateAge(post.user.dateOfBirth);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <MobileHeader title="Post Details" showBack />
+    <div className="min-h-screen bg-warm-white dark:bg-dark-navy pb-20">
+      <MobileHeader />
       
-      <div className="container mx-auto p-4 max-w-4xl pb-20">
-        <Card className="overflow-hidden">
+      <div className="max-w-4xl mx-auto px-4 py-6">
+        {/* Header with back button */}
+        <div className="flex items-center gap-4 mb-6">
+          <Link href="/">
+            <Button variant="ghost" size="sm" className="p-2">
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+          </Link>
+          <h1 className="text-lg font-semibold text-gray-900 dark:text-white">Post Details</h1>
+        </div>
+
+        {/* Main post card */}
+        <Card className="bg-gradient-to-br from-white via-gray-50 to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 shadow-xl rounded-3xl border-0 overflow-hidden mb-6">
           {/* Post Images */}
           {post.images && post.images.length > 0 && (
-            <div className="relative h-64 md:h-80">
-              <img
-                src={post.images[0]}
-                alt={post.title}
-                className="w-full h-full object-cover"
-              />
+            <div className="relative">
+              {post.images.length === 1 ? (
+                <img
+                  src={post.images[0].startsWith('/uploads') ? post.images[0] : `/uploads/posts/${post.images[0]}`}
+                  alt={post.title || "Post image"}
+                  className="w-full h-80 object-cover"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).style.display = 'none';
+                  }}
+                />
+              ) : (
+                <div className="grid grid-cols-2 gap-2 p-4">
+                  {post.images.slice(0, 4).map((image, index) => (
+                    <div key={index} className="relative">
+                      <img
+                        src={image.startsWith('/uploads') ? image : `/uploads/posts/${image}`}
+                        alt={`Post image ${index + 1}`}
+                        className="w-full h-40 object-cover rounded-xl"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = 'none';
+                        }}
+                      />
+                      {index === 3 && post.images.length > 4 && (
+                        <div className="absolute inset-0 bg-black/60 rounded-xl flex items-center justify-center">
+                          <span className="text-white font-bold text-lg">
+                            +{post.images.length - 4}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
               
-              {/* Badges */}
-              <div className="absolute top-3 left-3 flex space-x-2">
-                {post.isPinned && (
-                  <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100">
-                    Pinned
+              {post.isPinned && (
+                <div className="absolute top-4 right-4">
+                  <Badge className="bg-gradient-to-r from-amber-400 via-yellow-500 to-orange-500 text-white px-3 py-1.5 rounded-full shadow-lg">
+                    ✨ Pinned
                   </Badge>
-                )}
-                <Badge variant="secondary" className="capitalize">
-                  {post.relationshipType?.toLowerCase() || 'general'}
-                </Badge>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="absolute top-3 right-3 flex space-x-2">
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  className="bg-white/80 hover:bg-white/90 dark:bg-black/80 dark:hover:bg-black/90"
-                  onClick={() => likeMutation.mutate()}
-                  disabled={!user || likeMutation.isPending}
-                >
-                  <Heart className={`w-4 h-4 ${likeStatus?.liked ? 'fill-rose-500 text-rose-500' : ''}`} />
-                  <span className="ml-1">{post.likes || 0}</span>
-                </Button>
-              </div>
+                </div>
+              )}
             </div>
           )}
 
           <CardContent className="p-6">
-            {/* Title and Description */}
-            <div className="mb-6">
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
-                {post.title}
-              </h1>
-              <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
-                {post.description}
-              </p>
-            </div>
-
-            {/* Post Details */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-              {post.ageRange && (
-                <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
-                  <Calendar className="w-4 h-4" />
-                  <span>Preferred Age: {post.ageRange}</span>
+            {/* Post header */}
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-gradient-to-br from-mint to-soft-blue rounded-full p-0.5">
+                    <Avatar className="w-12 h-12 bg-white">
+                      <AvatarImage src={post.user.profilePhotoPath} />
+                      <AvatarFallback>{post.user.fullName.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                    </Avatar>
+                  </div>
+                  <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-400 rounded-full border-2 border-white dark:border-gray-900"></div>
                 </div>
-              )}
-              
-              {post.location && (
-                <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
-                  <MapPin className="w-4 h-4" />
-                  <span>Location: {post.location}</span>
-                </div>
-              )}
-            </div>
-
-            {/* Interests */}
-            {post.interests && post.interests.length > 0 && (
-              <div className="mb-6">
-                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Interests
-                </h3>
-                <div className="flex flex-wrap gap-2">
-                  {post.interests.map((interest, index) => (
-                    <Badge key={index} variant="outline">
-                      {interest}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* User Info */}
-            <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
-              <div className="flex items-center space-x-4 mb-4">
-                <Avatar className="w-12 h-12">
-                  <AvatarImage src={post.user.profilePhotoPath} />
-                  <AvatarFallback>
-                    {post.user.fullName.split(' ').map(n => n[0]).join('')}
-                  </AvatarFallback>
-                </Avatar>
-                
-                <div className="flex-1">
-                  <h3 className="font-semibold text-gray-900 dark:text-white">
-                    {post.user.fullName}
-                  </h3>
-                  <div className="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400">
-                    <div className="flex items-center space-x-1">
-                      <MapPin className="w-3 h-3" />
-                      <span>{post.user.island}</span>
-                    </div>
-                    {post.user.dateOfBirth && (
-                      <div className="flex items-center space-x-1">
-                        <Calendar className="w-3 h-3" />
-                        <span>{calculateAge(post.user.dateOfBirth)} years old</span>
-                      </div>
-                    )}
+                <div>
+                  <h3 className="font-bold text-lg text-gray-900 dark:text-white">{post.user.fullName}</h3>
+                  <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                    <MapPin className="w-3 h-3" />
+                    <span>{post.user.island}, {post.user.atoll}</span>
+                    <span>•</span>
+                    <span>{age} years</span>
                   </div>
                 </div>
               </div>
+              
+              {post.relationshipType && (
+                <Badge variant="secondary" className="bg-lavender/10 text-lavender border-lavender/20">
+                  {post.relationshipType}
+                </Badge>
+              )}
+            </div>
 
-              {/* Action Buttons */}
-              <div className="flex space-x-3">
-                {canConnect && (
+            {/* Like and share actions */}
+            <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-100 dark:border-gray-700">
+              <div className="flex items-center gap-4">
+                {!isOwnPost && (
                   <Button
-                    onClick={() => connectMutation.mutate()}
-                    disabled={connectMutation.isPending}
-                    className="flex-1 bg-mint-600 hover:bg-mint-700 text-white"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => likeMutation.mutate()}
+                    disabled={likeMutation.isPending}
+                    className="flex items-center gap-2 text-gray-600 hover:text-rose-500 dark:text-gray-400 dark:hover:text-rose-400"
                   >
-                    <MessageCircle className="w-4 h-4 mr-2" />
-                    {connectMutation.isPending ? 'Sending...' : 'Connect & Chat'}
+                    <Heart className={`w-5 h-5 ${isLiked ? 'fill-current text-rose-500' : ''}`} />
+                    <span className="font-medium">{post.likes || 0}</span>
                   </Button>
                 )}
+              </div>
+              
+              <div className="text-xs text-gray-500 dark:text-gray-400">
+                {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}
+              </div>
+            </div>
 
-                {connectionStatus?.connected && (
-                  <Link href="/inbox">
-                    <Button className="flex-1 bg-green-600 hover:bg-green-700 text-white">
-                      <MessageCircle className="w-4 h-4 mr-2" />
-                      Open Chat
-                    </Button>
-                  </Link>
+            {/* Post content */}
+            {post.title && (
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-3">{post.title}</h2>
+            )}
+            
+            <p className="text-gray-700 dark:text-gray-300 leading-relaxed mb-4">
+              {post.description}
+            </p>
+
+            {/* Preferences */}
+            {post.preferences && (
+              <div className="space-y-3 mb-6">
+                {(post.preferences.ageMin || post.preferences.ageMax) && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Age preference:</span>
+                    <Badge variant="secondary" className="bg-mint/10 text-mint border-mint/20">
+                      {post.preferences.ageMin}-{post.preferences.ageMax} years
+                    </Badge>
+                  </div>
                 )}
-
-                {connectionStatus?.status === 'PENDING' && (
-                  <Button disabled className="flex-1" variant="outline">
-                    <MessageCircle className="w-4 h-4 mr-2" />
-                    Request Pending
-                  </Button>
+                
+                {post.preferences.location && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Location:</span>
+                    <Badge variant="secondary" className="bg-soft-blue/10 text-soft-blue border-soft-blue/20">
+                      {post.preferences.location}
+                    </Badge>
+                  </div>
                 )}
+                
+                {post.preferences.interests && post.preferences.interests.length > 0 && (
+                  <div>
+                    <span className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2 block">Interests:</span>
+                    <div className="flex flex-wrap gap-2">
+                      {post.preferences.interests.map((interest, index) => (
+                        <Badge key={index} variant="secondary" className="bg-blush/10 text-blush border-blush/20">
+                          {interest}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
-                {isOwnPost && (
-                  <Link href="/my-posts">
-                    <Button variant="outline" className="flex-1">
-                      <User className="w-4 h-4 mr-2" />
-                      My Posts
-                    </Button>
-                  </Link>
+            {/* User info */}
+            <div className="bg-gray-50/50 dark:bg-gray-800/50 rounded-2xl p-4 mb-6">
+              <h4 className="font-semibold text-gray-900 dark:text-white mb-3">About {post.user.fullName.split(' ')[0]}</h4>
+              
+              <div className="space-y-2 text-sm">
+                {post.user.job && (
+                  <div className="flex items-center gap-2">
+                    <User className="w-4 h-4 text-gray-500" />
+                    <span className="text-gray-700 dark:text-gray-300">{post.user.job}</span>
+                  </div>
+                )}
+                
+                {post.user.education && (
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-gray-500" />
+                    <span className="text-gray-700 dark:text-gray-300">{post.user.education}</span>
+                  </div>
+                )}
+                
+                {post.user.shortBio && (
+                  <p className="text-gray-600 dark:text-gray-400 italic mt-3">
+                    "{post.user.shortBio}"
+                  </p>
                 )}
               </div>
             </div>
 
-            {/* Post Meta */}
-            <div className="border-t border-gray-200 dark:border-gray-700 pt-4 mt-6">
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                Posted {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}
-              </p>
-            </div>
+            {/* Connect button */}
+            {canConnect && (
+              <div className="flex justify-center">
+                <Button
+                  onClick={() => connectMutation.mutate()}
+                  disabled={connectMutation.isPending || (connectionStatus as any)?.connected}
+                  className="bg-gradient-to-r from-mint via-soft-blue to-lavender text-white rounded-xl font-semibold px-8 py-3 hover:shadow-lg hover:shadow-mint/25 transform hover:scale-105 transition-all duration-200 flex items-center gap-2"
+                >
+                  <MessageCircle className="w-5 h-5" />
+                  <span>
+                    {(connectionStatus as any)?.status === 'PENDING' ? 'Request Pending' :
+                     (connectionStatus as any)?.connected ? 'Connected' :
+                     connectMutation.isPending ? 'Sending...' : 'Send Connection Request'}
+                  </span>
+                  {!(connectionStatus as any)?.connected && (
+                    <span className="text-xs opacity-80">(1 coin)</span>
+                  )}
+                </Button>
+              </div>
+            )}
+            
+            {isOwnPost && (
+              <div className="text-center">
+                <Badge variant="outline" className="px-4 py-2">
+                  This is your post
+                </Badge>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
-
+      
       <BottomNavigation />
     </div>
   );
