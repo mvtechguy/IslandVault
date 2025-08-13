@@ -102,7 +102,7 @@ export default function CreatePostPage() {
         images: postImages,
         pinPost: wantToPinPost,
       };
-      return await apiRequest("/api/posts", "POST", postData);
+      return await apiRequest("POST", "/api/posts", postData);
     },
     onSuccess: () => {
       toast({

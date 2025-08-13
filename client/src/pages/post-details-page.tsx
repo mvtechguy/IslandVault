@@ -38,9 +38,7 @@ export default function PostDetailsPage() {
 
   const likeMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest(`/api/posts/${id}/like`, {
-        method: "POST",
-      });
+      return await apiRequest("POST", `/api/posts/${id}/like`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/posts/${id}`] });
@@ -51,12 +49,9 @@ export default function PostDetailsPage() {
 
   const connectMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest("/api/connect/request", {
-        method: "POST",
-        body: JSON.stringify({
-          targetUserId: post?.userId,
-          postId: post?.id,
-        }),
+      return await apiRequest("POST", "/api/connect/request", {
+        targetUserId: post?.userId,
+        postId: post?.id,
       });
     },
     onSuccess: () => {

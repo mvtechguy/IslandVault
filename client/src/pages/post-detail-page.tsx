@@ -60,7 +60,7 @@ export default function PostDetailPage() {
   });
 
   const likeMutation = useMutation({
-    mutationFn: () => apiRequest(`/api/posts/${id}/like`, "POST"),
+    mutationFn: () => apiRequest("POST", `/api/posts/${id}/like`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/posts/${id}`] });
       queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
@@ -76,7 +76,7 @@ export default function PostDetailPage() {
   });
 
   const requestConnectionMutation = useMutation({
-    mutationFn: () => apiRequest("/api/connection-requests", "POST", { 
+    mutationFn: () => apiRequest("POST", "/api/connection-requests", { 
       targetUserId: post?.user.id 
     }),
     onSuccess: () => {

@@ -39,7 +39,7 @@ export function UserCard({ post }: UserCardProps) {
 
   const connectMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest("/api/connection-requests", "POST", {
+      return await apiRequest("POST", "/api/connection-requests", {
         targetUserId: post.user.id,
         postId: post.id,
       });
@@ -62,7 +62,7 @@ export function UserCard({ post }: UserCardProps) {
 
   const likeMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest(`/api/posts/${post.id}/like`, "POST");
+      return await apiRequest("POST", `/api/posts/${post.id}/like`);
     },
     onSuccess: () => {
       toast({ title: "Post liked!" });

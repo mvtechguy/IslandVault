@@ -44,10 +44,7 @@ export default function InboxPage() {
 
   const handleConnectionMutation = useMutation({
     mutationFn: async ({ requestId, action }: { requestId: number; action: 'approve' | 'reject' }) => {
-      return await apiRequest(`/api/connect/requests/${requestId}`, {
-        method: "PUT",
-        body: JSON.stringify({ action }),
-      });
+      return await apiRequest("PUT", `/api/connect/requests/${requestId}`, { action });
     },
     onSuccess: (data, variables) => {
       toast({

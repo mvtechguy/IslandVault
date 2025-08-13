@@ -1,0 +1,64 @@
+island-vault-mvtechguys.replit.app/:1 <meta name="apple-mobile-web-app-capable" content="yes"> is deprecated. Please include <meta name="mobile-web-app-capable" content="yes">
+sw.js:362 [SW] Service Worker loaded successfully
+(index):40 SW registered:  ServiceWorkerRegistration
+sw.js:30 [SW] Install event
+sw.js:35 [SW] Caching essential assets
+sw.js:50 [SW] Activate event
+f1ed4cc1-fb35-4110-908d-f19f462b9c9f:1  GET https://storage.googleapis.com/replit-objstore-6dd8660a-4484-4c88-b464-d018fd8f6aeb/.private/uploads/f1ed4cc1-fb35-4110-908d-f19f462b9c9f 403 (Forbidden)
+Image
+bN @ index-DQzdBoFm.js:420
+(anonymous) @ index-DQzdBoFm.js:420
+mb @ index-DQzdBoFm.js:38
+Re.useState @ index-DQzdBoFm.js:9
+nQ @ index-DQzdBoFm.js:420
+(anonymous) @ index-DQzdBoFm.js:420
+Yv @ index-DQzdBoFm.js:38
+Nb @ index-DQzdBoFm.js:40
+P2 @ index-DQzdBoFm.js:40
+_2 @ index-DQzdBoFm.js:40
+qR @ index-DQzdBoFm.js:40
+jf @ index-DQzdBoFm.js:40
+Ib @ index-DQzdBoFm.js:40
+pa @ index-DQzdBoFm.js:38
+(anonymous) @ index-DQzdBoFm.js:40
+setTimeout
+s @ index-DQzdBoFm.js:48
+o @ index-DQzdBoFm.js:48
+batch @ index-DQzdBoFm.js:48
+Ls @ index-DQzdBoFm.js:48
+setData @ index-DQzdBoFm.js:48
+onSuccess @ index-DQzdBoFm.js:48
+h @ index-DQzdBoFm.js:48
+Promise.then
+N @ index-DQzdBoFm.js:48
+start @ index-DQzdBoFm.js:48
+fetch @ index-DQzdBoFm.js:48
+$c @ index-DQzdBoFm.js:48
+onSubscribe @ index-DQzdBoFm.js:48
+subscribe @ index-DQzdBoFm.js:48
+(anonymous) @ index-DQzdBoFm.js:48
+qC @ index-DQzdBoFm.js:38
+_p @ index-DQzdBoFm.js:40
+Yo @ index-DQzdBoFm.js:40
+WR @ index-DQzdBoFm.js:40
+wa @ index-DQzdBoFm.js:40
+Ib @ index-DQzdBoFm.js:40
+pa @ index-DQzdBoFm.js:38
+(anonymous) @ index-DQzdBoFm.js:40
+f1ed4cc1-fb35-4110-908d-f19f462b9c9f:1  GET https://storage.googleapis.com/replit-objstore-6dd8660a-4484-4c88-b464-d018fd8f6aeb/.private/uploads/f1ed4cc1-fb35-4110-908d-f19f462b9c9f 403 (Forbidden)
+Image
+bN @ index-DQzdBoFm.js:420
+(anonymous) @ index-DQzdBoFm.js:420
+mb @ index-DQzdBoFm.js:38
+Re.useState @ index-DQzdBoFm.js:9
+nQ @ index-DQzdBoFm.js:420
+(anonymous) @ index-DQzdBoFm.js:420
+Yv @ index-DQzdBoFm.js:38
+Nb @ index-DQzdBoFm.js:40
+P2 @ index-DQzdBoFm.js:40
+_2 @ index-DQzdBoFm.js:40
+qR @ index-DQzdBoFm.js:40
+jf @ index-DQzdBoFm.js:40
+Ib @ index-DQzdBoFm.js:40
+pa @ index-DQzdBoFm.js:38
+(anonymous) @ index-DQzdBoFm.js:40
