@@ -261,6 +261,7 @@ export const settings = pgTable("settings", {
   id: serial("id").primaryKey(),
   coinPriceMvr: decimal("coin_price_mvr", { precision: 10, scale: 2 }).default("10.00"),
   costPost: integer("cost_post").default(2),
+  costPinPost: integer("cost_pin_post").default(3),
   costConnect: integer("cost_connect").default(5),
   bankAccountName: varchar("bank_account_name", { length: 120 }),
   bankAccountNumber: varchar("bank_account_number", { length: 64 }),

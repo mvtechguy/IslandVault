@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Shield, Users, FileText, Coins, MessageSquare, Check, X, Eye, Search, Filter, Palette, Save, RotateCcw, Download, Upload, Package, Plus, Edit, Trash2 } from "lucide-react";
+import { Shield, Users, FileText, Coins, MessageSquare, Check, X, Eye, Search, Filter, Palette, Save, RotateCcw, Download, Upload, Package, Plus, Edit, Trash2, Landmark } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -58,6 +58,7 @@ export default function AdminPage() {
     isPrimary: false
   });
   const [isEditingBankAccount, setIsEditingBankAccount] = useState(false);
+  const [showAddBank, setShowAddBank] = useState(false);
 
   // Pagination states
   const [usersPage, setUsersPage] = useState(0);
@@ -150,7 +151,7 @@ export default function AdminPage() {
   });
 
   // Fetch bank accounts for admin
-  const { data: bankAccountsData } = useQuery({
+  const { data: banksData } = useQuery({
     queryKey: ["/api/admin/bank-accounts"],
     queryFn: getQueryFn({ on401: "throw" }),
     enabled: !!user && (user.role === "ADMIN" || user.role === "SUPERADMIN"),
@@ -429,6 +430,34 @@ export default function AdminPage() {
   };
 
   const totalPending = Object.values(pendingCounts).reduce((sum, count) => sum + count, 0);
+
+  // Bank account handlers
+  const handleEditBank = (bank: any) => {
+    setSelectedBankAccount(bank);
+    setBankAccountForm({
+      bankName: bank.bankName,
+      accountNumber: bank.accountNumber,
+      accountName: bank.accountName,
+      branchName: bank.branchName,
+      swiftCode: bank.swiftCode || "",
+      isActive: bank.isActive,
+      isPrimary: bank.isPrimary
+    });
+    setIsEditingBankAccount(true);
+    setShowAddBank(true);
+  };
+
+  const handleDeleteBank = async (bankId: number) => {
+    if (confirm("Are you sure you want to delete this bank account?")) {
+      try {
+        await apiRequest("/api/admin/bank-accounts/" + bankId, { method: "DELETE" });
+        queryClient.invalidateQueries({ queryKey: ["/api/admin/bank-accounts"] });
+        toast({ title: "Bank account deleted successfully" });
+      } catch (error) {
+        toast({ title: "Failed to delete bank account", variant: "destructive" });
+      }
+    }
+  };
 
   return (
     <div className="min-h-screen bg-warm-white dark:bg-dark-navy text-gray-800 dark:text-gray-200 transition-colors duration-300">
@@ -1137,6 +1166,73 @@ export default function AdminPage() {
                       <li>• Coin credit notifications</li>
                     </ul>
                   </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="banks" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Bank Account Management</CardTitle>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Manage bank accounts for coin top-up payments
+                  </p>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-lg font-semibold">Bank Accounts</h3>
+                    <Button onClick={() => setShowAddBank(true)}>
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add Bank Details
+                    </Button>
+                  </div>
+                  
+                  {banksData && banksData.length > 0 ? (
+                    <div className="space-y-3">
+                      {banksData.map((bank) => (
+                        <Card key={bank.id} className="p-4">
+                          <div className="flex justify-between items-start">
+                            <div className="space-y-1">
+                              <h4 className="font-medium">{bank.bankName}</h4>
+                              <p className="text-sm text-gray-600 dark:text-gray-400">
+                                {bank.accountName}
+                              </p>
+                              <p className="text-sm font-mono text-gray-800 dark:text-gray-200">
+                                {bank.accountNumber}
+                              </p>
+                            </div>
+                            <div className="flex space-x-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleEditBank(bank)}
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleDeleteBank(bank.id)}
+                                className="text-red-600 hover:text-red-700"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        </Card>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
+                        <Landmark className="w-8 h-8 text-gray-400" />
+                      </div>
+                      <p className="text-gray-600 dark:text-gray-400">No bank accounts configured</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">
+                        Add bank details for users to send coin top-up payments
+                      </p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>

@@ -129,8 +129,8 @@ export default function CreatePostPage() {
     createPostMutation.mutate(data);
   };
 
-  const totalCost = (settings?.costPost || 2) + (wantToPinPost ? 3 : 0);
-  const canAfford = user?.role === 'ADMIN' || user?.role === 'SUPERADMIN' || (coinBalance?.coins || 0) >= totalCost;
+  const totalCost = (settings?.costPost || 2) + (wantToPinPost ? (settings?.costPinPost || 3) : 0);
+  const canAfford = (coinBalance?.coins || 0) >= totalCost;
 
 
 
@@ -297,7 +297,7 @@ export default function CreatePostPage() {
                     </div>
                     <div className="flex items-center space-x-3">
                       <span className="text-sm font-medium">
-                        {user?.role === 'ADMIN' || user?.role === 'SUPERADMIN' ? 'Free' : '3 coins'}
+                        {settings?.costPinPost || 3} coins
                       </span>
                       <Switch
                         checked={wantToPinPost}
@@ -313,19 +313,19 @@ export default function CreatePostPage() {
             <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
               <div className="flex items-center justify-between text-sm">
                 <span>Post creation:</span>
-                <span>{user?.role === 'ADMIN' || user?.role === 'SUPERADMIN' ? 'Free' : `${settings?.costPost || 2} coins`}</span>
+                <span>{settings?.costPost || 2} coins</span>
               </div>
               {wantToPinPost && (
                 <div className="flex items-center justify-between text-sm">
                   <span>Pin post:</span>
-                  <span>{user?.role === 'ADMIN' || user?.role === 'SUPERADMIN' ? 'Free' : '3 coins'}</span>
+                  <span>{settings?.costPinPost || 3} coins</span>
                 </div>
               )}
               <div className="border-t border-gray-200 dark:border-gray-600 mt-2 pt-2 flex items-center justify-between font-medium">
                 <span>Total:</span>
-                <span>{user?.role === 'ADMIN' || user?.role === 'SUPERADMIN' ? 'Free' : `${totalCost} coins`}</span>
+                <span>{totalCost} coins</span>
               </div>
-              {!canAfford && (user?.role !== 'ADMIN' && user?.role !== 'SUPERADMIN') && (
+              {!canAfford && (
                 <p className="text-sm text-red-500 mt-2">
                   Insufficient coins. You need {totalCost - (coinBalance?.coins || 0)} more coins.
                 </p>
@@ -335,7 +335,7 @@ export default function CreatePostPage() {
             {/* Submit Button */}
             <Button
               type="submit"
-              disabled={createPostMutation.isPending || (!canAfford && user?.role !== 'ADMIN' && user?.role !== 'SUPERADMIN')}
+              disabled={createPostMutation.isPending || !canAfford}
               className="w-full bg-gradient-to-r from-mint to-soft-blue hover:shadow-lg"
             >
               {createPostMutation.isPending ? "Creating..." : "Create Post"}
