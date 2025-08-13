@@ -1855,6 +1855,271 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ================== CONNECTION REQUEST ENDPOINTS ==================
+
+  // Send connection request
+  app.post("/api/connect/request", isAuthenticated, async (req, res) => {
+    try {
+      const { targetUserId, postId } = req.body;
+      const requesterId = req.user!.id;
+
+      if (requesterId === targetUserId) {
+        return res.status(400).json({ message: "Cannot connect to yourself" });
+      }
+
+      // Check if connection request already exists
+      const existingRequests = await storage.getUserConnectionRequests(requesterId, 'sent');
+      const existingRequest = existingRequests.find(r => r.targetUserId === targetUserId && r.status === 'PENDING');
+      
+      if (existingRequest) {
+        return res.status(400).json({ message: "Connection request already sent" });
+      }
+
+      // Deduct connection cost
+      const settings = await storage.getSettings();
+      const costConnect = settings?.costConnect || 5;
+      
+      const userBalance = await storage.getUserCoinBalance(requesterId);
+      if (userBalance < costConnect) {
+        return res.status(400).json({ message: "Insufficient coins" });
+      }
+
+      // Create connection request
+      const connectionRequest = await storage.createConnectionRequest({
+        requesterId,
+        targetUserId,
+        postId: postId || null,
+        status: 'PENDING'
+      });
+
+      // Deduct coins
+      await storage.deductCoins(requesterId, costConnect, 'CONNECT');
+
+      res.json(connectionRequest);
+    } catch (error) {
+      console.error("Error creating connection request:", error);
+      res.status(500).json({ message: "Failed to send connection request" });
+    }
+  });
+
+  // Get sent connection requests
+  app.get("/api/connect/sent", isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const requests = await storage.getUserConnectionRequests(userId, 'sent');
+      
+      // Get user details for each request
+      const requestsWithUsers = await Promise.all(
+        requests.map(async (request) => {
+          const targetUser = await storage.getUser(request.targetUserId);
+          return {
+            ...request,
+            targetUser
+          };
+        })
+      );
+      
+      res.json(requestsWithUsers);
+    } catch (error) {
+      console.error("Error fetching sent requests:", error);
+      res.status(500).json({ message: "Failed to fetch requests" });
+    }
+  });
+
+  // Get received connection requests
+  app.get("/api/connect/received", isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const requests = await storage.getUserConnectionRequests(userId, 'received');
+      
+      // Get user details for each request
+      const requestsWithUsers = await Promise.all(
+        requests.map(async (request) => {
+          const requester = await storage.getUser(request.requesterId);
+          return {
+            ...request,
+            requester
+          };
+        })
+      );
+      
+      res.json(requestsWithUsers);
+    } catch (error) {
+      console.error("Error fetching received requests:", error);
+      res.status(500).json({ message: "Failed to fetch requests" });
+    }
+  });
+
+  // Approve or reject connection request
+  app.put("/api/connect/requests/:id", isAuthenticated, async (req, res) => {
+    try {
+      const requestId = parseInt(req.params.id);
+      const { action } = req.body;
+      const userId = req.user!.id;
+
+      const request = await storage.getConnectionRequest(requestId);
+      if (!request) {
+        return res.status(404).json({ message: "Connection request not found" });
+      }
+
+      if (request.targetUserId !== userId) {
+        return res.status(403).json({ message: "You can only respond to requests sent to you" });
+      }
+
+      if (request.status !== 'PENDING') {
+        return res.status(400).json({ message: "Request has already been responded to" });
+      }
+
+      const newStatus = action === 'approve' ? 'APPROVED' : 'REJECTED';
+      const updatedRequest = await storage.updateConnectionRequest(requestId, {
+        status: newStatus,
+        updatedAt: new Date()
+      });
+
+      if (action === 'approve') {
+        // Create or get existing conversation
+        let conversation = await storage.getConversationByParticipants(
+          request.requesterId,
+          request.targetUserId
+        );
+
+        if (!conversation) {
+          conversation = await storage.createConversation({
+            status: 'ACTIVE'
+          });
+
+          // Add both users as participants
+          await storage.addConversationParticipant({
+            conversationId: conversation.id,
+            userId: request.requesterId
+          });
+
+          await storage.addConversationParticipant({
+            conversationId: conversation.id,
+            userId: request.targetUserId
+          });
+        }
+
+        // Send notification to requester
+        await storage.createNotification({
+          userId: request.requesterId,
+          type: 'CONNECTION_APPROVED',
+          data: {
+            targetUserId: request.targetUserId,
+            conversationId: conversation.id
+          },
+          seen: false
+        });
+      } else {
+        // Send rejection notification
+        await storage.createNotification({
+          userId: request.requesterId,
+          type: 'CONNECTION_REJECTED',
+          data: {
+            targetUserId: request.targetUserId
+          },
+          seen: false
+        });
+      }
+
+      res.json(updatedRequest);
+    } catch (error) {
+      console.error("Error updating connection request:", error);
+      res.status(500).json({ message: "Failed to update connection request" });
+    }
+  });
+
+  // Check connection status between users
+  app.get("/api/connect/status/:userId", isAuthenticated, async (req, res) => {
+    try {
+      const targetUserId = parseInt(req.params.userId);
+      const currentUserId = req.user!.id;
+
+      if (currentUserId === targetUserId) {
+        return res.json({ connected: false, status: null });
+      }
+
+      // Check for any connection requests between users
+      const sentRequests = await storage.getUserConnectionRequests(currentUserId, 'sent');
+      const sentRequest = sentRequests.find(r => r.targetUserId === targetUserId);
+
+      if (sentRequest) {
+        return res.json({ 
+          connected: sentRequest.status === 'APPROVED', 
+          status: sentRequest.status,
+          requestId: sentRequest.id
+        });
+      }
+
+      const receivedRequests = await storage.getUserConnectionRequests(currentUserId, 'received');
+      const receivedRequest = receivedRequests.find(r => r.requesterId === targetUserId);
+
+      if (receivedRequest) {
+        return res.json({ 
+          connected: receivedRequest.status === 'APPROVED', 
+          status: receivedRequest.status,
+          requestId: receivedRequest.id
+        });
+      }
+
+      res.json({ connected: false, status: null });
+    } catch (error) {
+      console.error("Error checking connection status:", error);
+      res.status(500).json({ message: "Failed to check connection status" });
+    }
+  });
+
+  // Get user conversations (simplified for inbox)
+  app.get("/api/conversations", isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const conversations = await storage.getUserConversations(userId);
+      
+      // Transform and get the latest message for each conversation
+      const conversationsWithDetails = await Promise.all(
+        conversations.map(async (conv) => {
+          const messages = await storage.getMessages(conv.conversation.id, 1, 0);
+          const otherParticipants = await storage.getConversationParticipants(conv.conversation.id);
+          const otherUser = otherParticipants.find(p => p.userId !== userId);
+          const otherUserDetails = otherUser ? await storage.getUser(otherUser.userId) : null;
+          
+          return {
+            conversation: conv.conversation,
+            otherUser: otherUserDetails,
+            lastMessage: messages.length > 0 ? messages[0] : null
+          };
+        })
+      );
+      
+      res.json(conversationsWithDetails);
+    } catch (error) {
+      console.error("Error fetching conversations:", error);
+      res.status(500).json({ message: "Failed to fetch conversations" });
+    }
+  });
+
+  // Get messages for a conversation
+  app.get("/api/conversations/:id/messages", isAuthenticated, async (req, res) => {
+    try {
+      const conversationId = parseInt(req.params.id);
+      const userId = req.user!.id;
+      const limit = parseInt(req.query.limit as string) || 50;
+      const offset = parseInt(req.query.offset as string) || 0;
+
+      // Verify user is participant
+      const isParticipant = await storage.isConversationParticipant(conversationId, userId);
+      if (!isParticipant) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const messages = await storage.getMessages(conversationId, limit, offset);
+      res.json({ messages });
+    } catch (error) {
+      console.error("Error fetching messages:", error);
+      res.status(500).json({ message: "Failed to fetch messages" });
+    }
+  });
+
   // Chat API Routes
   // Get user's conversations with admin inbox visibility for admins
   app.get("/api/chat/conversations", isAuthenticated, async (req, res) => {

@@ -15,8 +15,10 @@ import AdminPage from "@/pages/admin-page";
 import BuyCoinsPage from "@/pages/buy-coins-page";
 import OnboardPage from "@/pages/onboard-page";
 import PostDetailPage from "@/pages/post-detail-page";
+import PostDetailsPage from "@/pages/post-details-page";
 import BrowsePostsPage from "@/pages/browse-posts-page";
 import CreatePostPage from "@/pages/create-post-page";
+import InboxPage from "@/pages/inbox-page";
 
 
 
@@ -56,12 +58,17 @@ function Router() {
       </Route>
       <Route path="/posts/:id">
         <ProtectedRoute>
-          <PostDetailPage />
+          <PostDetailsPage />
         </ProtectedRoute>
       </Route>
       <Route path="/create">
         <ProtectedRoute>
           <CreatePostPage />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/inbox">
+        <ProtectedRoute>
+          <InboxPage />
         </ProtectedRoute>
       </Route>
       <Route component={NotFound} />

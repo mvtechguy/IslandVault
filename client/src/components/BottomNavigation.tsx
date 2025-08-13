@@ -1,12 +1,12 @@
 import { useLocation } from "wouter";
-import { Home, Search, Plus, Coins, User } from "lucide-react";
+import { Home, Search, Plus, MessageCircle, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { path: "/", icon: Home, label: "Home" },
   { path: "/browse", icon: Search, label: "Browse" },
   { path: "/create", icon: Plus, label: "Create", special: true },
-  { path: "/coins", icon: Coins, label: "Coins" },
+  { path: "/inbox", icon: MessageCircle, label: "Inbox" },
   { path: "/profile", icon: User, label: "Profile" },
 ];
 
