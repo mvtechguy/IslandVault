@@ -233,7 +233,6 @@ export const bankAccounts = pgTable("bank_accounts", {
   bankName: varchar("bank_name", { length: 100 }).notNull(),
   accountNumber: varchar("account_number", { length: 50 }).notNull(),
   accountName: varchar("account_name", { length: 100 }).notNull(),
-  branchName: varchar("branch_name", { length: 100 }).notNull(),
   swiftCode: varchar("swift_code", { length: 20 }),
   isActive: boolean("is_active").default(true),
   isPrimary: boolean("is_primary").default(false),
@@ -365,7 +364,6 @@ export const insertBankAccountSchema = createInsertSchema(bankAccounts).pick({
   bankName: true,
   accountNumber: true,
   accountName: true,
-  branchName: true,
   swiftCode: true,
   isActive: true,
   isPrimary: true

@@ -1283,13 +1283,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/admin/bank-accounts", isAdmin, async (req, res) => {
     try {
-      const { bankName, accountNumber, accountName, branchName, swiftCode, isActive, isPrimary } = req.body;
+      const { bankName, accountNumber, accountName, swiftCode, isActive, isPrimary } = req.body;
       
       const newAccount = await storage.createBankAccount({
         bankName,
         accountNumber,
         accountName,
-        branchName,
         swiftCode,
         isActive: isActive !== undefined ? isActive : true,
         isPrimary: isPrimary !== undefined ? isPrimary : false
@@ -1314,13 +1313,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/admin/bank-accounts/:id", isAdmin, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const { bankName, accountNumber, accountName, branchName, swiftCode, isActive, isPrimary } = req.body;
+      const { bankName, accountNumber, accountName, swiftCode, isActive, isPrimary } = req.body;
       
       const updatedAccount = await storage.updateBankAccount(id, {
         bankName,
         accountNumber,
         accountName,
-        branchName,
         swiftCode,
         isActive,
         isPrimary

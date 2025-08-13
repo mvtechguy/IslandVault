@@ -52,7 +52,6 @@ export default function AdminPage() {
     bankName: "",
     accountNumber: "",
     accountName: "",
-    branchName: "",
     swiftCode: "",
     isActive: true,
     isPrimary: false
@@ -1983,15 +1982,7 @@ export default function AdminPage() {
               />
             </div>
 
-            <div>
-              <Label htmlFor="branchName">Branch Name</Label>
-              <Input
-                id="branchName"
-                value={bankAccountForm.branchName}
-                onChange={(e) => setBankAccountForm({ ...bankAccountForm, branchName: e.target.value })}
-                placeholder="Branch name"
-              />
-            </div>
+
 
             <div>
               <Label htmlFor="swiftCode">SWIFT Code (Optional)</Label>
@@ -2038,7 +2029,6 @@ export default function AdminPage() {
                   bankName: "",
                   accountNumber: "",
                   accountName: "",
-                  branchName: "",
                   swiftCode: "",
                   isActive: true,
                   isPrimary: false
