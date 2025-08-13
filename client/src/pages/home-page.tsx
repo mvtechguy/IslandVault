@@ -49,13 +49,13 @@ export default function HomePage() {
   const [showFilters, setShowFilters] = useState(false);
   const [postImages, setPostImages] = useState<string[]>([]);
 
-  // Fetch posts (pinned posts only for home page)
+  // Fetch posts (both pinned and regular posts for home page)
   const { data: postsData, isLoading: postsLoading } = useQuery<{
     posts: any[];
     total: number;
     hasMore: boolean;
   }>({
-    queryKey: ["/api/posts?pinned=true"],
+    queryKey: ["/api/posts"],
     queryFn: getQueryFn({ on401: "throw" }),
   });
 
@@ -117,6 +117,7 @@ export default function HomePage() {
       createPostForm.reset();
       setPostImages([]);
       queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/posts?pinned=true"] });
       queryClient.invalidateQueries({ queryKey: ["/api/coins/balance"] });
     },
     onError: (error: Error) => {

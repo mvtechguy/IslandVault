@@ -145,18 +145,24 @@ export function UserCard({ post }: UserCardProps) {
           <div className="mb-3">
             {post.images.length === 1 ? (
               <img
-                src={post.images[0]}
+                src={post.images[0].startsWith('/uploads') ? post.images[0] : `/uploads/posts/${post.images[0]}`}
                 alt="Post image"
                 className="w-full h-48 object-cover rounded-lg border border-gray-200 dark:border-gray-600"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = 'none';
+                }}
               />
             ) : (
               <div className="grid grid-cols-2 gap-2">
                 {post.images.slice(0, 4).map((image, index) => (
                   <div key={index} className="relative">
                     <img
-                      src={image}
+                      src={image.startsWith('/uploads') ? image : `/uploads/posts/${image}`}
                       alt={`Post image ${index + 1}`}
                       className="w-full h-24 object-cover rounded-lg border border-gray-200 dark:border-gray-600"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
                     />
                     {index === 3 && post.images!.length > 4 && (
                       <div className="absolute inset-0 bg-black/60 rounded-lg flex items-center justify-center">

@@ -115,6 +115,7 @@ export default function CreatePostPage() {
       setPostImages([]);
       setWantToPinPost(false);
       queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/posts?pinned=true"] });
       queryClient.invalidateQueries({ queryKey: ["/api/coins/balance"] });
       setLocation("/");
     },
@@ -210,6 +211,10 @@ export default function CreatePostPage() {
                 onUploadComplete={(files) => {
                   const newImages = [...postImages, ...files.map(f => f.filePath)];
                   setPostImages(newImages.slice(0, 5)); // Limit to 5 images
+                  toast({
+                    title: "Images uploaded successfully!",
+                    description: `${files.length} image${files.length > 1 ? 's' : ''} ready for your post.`,
+                  });
                 }}
                 onUploadError={(error) => {
                   toast({
@@ -218,7 +223,12 @@ export default function CreatePostPage() {
                     variant: "destructive",
                   });
                 }}
-              />
+              >
+                <div className="flex items-center gap-2">
+                  <Upload className="w-4 h-4" />
+                  <span>Add Photos (up to 5)</span>
+                </div>
+              </LocalFileUploader>
               
               {/* Display uploaded images */}
               {postImages.length > 0 && (
