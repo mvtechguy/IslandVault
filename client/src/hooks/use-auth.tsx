@@ -1,4 +1,4 @@
-import { createContext, useContext, ReactNode } from 'react';
+import { createContext, useContext, ReactNode, useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
@@ -41,10 +41,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   
+  // Track previous user state for notifications
+  const [previousUser, setPreviousUser] = useState<User | null>(null);
+  
   const { data: user, isLoading } = useQuery<User>({
     queryKey: ['/api/me'],
     retry: false,
+    refetchInterval: (data) => {
+      // Poll more frequently if user is pending approval
+      if (data?.status === 'PENDING_APPROVAL') {
+        return 3000; // 3 seconds
+      }
+      // Normal polling for other states
+      return 10000; // 10 seconds
+    },
+    refetchIntervalInBackground: true,
   });
+
+  // Show notifications for status and coin changes
+  useEffect(() => {
+    if (user && previousUser) {
+      // Check for status change to APPROVED
+      if (previousUser.status !== 'APPROVED' && user.status === 'APPROVED') {
+        toast({
+          title: "Profile Approved! 🎉",
+          description: "Your profile has been approved. Welcome to Kaiveni!",
+        });
+      }
+      
+      // Check for coin balance increase
+      if (user.coins > previousUser.coins) {
+        const coinDifference = user.coins - previousUser.coins;
+        toast({
+          title: "Coins Added!",
+          description: `${coinDifference} coins have been added to your account.`,
+        });
+      }
+    }
+    
+    // Update previous user state
+    if (user) {
+      setPreviousUser(user);
+    }
+  }, [user, previousUser, toast]);
 
   const loginMutation = useMutation({
     mutationFn: async (credentials: { username: string; password: string }) => {

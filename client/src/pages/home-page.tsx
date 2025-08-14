@@ -59,10 +59,12 @@ export default function HomePage() {
     queryFn: getQueryFn({ on401: "throw" }),
   });
 
-  // Fetch coin balance
+  // Fetch coin balance with automatic updates
   const { data: coinBalance } = useQuery<{ coins: number }>({
     queryKey: ["/api/coins/balance"],
     queryFn: getQueryFn({ on401: "throw" }),
+    refetchInterval: 5000, // Poll every 5 seconds
+    refetchIntervalInBackground: true,
   });
 
   // Fetch notifications

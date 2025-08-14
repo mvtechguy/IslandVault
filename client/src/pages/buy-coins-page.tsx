@@ -32,16 +32,20 @@ export default function BuyCoinsPage() {
     queryFn: getQueryFn({ on401: "throw" }),
   });
 
-  // Fetch coin balance
+  // Fetch coin balance with polling
   const { data: coinBalance } = useQuery({
     queryKey: ["/api/coins/balance"],
     queryFn: getQueryFn({ on401: "throw" }),
+    refetchInterval: 5000, // Check every 5 seconds
+    refetchIntervalInBackground: true,
   });
 
-  // Fetch topup history
+  // Fetch topup history with polling
   const { data: topupHistory } = useQuery({
     queryKey: ["/api/coins/topups"],
     queryFn: getQueryFn({ on401: "throw" }),
+    refetchInterval: 10000, // Check every 10 seconds
+    refetchIntervalInBackground: true,
   });
 
   const submitTopupMutation = useMutation({

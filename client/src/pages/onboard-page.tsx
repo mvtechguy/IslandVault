@@ -34,9 +34,12 @@ export default function OnboardPage() {
   // Real-time redirect for approved users
   useEffect(() => {
     if (!isLoading && user && user.status === 'APPROVED') {
-      setTimeout(() => {
+      // Show success message briefly then redirect
+      const timer = setTimeout(() => {
         setLocation('/');
-      }, 2000); // 2 second delay to show success message
+      }, 1500); // 1.5 second delay to show success message
+      
+      return () => clearTimeout(timer);
     }
   }, [user?.status, isLoading, setLocation]);
 

@@ -13,6 +13,8 @@ export function CoinBalance({ className }: { className?: string }) {
 
   const { data: coinData } = useQuery<CoinBalanceResponse>({
     queryKey: ['/api/coins/balance'],
+    refetchInterval: 5000, // Poll every 5 seconds
+    refetchIntervalInBackground: true,
   });
 
   const handleCoinClick = () => {
