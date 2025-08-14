@@ -1149,6 +1149,27 @@ export class DatabaseStorage implements IStorage {
       total: totalResult?.count || 0
     };
   }
+
+  // Add missing methods that are referenced but not implemented
+  async isConversationParticipant(conversationId: number, userId: number): Promise<boolean> {
+    const [participant] = await db
+      .select()
+      .from(conversationParticipants)
+      .where(
+        and(
+          eq(conversationParticipants.conversationId, conversationId),
+          eq(conversationParticipants.userId, userId)
+        )
+      );
+    return !!participant;
+  }
+
+  async getConversationParticipants(conversationId: number): Promise<any[]> {
+    return await db
+      .select()
+      .from(conversationParticipants)
+      .where(eq(conversationParticipants.conversationId, conversationId));
+  }
 }
 
 export const storage = new DatabaseStorage();

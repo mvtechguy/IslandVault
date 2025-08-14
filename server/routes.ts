@@ -142,7 +142,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         aclRules: [
           {
             group: {
-              type: "ADMIN_ONLY",
+              type: "PRIVATE",
               id: "admins"
             },
             permission: ObjectPermission.READ
@@ -309,9 +309,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const postData = insertPostSchema.parse(req.body);
       const post = await storage.createPost({
         ...postData,
-        userId: req.user.id,
-        // Admin posts are automatically approved
-        status: isAdmin ? 'APPROVED' : 'PENDING'
+        userId: req.user!.id
       });
 
       // Deduct coins only for non-admin users
@@ -328,7 +326,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Send Telegram notification to admin about new post (only for non-admin users)
-      if (!isAdmin) {
+      if (!isAdmin && user) {
         await telegramService.notifyAdminNewPost(
           user.username, 
           post.title || 'Untitled', 
@@ -623,9 +621,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const request = await storage.createConnectionRequest({
         ...requestData,
-        requesterId: req.user.id,
-        // Admin connection requests are automatically approved
-        status: isAdmin ? 'APPROVED' : 'PENDING'
+        requesterId: req.user!.id
       });
 
       // Deduct coins only for non-admin users
@@ -647,15 +643,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Send Telegram notification to target user
       if (targetUser) {
-        await telegramService.notifyConnectionRequest(targetUser.id, user.fullName);
+        await telegramService.notifyConnectionRequest(targetUser.id, user?.fullName || 'Unknown User');
       }
 
       // Send admin notification (only for non-admin users)
       if (!isAdmin) {
         await telegramService.notifyAdminConnectionRequest(
-          user.fullName,
+          user?.fullName || 'Unknown User',
           targetUser?.fullName || 'Unknown User',
-          post?.title
+          post?.title || null
         );
       }
 
@@ -711,14 +707,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Check if the user owns this post
       const existingPost = await storage.getPost(id);
-      if (!existingPost || existingPost.authorId !== req.user!.id) {
+      if (!existingPost || existingPost.userId !== req.user!.id) {
         return res.status(403).json({ message: "Not authorized to edit this post" });
       }
 
       const updatedPost = await storage.updatePost(id, { 
         title, 
-        description,
-        status: 'PENDING' // Reset to pending on edit
+        description
       });
       
       if (!updatedPost) {
@@ -890,7 +885,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Create audit log
       await storage.createAudit({
-        adminId: req.user.id,
+        adminId: req.user!.id,
         action: 'USER_APPROVED',
         entity: 'users',
         entityId: id,
@@ -926,7 +921,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await telegramService.notifyUserRegistrationRejected(id, note);
 
       await storage.createAudit({
-        adminId: req.user.id,
+        adminId: req.user!.id,
         action: 'USER_REJECTED',
         entity: 'users',
         entityId: id,
@@ -1070,7 +1065,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await telegramService.notifyCoinsAdded(topup.userId, computedCoins);
 
       await storage.createAudit({
-        adminId: req.user.id,
+        adminId: req.user!.id,
         action: 'TOPUP_APPROVED',
         entity: 'coin_topups',
         entityId: id,
@@ -1271,7 +1266,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.createAudit({
         adminId: req.user!.id,
         action: 'PACKAGE_CREATED',
-        entity: 'packages',
+        entity: 'coin_packages',
         entityId: newPackage.id,
         meta: { name, coins, priceMvr },
         ip: req.ip || null
@@ -1305,7 +1300,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.createAudit({
         adminId: req.user!.id,
         action: 'PACKAGE_UPDATED',
-        entity: 'packages',
+        entity: 'coin_packages',
         entityId: id,
         meta: { name, coins, priceMvr },
         ip: req.ip || null
@@ -1327,7 +1322,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.createAudit({
         adminId: req.user!.id,
         action: 'PACKAGE_DELETED',
-        entity: 'packages',
+        entity: 'coin_packages',
         entityId: id,
         meta: {},
         ip: req.ip || null
@@ -2488,10 +2483,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         switch (data.type) {
           case 'authenticate':
             userId = data.userId;
-            if (!activeConnections.has(userId)) {
-              activeConnections.set(userId, new Set());
+            if (!activeConnections.has(userId!)) {
+              activeConnections.set(userId!, new Set());
             }
-            activeConnections.get(userId)!.add(ws);
+            activeConnections.get(userId!)!.add(ws);
             ws.send(JSON.stringify({ type: 'authenticated', success: true }));
             break;
             
@@ -2509,7 +2504,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // Verify user is participant in conversation
             const isParticipant = await storage.isConversationParticipant(
               conversationId, 
-              userId
+              userId!
             );
             
             if (!isParticipant) {
@@ -2523,7 +2518,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // Save message to database
             const newMessage = await storage.createMessage({
               conversationId,
-              senderId: userId,
+              senderId: userId!,
               body,
               attachments
             });

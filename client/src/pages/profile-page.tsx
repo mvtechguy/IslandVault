@@ -46,7 +46,7 @@ const updateProfileSchema = z.object({
 });
 
 export default function ProfilePage() {
-  const { user, logoutMutation } = useAuth();
+  const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -152,15 +152,15 @@ export default function ProfilePage() {
       username: user?.username || "",
       phone: user?.phone || "",
       fullName: user?.fullName || "",
-      gender: user?.gender || "",
+      gender: (user?.gender as "male" | "female" | "other") || "male",
       dateOfBirth: user?.dateOfBirth ? new Date(user.dateOfBirth).toISOString().split('T')[0] : "",
       island: user?.island || "",
       atoll: user?.atoll || "",
       profilePhotoPath: user?.profilePhotoPath || "",
-      job: user?.job || "",
-      education: user?.education || "",
-      shortBio: user?.shortBio || "",
-      partnerPreferences: user?.partnerPreferences || {
+      job: "",
+      education: "",
+      shortBio: "",
+      partnerPreferences: {
         ageMin: 18,
         ageMax: 50,
         gender: "",
@@ -180,7 +180,7 @@ export default function ProfilePage() {
         description: "Your profile is now pending admin approval.",
       });
       setShowEditProfile(false);
-      queryClient.setQueryData(["/api/user"], updatedUser);
+      queryClient.setQueryData(["/api/me"], updatedUser);
     },
     onError: (error: Error) => {
       toast({
@@ -316,11 +316,7 @@ export default function ProfilePage() {
                   <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">
                     {user.island}, {user.atoll}
                   </p>
-                  {user.shortBio && (
-                    <p className="text-sm text-gray-700 dark:text-gray-300 mt-2">
-                      {user.shortBio}
-                    </p>
-                  )}
+
                 </div>
               </div>
             </CardContent>
@@ -689,7 +685,7 @@ export default function ProfilePage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {atolls.map((atoll) => (
+                      {atolls.map((atoll: any) => (
                         <SelectItem key={atoll.code} value={atoll.code}>
                           {atoll.fullName}
                         </SelectItem>
@@ -707,8 +703,8 @@ export default function ProfilePage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {availableIslands.map((island) => (
-                        <SelectItem key={island.name} value={island.name?.toLowerCase().replace(/\s+/g, '_') || island.name}>
+                      {availableIslands.map((island: any) => (
+                        <SelectItem key={island.name} value={island.name}>
                           {island.name}
                         </SelectItem>
                       ))}
