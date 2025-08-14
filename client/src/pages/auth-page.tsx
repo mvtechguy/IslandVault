@@ -12,9 +12,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertUserSchema } from "@shared/schema";
 import { z } from "zod";
-import { Heart, Users, Shield, Sparkles, Eye, EyeOff, Check, X, AlertCircle, Camera, Cpu, Zap, Activity } from "lucide-react";
-import { QuantumCard } from "@/components/QuantumCard";
-import { QuantumButton } from "@/components/QuantumButton";
+import { Heart, Users, Shield, Sparkles, Eye, EyeOff, Check, X, AlertCircle, Camera } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { getMaldivesData, getIslandsByAtoll } from "@/data/maldives-data";
 
@@ -175,16 +173,7 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen relative overflow-hidden flex items-center justify-center p-4">
-      {/* Quantum Background Effects */}
-      <div className="quantum-particles"></div>
-      
-      {/* Neural Background Patterns */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-10 w-32 h-32 bg-cyan-400/10 rounded-full blur-3xl neural-pulse"></div>
-        <div className="absolute bottom-20 right-10 w-40 h-40 bg-purple-600/10 rounded-full blur-3xl neural-pulse" style={{animationDelay: "1s"}}></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-pink-500/5 rounded-full blur-3xl neural-pulse" style={{animationDelay: "2s"}}></div>
-      </div>
+    <div className="min-h-screen bg-gradient-to-br from-warm-white to-mint/10 dark:from-dark-navy dark:to-charcoal flex items-center justify-center p-4">
       <div className="w-full max-w-6xl grid md:grid-cols-2 gap-8 items-center">
         {/* Hero Section */}
         <div className="text-center md:text-left">
@@ -203,12 +192,12 @@ export default function AuthPage() {
                 }}
               />
             ) : (
-              <div className="w-12 h-12 bg-gradient-to-br from-cyan-400 to-purple-600 rounded-2xl flex items-center justify-center mr-3 neural-pulse">
-                <Cpu className="w-6 h-6 text-white" />
+              <div className="w-12 h-12 bg-gradient-to-br from-mint to-soft-blue rounded-2xl flex items-center justify-center mr-3">
+                <Heart className="w-6 h-6 text-white" />
               </div>
             )}
-            <h1 className="text-4xl font-bold holo-text">
-              Quantum Match
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-mint to-soft-blue bg-clip-text text-transparent">
+              {appName}
             </h1>
           </div>
           

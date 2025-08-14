@@ -1,10 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Heart, Bell, Moon, Sun, Coins, Plus, Filter, Search, Shield, Sparkles, Zap, Star, MapPin, Cpu, Activity } from "lucide-react";
-import { QuantumCard } from "@/components/QuantumCard";
-import { QuantumButton } from "@/components/QuantumButton";
-import { QuantumProfileCard } from "@/components/QuantumProfileCard";
-import { QuantumHeader } from "@/components/QuantumHeader";
+import { Heart, Bell, Moon, Sun, Coins, Plus, Filter, Search, Shield } from "lucide-react";
 import { Redirect, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,7 +14,7 @@ import { useTheme } from "@/lib/theme-provider";
 import { useToast } from "@/hooks/use-toast";
 import { UserCard } from "@/components/UserCard";
 
-import { QuantumBottomNav } from "@/components/QuantumBottomNav";
+import { BottomNavigation } from "@/components/BottomNavigation";
 import { apiRequest, getQueryFn } from "@/lib/queryClient";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -144,121 +140,87 @@ export default function HomePage() {
   const unreadNotifications = notifications?.filter((n: any) => !n.seen).length || 0;
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-slate-50 to-white dark:from-slate-900 dark:to-slate-800">
-      {/* Quantum Background Effects */}
-      <div className="quantum-particles"></div>
-      
-      {/* Futuristic Header */}
-      <header className="fixed top-0 left-0 right-0 bg-gradient-to-r from-slate-900/95 to-slate-800/95 border-b border-cyan-400/20 z-50 backdrop-blur-xl shadow-2xl">
-        <div className="container mx-auto flex items-center justify-between px-3 py-2 sm:px-4 sm:py-3">
-          {/* Left Section - Logo */}
-          <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-shrink-0">
-            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-cyan-400 to-purple-600 rounded-lg sm:rounded-xl flex items-center justify-center neural-pulse">
-              <Cpu className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+    <div className="min-h-screen bg-warm-white dark:bg-dark-navy text-gray-800 dark:text-gray-200 transition-colors duration-300">
+      {/* Mobile Header */}
+      <header className="bg-white dark:bg-charcoal shadow-sm border-b border-gray-100 dark:border-gray-700 sticky top-0 z-50">
+        <div className="flex items-center justify-between px-4 py-3">
+          <div className="flex items-center space-x-3">
+            <div className="w-8 h-8 bg-gradient-to-br from-mint to-soft-blue rounded-xl flex items-center justify-center">
+              <Heart className="w-4 h-4 text-white" />
             </div>
-            <h1 className="text-lg sm:text-xl lg:text-2xl font-bold holo-text truncate">
+            <h1 className="text-xl font-bold bg-gradient-to-r from-mint to-soft-blue bg-clip-text text-transparent">
               Kaiveni
             </h1>
           </div>
-          
-          {/* Right Section - Controls */}
-          <div className="flex items-center space-x-1 sm:space-x-2 lg:space-x-3">
-            {/* Credits - Hide text on very small screens */}
-            <QuantumCard glow={false} className="px-2 py-1 sm:px-3">
-              <QuantumButton
-                variant="ghost"
-                size="sm"
-                onClick={() => setLocation('/coins')}
-                className="flex items-center space-x-1 sm:space-x-2"
-              >
-                <Zap className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-400" />
-                <span className="text-xs sm:text-sm font-bold text-yellow-400">
+          <div className="flex items-center space-x-3">
+            {/* Coin Balance with Plus Button */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setLocation('/coins')}
+              className="flex items-center space-x-2 bg-gradient-to-r from-mint/10 to-soft-blue/10 hover:from-mint/20 hover:to-soft-blue/20 border border-mint/20 rounded-full px-3 py-1"
+            >
+              <div className="flex items-center space-x-1">
+                <Coins className="w-4 h-4 text-mint" />
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   {coinBalance?.coins || 0}
                 </span>
-                <span className="hidden sm:inline text-xs text-muted-foreground">Credits</span>
-                <Plus className="w-2 h-2 sm:w-3 sm:h-3 text-cyan-400" />
-              </QuantumButton>
-            </QuantumCard>
-            
+              </div>
+              <div className="w-5 h-5 bg-gradient-to-r from-mint to-soft-blue rounded-full flex items-center justify-center">
+                <Plus className="w-3 h-3 text-white" />
+              </div>
+            </Button>
             {/* Theme Toggle */}
-            <QuantumButton
+            <Button
               variant="ghost"
-              size="icon"
+              size="sm"
               onClick={toggleTheme}
-              quantum
-              className="w-8 h-8 sm:w-9 sm:h-9"
+              className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600"
             >
               {theme === "light" ? (
-                <Moon className="w-3 h-3 sm:w-4 sm:h-4" />
+                <Moon className="w-4 h-4 text-gray-600" />
               ) : (
-                <Sun className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-400" />
+                <Sun className="w-4 h-4 text-yellow-400" />
               )}
-            </QuantumButton>
-            
+            </Button>
             {/* Notifications */}
-            <QuantumButton
+            <Button
               variant="ghost"
-              size="icon"
-              className="relative w-8 h-8 sm:w-9 sm:h-9"
+              size="sm"
+              className="relative w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600"
             >
-              <Bell className="w-3 h-3 sm:w-4 sm:h-4" />
+              <Bell className="w-4 h-4 text-gray-600 dark:text-gray-300" />
               {unreadNotifications > 0 && (
-                <Badge className="absolute -top-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center p-0 bg-gradient-to-r from-red-500 to-pink-500 text-xs neural-pulse">
-                  {unreadNotifications > 99 ? "99+" : unreadNotifications}
-                </Badge>
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-blush rounded-full text-xs text-white flex items-center justify-center">
+                  {unreadNotifications}
+                </span>
               )}
-            </QuantumButton>
+            </Button>
             
-            {/* Admin Access - Show only on larger screens for admins */}
+            {/* Admin Dashboard Access - Only for Admin Users */}
             {user && (user.role === 'ADMIN' || user.role === 'SUPERADMIN') && (
-              <QuantumButton
+              <Button
                 variant="ghost"
-                size="icon"
+                size="sm"
                 onClick={() => window.location.href = '/admin'}
-                className="hidden sm:flex w-8 h-8 sm:w-9 sm:h-9 bg-gradient-to-r from-orange-600/20 to-red-600/20 border border-orange-400/30"
-                title="Admin Console"
-                quantum
+                className="w-8 h-8 rounded-lg bg-orange-100 dark:bg-orange-900/20 hover:bg-orange-200 dark:hover:bg-orange-900/40 border border-orange-300 dark:border-orange-600"
+                title="Admin Dashboard"
               >
-                <Shield className="w-3 h-3 sm:w-4 sm:h-4 text-orange-400" />
-              </QuantumButton>
+                <Shield className="w-4 h-4 text-orange-600 dark:text-orange-400" />
+              </Button>
             )}
           </div>
         </div>
       </header>
 
-      {/* Main Content with top padding for fixed header */}
-      <main className="pt-16 sm:pt-20 pb-20 px-3 relative z-10 space-y-4">
-        {/* Status Panel */}
-        <QuantumCard floating className="mt-3">
-          <div className="p-3">
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="text-sm font-medium text-cyan-400">Platform Status</h2>
-              <Badge className="bg-gradient-to-r from-green-500 to-emerald-500 text-white border-0 text-xs">
-                <Activity className="h-2 w-2 mr-1" />
-                ONLINE
-              </Badge>
-            </div>
-            <div className="grid grid-cols-3 gap-2 text-center">
-              <div>
-                <div className="text-lg font-bold text-cyan-400">{postsData?.total || 0}</div>
-                <div className="text-xs text-muted-foreground">Users</div>
-              </div>
-              <div>
-                <div className="text-lg font-bold text-purple-400">Smart</div>
-                <div className="text-xs text-muted-foreground">Matching</div>
-              </div>
-              <div>
-                <div className="text-lg font-bold text-pink-400">∞</div>
-                <div className="text-xs text-muted-foreground">Connections</div>
-              </div>
-            </div>
-          </div>
-        </QuantumCard>
+      {/* Main Content */}
+      <main className="pb-20 px-4">
 
-        {/* Filters */}
-        <div>
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-medium">Featured Posts</h2>
+
+        {/* Quick Filters */}
+        <div className="mt-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold">Pinned Posts</h2>
             <Button
               variant="ghost"
               size="sm"
@@ -269,21 +231,21 @@ export default function HomePage() {
               All Filters
             </Button>
           </div>
-          <div className="flex space-x-2 overflow-x-auto pb-2">
+          <div className="flex space-x-3 overflow-x-auto pb-2">
             <div className="flex space-x-2 min-w-max">
-              <Badge variant="default" className="bg-cyan-600 hover:bg-cyan-700 text-white whitespace-nowrap text-xs">
+              <Badge variant="default" className="bg-mint hover:bg-mint/80 text-white whitespace-nowrap">
                 All
               </Badge>
-              <Badge variant="outline" className="whitespace-nowrap hover:border-cyan-400 text-xs">
+              <Badge variant="outline" className="whitespace-nowrap hover:border-mint">
                 Male
               </Badge>
-              <Badge variant="outline" className="whitespace-nowrap hover:border-cyan-400 text-xs">
+              <Badge variant="outline" className="whitespace-nowrap hover:border-mint">
                 Female
               </Badge>
-              <Badge variant="outline" className="whitespace-nowrap hover:border-cyan-400 text-xs">
+              <Badge variant="outline" className="whitespace-nowrap hover:border-mint">
                 20-30
               </Badge>
-              <Badge variant="outline" className="whitespace-nowrap hover:border-cyan-400 text-xs">
+              <Badge variant="outline" className="whitespace-nowrap hover:border-mint">
                 Malé
               </Badge>
             </div>
@@ -291,7 +253,7 @@ export default function HomePage() {
         </div>
 
         {/* User Cards Feed */}
-        <div className="space-y-3">
+        <div className="mt-6 space-y-4">
           {postsLoading ? (
             // Loading skeleton
             <div className="space-y-4">
@@ -308,58 +270,35 @@ export default function HomePage() {
             </div>
           ) : postsData?.posts && postsData.posts.length > 0 ? (
             postsData.posts.map((post: any) => (
-              <QuantumProfileCard 
-                key={post.id} 
-                post={post}
-                onConnect={(userId, postId) => {
-                  console.log("Connection requested:", userId, postId);
-                }}
-                onLike={(postId) => {
-                  console.log("Post liked:", postId);
-                }}
-              />
+              <UserCard key={post.id} post={post} />
             ))
           ) : (
-            <QuantumCard floating particles className="text-center py-16">
-              <div className="space-y-6">
-                <div className="mx-auto w-24 h-24 bg-gradient-to-br from-cyan-400 to-purple-600 rounded-full flex items-center justify-center neural-pulse">
-                  <Sparkles className="w-12 h-12 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold holo-text mb-2">
-                    Welcome to Kaiveni
-                  </h3>
-                  <p className="text-muted-foreground mb-6">
-                    Be the first to create your profile and start connecting with people from the Maldives!
-                  </p>
-                  {user?.status === 'APPROVED' && (
-                    <QuantumButton
-                      onClick={() => setShowCreatePost(true)}
-                      quantum
-                      pulse
-                      className="bg-gradient-to-r from-cyan-600 to-purple-600 hover:from-cyan-500 hover:to-purple-500 text-white border-0"
-                    >
-                      <Plus className="w-4 h-4 mr-2" />
-                      Create Your Profile
-                    </QuantumButton>
-                  )}
-                </div>
-              </div>
-            </QuantumCard>
+            <div className="text-center py-12">
+              <Heart className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                No posts yet
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400 mb-4">
+                Be the first to create a post and start connecting!
+              </p>
+              {user?.status === 'APPROVED' && (
+                <Button
+                  onClick={() => setShowCreatePost(true)}
+                  className="bg-gradient-to-r from-mint to-soft-blue hover:shadow-lg"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create Post
+                </Button>
+              )}
+            </div>
           )}
         </div>
 
-        {/* Create Profile Dialog */}
+        {/* Create Post Modal */}
         <Dialog open={showCreatePost} onOpenChange={setShowCreatePost}>
-          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto quantum-glow">
-            <DialogHeader className="border-b border-cyan-400/20 pb-4">
-              <DialogTitle className="text-xl holo-text flex items-center space-x-2">
-                <Cpu className="h-5 w-5 text-cyan-400" />
-                <span>Create Your Profile</span>
-              </DialogTitle>
-              <p className="text-sm text-muted-foreground mt-2">
-                Tell others about yourself and what you're looking for
-              </p>
+          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Create a New Post</DialogTitle>
             </DialogHeader>
             <form onSubmit={createPostForm.handleSubmit(onCreatePost as any)} className="space-y-4">
               <div>
@@ -493,14 +432,7 @@ export default function HomePage() {
       </main>
 
       {/* Bottom Navigation */}
-      <QuantumBottomNav 
-        notifications={unreadNotifications} 
-        onCreatePost={() => user?.status === 'APPROVED' ? setShowCreatePost(true) : toast({
-          title: "Account not approved",
-          description: "Please wait for admin approval to create posts.",
-          variant: "destructive"
-        })}
-      />
+      <BottomNavigation />
     </div>
   );
 }

@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
-import { QuantumBottomNav } from "@/components/QuantumBottomNav";
+import { BottomNavigation } from "@/components/BottomNavigation";
 import { ThemeCustomizationPanel } from "@/components/ThemeCustomizationPanel";
 import { apiRequest, getQueryFn } from "@/lib/queryClient";
 import { formatDistanceToNow } from "date-fns";
@@ -1833,7 +1833,7 @@ export default function AdminPage() {
       </main>
 
       {/* Bottom Navigation */}
-      <QuantumBottomNav />
+      <BottomNavigation />
 
       {/* Package Creation/Edit Dialog */}
       <Dialog open={!!selectedPackage} onOpenChange={() => setSelectedPackage(null)}>

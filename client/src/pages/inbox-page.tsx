@@ -13,7 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { formatDistanceToNow } from "date-fns";
 import { MobileHeader } from "@/components/MobileHeader";
-import { QuantumBottomNav } from "@/components/QuantumBottomNav";
+import { BottomNavigation } from "@/components/BottomNavigation";
 import { useChat } from "@/hooks/useChat";
 
 export default function InboxPage() {
@@ -402,7 +402,7 @@ export default function InboxPage() {
         )}
       </div>
 
-      <QuantumBottomNav />
+      <BottomNavigation />
     </div>
   );
 }

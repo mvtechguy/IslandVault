@@ -1,359 +1,202 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
-
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  /* Futuristic Quantum Color Palette - 2500s Design */
-  --quantum-cyan: #00f5ff;
-  --quantum-purple: #8b5cf6;
-  --quantum-pink: #f472b6;
-  --quantum-blue: #3b82f6;
-  --quantum-green: #10b981;
-  --quantum-gold: #f59e0b;
-  --quantum-red: #ef4444;
+  --background: hsl(0, 0%, 98%);
+  --foreground: hsl(210, 25%, 7.8431%);
+  --card: hsl(180, 6.6667%, 97.0588%);
+  --card-foreground: hsl(210, 25%, 7.8431%);
+  --popover: hsl(0, 0%, 100%);
+  --popover-foreground: hsl(210, 25%, 7.8431%);
+  --primary: hsl(161, 46%, 74%);
+  --primary-foreground: hsl(0, 0%, 100%);
+  --secondary: hsl(210, 25%, 7.8431%);
+  --secondary-foreground: hsl(0, 0%, 100%);
+  --muted: hsl(240, 1.9608%, 90%);
+  --muted-foreground: hsl(210, 25%, 7.8431%);
+  --accent: hsl(211.5789, 51.3514%, 92.7451%);
+  --accent-foreground: hsl(161, 46%, 74%);
+  --destructive: hsl(356.3033, 90.5579%, 54.3137%);
+  --destructive-foreground: hsl(0, 0%, 100%);
+  --border: hsl(201.4286, 30.4348%, 90.9804%);
+  --input: hsl(200, 23.0769%, 97.4510%);
+  --ring: hsl(161, 46%, 74%);
+  --chart-1: hsl(161, 46%, 74%);
+  --chart-2: hsl(159.7826, 100%, 36.0784%);
+  --chart-3: hsl(42.0290, 92.8251%, 56.2745%);
+  --chart-4: hsl(147.1429, 78.5047%, 41.9608%);
+  --chart-5: hsl(341.4894, 75.2000%, 50.9804%);
+  --radius: 1.5rem;
   
-  /* Neural network gradients */
-  --neural-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  --neural-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-  --neural-tertiary: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-  --neural-dark: linear-gradient(135deg, #0c0c0c 0%, #1a1a1a 100%);
-  
-  /* Holographic effects */
-  --holo-1: linear-gradient(45deg, #ff0080, #ff8c00, #40e0d0);
-  --holo-2: linear-gradient(45deg, #8a2be2, #00ced1, #ff1493);
-  --holo-3: linear-gradient(45deg, #00f5ff, #8b5cf6, #f472b6);
-  
-  /* System colors for light mode */
-  --background: 240 10% 3.9%;
-  --foreground: 0 0% 98%;
-  --card: 240 10% 3.9%;
-  --card-foreground: 0 0% 98%;
-  --popover: 240 10% 3.9%;
-  --popover-foreground: 0 0% 98%;
-  --primary: 200 100% 50%;
-  --primary-foreground: 240 10% 3.9%;
-  --secondary: 262 83% 58%;
-  --secondary-foreground: 0 0% 98%;
-  --muted: 240 3.7% 15.9%;
-  --muted-foreground: 240 5% 64.9%;
-  --accent: 318 71% 70%;
-  --accent-foreground: 240 10% 3.9%;
-  --destructive: 0 72% 51%;
-  --destructive-foreground: 0 0% 98%;
-  --border: 240 3.7% 15.9%;
-  --input: 240 3.7% 15.9%;
-  --ring: 200 100% 50%;
-  --chart-1: 200 100% 50%;
-  --chart-2: 262 83% 58%;
-  --chart-3: 318 71% 70%;
-  --chart-4: 142 76% 73%;
-  --chart-5: 38 100% 50%;
-  --radius: 1rem;
+  /* Custom Maldivian Color Palette */
+  --mint: hsl(161, 46%, 74%);
+  --blush: hsl(353, 100%, 85%);
+  --lavender: hsl(240, 82%, 94%);
+  --soft-blue: hsl(207, 72%, 82%);
+  --warm-white: hsl(0, 0%, 98%);
+  --soft-gray: hsl(210, 16.6667%, 97.6471%);
+  --dark-navy: hsl(215, 20%, 12%);
+  --charcoal: hsl(220, 13%, 18%);
 }
 
 .dark {
-  --background: 240 10% 3.9%;
-  --foreground: 0 0% 98%;
-  --card: 240 10% 3.9%;
-  --card-foreground: 0 0% 98%;
-  --popover: 240 10% 3.9%;
-  --popover-foreground: 0 0% 98%;
-  --primary: 200 100% 50%;
-  --primary-foreground: 240 10% 3.9%;
-  --secondary: 240 3.7% 15.9%;
-  --secondary-foreground: 0 0% 98%;
-  --muted: 240 3.7% 15.9%;
-  --muted-foreground: 240 5% 64.9%;
-  --accent: 240 3.7% 15.9%;
-  --accent-foreground: 0 0% 98%;
-  --destructive: 0 62.8% 30.6%;
-  --destructive-foreground: 0 0% 98%;
-  --border: 240 3.7% 15.9%;
-  --input: 240 3.7% 15.9%;
-  --ring: 200 100% 50%;
-  --chart-1: 200 100% 50%;
-  --chart-2: 262 83% 58%;
-  --chart-3: 318 71% 70%;
-  --chart-4: 142 76% 73%;
-  --chart-5: 38 100% 50%;
+  --background: hsl(215, 20%, 12%);
+  --foreground: hsl(200, 6.6667%, 91.1765%);
+  --card: hsl(220, 13%, 18%);
+  --card-foreground: hsl(0, 0%, 85.0980%);
+  --popover: hsl(215, 20%, 12%);
+  --popover-foreground: hsl(200, 6.6667%, 91.1765%);
+  --primary: hsl(161, 46%, 74%);
+  --primary-foreground: hsl(0, 0%, 100%);
+  --secondary: hsl(195.0000, 15.3846%, 94.9020%);
+  --secondary-foreground: hsl(210, 25%, 7.8431%);
+  --muted: hsl(0, 0%, 9.4118%);
+  --muted-foreground: hsl(210, 3.3898%, 46.2745%);
+  --accent: hsl(220, 13%, 18%);
+  --accent-foreground: hsl(161, 46%, 74%);
+  --destructive: hsl(356.3033, 90.5579%, 54.3137%);
+  --destructive-foreground: hsl(0, 0%, 100%);
+  --border: hsl(210, 5.2632%, 14.9020%);
+  --input: hsl(220, 13%, 18%);
+  --ring: hsl(161, 46%, 74%);
+  --chart-1: hsl(161, 46%, 74%);
+  --chart-2: hsl(159.7826, 100%, 36.0784%);
+  --chart-3: hsl(42.0290, 92.8251%, 56.2745%);
+  --chart-4: hsl(147.1429, 78.5047%, 41.9608%);
+  --chart-5: hsl(341.4894, 75.2000%, 50.9804%);
 }
 
-* {
-  border-color: hsl(var(--border));
-  box-sizing: border-box;
-}
-
-html {
-  font-family: 'Inter', sans-serif;
-  scroll-behavior: smooth;
-}
-
-body {
-  color: hsl(var(--foreground));
-  background: hsl(var(--background));
-  min-height: 100vh;
-  overflow-x: hidden;
-  position: relative;
-}
-
-/* Futuristic background effects */
-body::before {
-  content: '';
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: 
-    radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.1) 0%, transparent 50%),
-    radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.1) 0%, transparent 50%),
-    radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.05) 0%, transparent 50%);
-  pointer-events: none;
-  z-index: -2;
-  animation: backgroundShift 20s ease-in-out infinite;
-}
-
-body::after {
-  content: '';
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-image: 
-    linear-gradient(90deg, transparent 24%, rgba(0, 245, 255, 0.02) 25%, rgba(0, 245, 255, 0.02) 26%, transparent 27%, transparent 74%, rgba(0, 245, 255, 0.02) 75%, rgba(0, 245, 255, 0.02) 76%, transparent 77%, transparent),
-    linear-gradient(transparent 24%, rgba(0, 245, 255, 0.02) 25%, rgba(0, 245, 255, 0.02) 26%, transparent 27%, transparent 74%, rgba(0, 245, 255, 0.02) 75%, rgba(0, 245, 255, 0.02) 76%, transparent 77%, transparent);
-  background-size: 50px 50px;
-  pointer-events: none;
-  z-index: -1;
-}
-
-@keyframes backgroundShift {
-  0%, 100% { filter: hue-rotate(0deg); }
-  25% { filter: hue-rotate(90deg); }
-  50% { filter: hue-rotate(180deg); }
-  75% { filter: hue-rotate(270deg); }
-}
-
-/* Quantum glow effects */
-.quantum-glow {
-  position: relative;
-  background: linear-gradient(135deg, rgba(0, 245, 255, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
-  border: 1px solid rgba(0, 245, 255, 0.3);
-  box-shadow: 
-    0 0 20px rgba(0, 245, 255, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  transition: all 0.3s ease;
-}
-
-.quantum-glow:hover {
-  box-shadow: 
-    0 0 30px rgba(0, 245, 255, 0.4),
-    0 0 60px rgba(139, 92, 246, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
-  transform: translateY(-2px);
-}
-
-/* Neural network animations */
-@keyframes neuralPulse {
-  0%, 100% { opacity: 0.7; transform: scale(1); }
-  50% { opacity: 1; transform: scale(1.05); }
-}
-
-.neural-pulse {
-  animation: neuralPulse 2s ease-in-out infinite;
-}
-
-/* Holographic text */
-.holo-text {
-  background: linear-gradient(45deg, #00f5ff, #8b5cf6, #f472b6, #00f5ff);
-  background-size: 400% 400%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  animation: holoShift 3s ease-in-out infinite;
-  font-weight: 700;
-  text-shadow: 0 0 30px rgba(0, 245, 255, 0.5);
-}
-
-@keyframes holoShift {
-  0%, 100% { background-position: 0% 50%; }
-  25% { background-position: 100% 50%; }
-  50% { background-position: 100% 100%; }
-  75% { background-position: 0% 100%; }
-}
-
-/* Quantum buttons */
-.quantum-btn {
-  position: relative;
-  background: linear-gradient(135deg, rgba(0, 245, 255, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%);
-  border: 1px solid rgba(0, 245, 255, 0.5);
-  backdrop-filter: blur(10px);
-  transition: all 0.3s ease;
-  overflow: hidden;
-}
-
-.quantum-btn::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  transition: left 0.5s;
-}
-
-.quantum-btn:hover::before {
-  left: 100%;
-}
-
-.quantum-btn:hover {
-  box-shadow: 
-    0 0 20px rgba(0, 245, 255, 0.5),
-    0 0 40px rgba(139, 92, 246, 0.3);
-  transform: translateY(-2px);
-}
-
-/* Floating cards */
-@keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
-}
-
-.floating-card {
-  animation: float 6s ease-in-out infinite;
-}
-
-.floating-card:nth-child(even) {
-  animation-delay: 3s;
-}
-
-/* Quantum particles */
-.quantum-particles {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  pointer-events: none;
-}
-
-.quantum-particles::before,
-.quantum-particles::after {
-  content: '';
-  position: absolute;
-  width: 4px;
-  height: 4px;
-  background: radial-gradient(circle, rgba(0, 245, 255, 0.8) 0%, transparent 70%);
-  border-radius: 50%;
-  animation: particleFloat 10s linear infinite;
-}
-
-.quantum-particles::before {
-  left: 10%;
-  animation-delay: -5s;
-}
-
-.quantum-particles::after {
-  left: 90%;
-  animation-delay: -2s;
-}
-
-@keyframes particleFloat {
-  0% {
-    transform: translateY(100vh) scale(0);
-    opacity: 0;
+@layer base {
+  * {
+    @apply border-border;
   }
-  10% {
-    opacity: 1;
-    transform: translateY(90vh) scale(1);
-  }
-  90% {
-    opacity: 1;
-    transform: translateY(10vh) scale(1);
-  }
-  100% {
-    transform: translateY(-10vh) scale(0);
-    opacity: 0;
-  }
-}
 
-/* Mobile optimizations with quantum effects */
-@media screen and (max-width: 768px) {
-  .mobile-header {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    z-index: 50;
-    background: rgba(15, 23, 42, 0.95);
-    backdrop-filter: blur(20px);
-    border-bottom: 1px solid rgba(0, 245, 255, 0.2);
-    box-shadow: 0 4px 20px rgba(0, 245, 255, 0.1);
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   }
   
-  .main-content {
-    padding-top: 4rem;
-    padding-bottom: 5rem;
-    min-height: 100vh;
-  }
-  
-  .bottom-nav {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    z-index: 50;
-    background: rgba(15, 23, 42, 0.95);
-    backdrop-filter: blur(20px);
-    border-top: 1px solid rgba(0, 245, 255, 0.2);
-    box-shadow: 0 -4px 20px rgba(0, 245, 255, 0.1);
+  html {
+    scroll-behavior: smooth;
   }
 }
 
-/* Advanced scrollbar */
+@layer utilities {
+  .text-mint {
+    color: var(--mint);
+  }
+  
+  .text-blush {
+    color: var(--blush);
+  }
+  
+  .text-lavender {
+    color: var(--lavender);
+  }
+  
+  .text-soft-blue {
+    color: var(--soft-blue);
+  }
+  
+  .bg-mint {
+    background-color: var(--mint);
+  }
+  
+  .bg-blush {
+    background-color: var(--blush);
+  }
+  
+  .bg-lavender {
+    background-color: var(--lavender);
+  }
+  
+  .bg-soft-blue {
+    background-color: var(--soft-blue);
+  }
+  
+  .bg-warm-white {
+    background-color: var(--warm-white);
+  }
+  
+  .bg-soft-gray {
+    background-color: var(--soft-gray);
+  }
+  
+  .bg-dark-navy {
+    background-color: var(--dark-navy);
+  }
+  
+  .bg-charcoal {
+    background-color: var(--charcoal);
+  }
+  
+  .border-mint {
+    border-color: var(--mint);
+  }
+  
+  .hover\:border-mint:hover {
+    border-color: var(--mint);
+  }
+  
+  .from-mint {
+    --tw-gradient-from: var(--mint);
+  }
+  
+  .to-soft-blue {
+    --tw-gradient-to: var(--soft-blue);
+  }
+  
+  .shadow-pastel {
+    box-shadow: 0 4px 20px rgba(168, 230, 207, 0.15);
+  }
+  
+  .dark .shadow-pastel {
+    box-shadow: 0 4px 20px rgba(168, 230, 207, 0.05);
+  }
+}
+
+/* Uppy Modal Styling for Dark Mode */
+.dark .uppy-Dashboard {
+  background-color: var(--charcoal);
+  color: var(--foreground);
+}
+
+.dark .uppy-Dashboard-inner {
+  background-color: var(--charcoal);
+}
+
+.dark .uppy-Dashboard-AddFiles {
+  background-color: var(--background);
+  border-color: var(--border);
+}
+
+/* Custom scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.1);
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg, rgba(0, 245, 255, 0.5) 0%, rgba(139, 92, 246, 0.5) 100%);
-  border-radius: 4px;
+  background: var(--mint);
+  border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(135deg, rgba(0, 245, 255, 0.8) 0%, rgba(139, 92, 246, 0.8) 100%);
+  background: var(--soft-blue);
 }
 
-/* Quantum loading */
-@keyframes quantumSpin {
-  0% { transform: rotate(0deg) scale(1); }
-  25% { transform: rotate(90deg) scale(1.1); }
-  50% { transform: rotate(180deg) scale(1); }
-  75% { transform: rotate(270deg) scale(1.1); }
-  100% { transform: rotate(360deg) scale(1); }
+/* Smooth transitions */
+* {
+  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
 }
 
-.quantum-loading {
-  animation: quantumSpin 2s linear infinite;
-}
-
-/* Text selection */
-::selection {
-  background: rgba(0, 245, 255, 0.3);
-  color: white;
-}
-
-/* Focus indicators */
+/* Focus outline for accessibility */
 *:focus-visible {
-  outline: 2px solid rgba(0, 245, 255, 0.8);
+  outline: 2px solid var(--mint);
   outline-offset: 2px;
-  border-radius: 4px;
 }

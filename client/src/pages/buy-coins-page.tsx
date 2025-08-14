@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
-import { QuantumBottomNav } from "@/components/QuantumBottomNav";
+import { BottomNavigation } from "@/components/BottomNavigation";
 import { ObjectUploader } from "@/components/ObjectUploader";
 import { apiRequest, getQueryFn } from "@/lib/queryClient";
 import { formatDistanceToNow } from "date-fns";
@@ -454,7 +454,7 @@ export default function BuyCoinsPage() {
       </main>
 
       {/* Bottom Navigation */}
-      <QuantumBottomNav />
+      <BottomNavigation />
     </div>
   );
 }

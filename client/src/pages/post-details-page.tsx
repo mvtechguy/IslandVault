@@ -12,7 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { formatDistanceToNow } from "date-fns";
 import { MobileHeader } from "@/components/MobileHeader";
-import { QuantumBottomNav } from "@/components/QuantumBottomNav";
+import { BottomNavigation } from "@/components/BottomNavigation";
 
 interface PostDetailsData {
   id: number;
@@ -117,7 +117,7 @@ export default function PostDetailsPage() {
         <div className="flex items-center justify-center h-screen">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-mint"></div>
         </div>
-        <QuantumBottomNav />
+        <BottomNavigation />
       </div>
     );
   }
@@ -135,7 +135,7 @@ export default function PostDetailsPage() {
             </Link>
           </div>
         </div>
-        <QuantumBottomNav />
+        <BottomNavigation />
       </div>
     );
   }
@@ -364,7 +364,7 @@ export default function PostDetailsPage() {
         </Card>
       </div>
       
-      <QuantumBottomNav />
+      <BottomNavigation />
     </div>
   );
 }

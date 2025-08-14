@@ -19,7 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { LocalFileUploader } from "@/components/LocalFileUploader";
 import { MobileHeader } from "@/components/MobileHeader";
-import { QuantumBottomNav } from "@/components/QuantumBottomNav";
+import { BottomNavigation } from "@/components/BottomNavigation";
 
 const createPostSchema = insertPostSchema.extend({
   preferences: z.object({
@@ -391,7 +391,7 @@ export default function CreatePostPage() {
       </Card>
       </div>
       
-      <QuantumBottomNav />
+      <BottomNavigation />
     </div>
   );
 }

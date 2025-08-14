@@ -15,7 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/use-auth";
 import { useTheme } from "@/lib/theme-provider";
 import { useToast } from "@/hooks/use-toast";
-import { QuantumBottomNav } from "@/components/QuantumBottomNav";
+import { BottomNavigation } from "@/components/BottomNavigation";
 import { apiRequest, getQueryFn } from "@/lib/queryClient";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -270,7 +270,7 @@ export default function ProfilePage() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => logout()}
+              onClick={() => logoutMutation.mutate()}
               className="text-red-600 hover:text-red-700"
             >
               <LogOut className="w-4 h-4 mr-1" />
@@ -649,7 +649,7 @@ export default function ProfilePage() {
                   <Label htmlFor="gender">Gender</Label>
                   <Select
                     value={updateProfileForm.watch("gender")}
-                    onValueChange={(value) => updateProfileForm.setValue("gender", value as "male" | "female" | "other")}
+                    onValueChange={(value) => updateProfileForm.setValue("gender", value)}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -800,7 +800,7 @@ export default function ProfilePage() {
         </DialogContent>
       </Dialog>
 
-      <QuantumBottomNav />
+      <BottomNavigation />
     </div>
   );
 }
