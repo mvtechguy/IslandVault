@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Shield, Users, FileText, Coins, MessageSquare, Check, X, Eye, Search, Filter, Palette, Save, RotateCcw, Download, Upload, Package, Plus, Edit, Trash2, Landmark } from "lucide-react";
+import { Shield, Users, FileText, Coins, MessageSquare, Check, X, Eye, Search, Filter, Palette, Save, RotateCcw, Download, Upload, Package, Plus, Edit, Trash2, Landmark, MoreVertical, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,6 +25,8 @@ export default function AdminPage() {
   const [selectedPost, setSelectedPost] = useState<any>(null);
   const [selectedTopup, setSelectedTopup] = useState<any>(null);
   const [selectedConversation, setSelectedConversation] = useState<any>(null);
+  const [selectedConnection, setSelectedConnection] = useState<any>(null);
+  const [showConnectionDetails, setShowConnectionDetails] = useState(false);
   const [actionNote, setActionNote] = useState("");
   const [statusFilter, setStatusFilter] = useState("PENDING");
   const [telegramBotToken, setTelegramBotToken] = useState("");
@@ -109,7 +111,7 @@ export default function AdminPage() {
 
   // Fetch pending connection requests
   const { data: connectionsData } = useQuery<{requests: any[], total: number}>({
-    queryKey: ["/api/admin/queues/connect", statusFilter],
+    queryKey: ["/api/admin/queues/connect/" + statusFilter],
     queryFn: getQueryFn({ 
       on401: "throw"
     }),
@@ -998,10 +1000,114 @@ export default function AdminPage() {
             </TabsContent>
 
             <TabsContent value="connections" className="space-y-4">
-              <div className="text-center py-8">
-                <MessageSquare className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                <p className="text-gray-600 dark:text-gray-400">Connection requests management coming soon</p>
-              </div>
+              {connectionsData?.requests && connectionsData.requests.length > 0 ? (
+                <>
+                  <div className="space-y-3">
+                    {connectionsData?.requests
+                      .slice(connectionsPage * itemsPerPage, (connectionsPage + 1) * itemsPerPage)
+                      .map((request: any) => (
+                        <Card key={request.id} className="border-l-4 border-l-mint">
+                          <CardContent className="pt-4">
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <div className="flex items-center space-x-3 mb-2">
+                                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-mint to-soft-blue flex items-center justify-center">
+                                    <span className="text-white font-semibold">
+                                      {request.requesterName?.charAt(0) || 'U'}
+                                    </span>
+                                  </div>
+                                  <div>
+                                    <h4 className="font-medium text-gray-900 dark:text-white">
+                                      {request.requesterName || 'Unknown User'}
+                                    </h4>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                                      Wants to connect with {request.targetUserName || 'Unknown User'}
+                                    </p>
+                                    {request.postId && (
+                                      <p className="text-xs text-gray-500 dark:text-gray-500">
+                                        Post ID: {request.postId}
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+                                <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">
+                                  {formatDistanceToNow(new Date(request.createdAt), { addSuffix: true })}
+                                </p>
+                                <div className="flex items-center space-x-2">
+                                  <Badge variant={request.status === 'PENDING' ? 'secondary' : request.status === 'APPROVED' ? 'default' : 'destructive'}>
+                                    {request.status}
+                                  </Badge>
+                                  {request.adminNote && (
+                                    <span className="text-xs text-gray-500">Note: {request.adminNote}</span>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                {request.status === 'PENDING' && (
+                                  <>
+                                    <Button
+                                      size="sm"
+                                      onClick={() => {
+                                        setSelectedConnection(request);
+                                        setShowConnectionDetails(true);
+                                      }}
+                                      variant="outline"
+                                    >
+                                      <Eye className="w-4 h-4 mr-1" />
+                                      Review
+                                    </Button>
+                                  </>
+                                )}
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => {
+                                    setSelectedConnection(request);
+                                    setShowConnectionDetails(true);
+                                  }}
+                                >
+                                  <MoreVertical className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                  </div>
+                  
+                  {/* Pagination for connections */}
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-gray-700 dark:text-gray-300">
+                      Showing {connectionsPage * itemsPerPage + 1} to {Math.min((connectionsPage + 1) * itemsPerPage, connectionsData?.total || 0)} of {connectionsData?.total || 0} requests
+                    </p>
+                    <div className="flex items-center space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setConnectionsPage(Math.max(0, connectionsPage - 1))}
+                        disabled={connectionsPage === 0}
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                        Previous
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setConnectionsPage(connectionsPage + 1)}
+                        disabled={(connectionsPage + 1) * itemsPerPage >= (connectionsData?.total || 0)}
+                      >
+                        Next
+                        <ChevronRight className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="text-center py-8">
+                  <MessageSquare className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                  <p className="text-gray-600 dark:text-gray-400">No connection requests found</p>
+                </div>
+              )}
             </TabsContent>
 
             <TabsContent value="chat-inbox" className="space-y-4">

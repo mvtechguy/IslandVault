@@ -347,12 +347,26 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(connectionRequests.createdAt));
   }
 
-  async getConnectionRequestsForAdmin(status?: string, limit = 50, offset = 0): Promise<{ requests: ConnectionRequest[], total: number }> {
+  async getConnectionRequestsForAdmin(status?: string, limit = 50, offset = 0): Promise<{ requests: any[], total: number }> {
     const conditions = status ? eq(connectionRequests.status, status as any) : undefined;
     
     const requestsList = await db
-      .select()
+      .select({
+        id: connectionRequests.id,
+        requesterId: connectionRequests.requesterId,
+        targetUserId: connectionRequests.targetUserId,
+        postId: connectionRequests.postId,
+        status: connectionRequests.status,
+        adminNote: connectionRequests.adminNote,
+        refundApplied: connectionRequests.refundApplied,
+        createdAt: connectionRequests.createdAt,
+        updatedAt: connectionRequests.updatedAt,
+        requesterName: users.fullName,
+        targetUserName: sql<string>`target_user.full_name`
+      })
       .from(connectionRequests)
+      .leftJoin(users, eq(connectionRequests.requesterId, users.id))
+      .leftJoin(sql.raw(`users as target_user ON connection_requests.target_user_id = target_user.id`))
       .where(conditions)
       .orderBy(desc(connectionRequests.createdAt))
       .limit(limit)
