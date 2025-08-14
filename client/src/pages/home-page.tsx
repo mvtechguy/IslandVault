@@ -248,35 +248,54 @@ export default function HomePage() {
                 className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-mint/10 to-soft-blue/10 border border-mint/20 cursor-pointer group"
                 onClick={() => handleBannerClick(banner)}
               >
-                <div className="p-6 flex items-center space-x-4">
-                  {banner.imageUrl && (
-                    <div className="flex-shrink-0 w-16 h-16 rounded-xl overflow-hidden bg-white dark:bg-gray-700">
+                {banner.imageUrl ? (
+                  // Full-width image banner
+                  <div className="relative">
+                    <div className="w-full aspect-[16/9] max-h-[200px] overflow-hidden">
                       <img
                         src={banner.imageUrl}
                         alt={banner.title}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        loading="lazy"
                       />
                     </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white group-hover:text-mint transition-colors">
+                    {/* Content overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+                    <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
+                      <h3 className="text-lg font-semibold mb-1 drop-shadow-lg">
+                        {banner.title}
+                      </h3>
+                      {banner.description && (
+                        <p className="text-sm text-white/90 mb-2 line-clamp-2 drop-shadow">
+                          {banner.description}
+                        </p>
+                      )}
+                      {banner.buttonText && (
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-white/20 backdrop-blur-sm text-white border border-white/30 group-hover:bg-white/30 transition-colors">
+                          {banner.buttonText}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  // Text-only banner fallback
+                  <div className="p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white group-hover:text-mint transition-colors mb-2">
                       {banner.title}
                     </h3>
                     {banner.description && (
-                      <p className="text-sm text-gray-600 dark:text-gray-300 mt-1 line-clamp-2">
+                      <p className="text-sm text-gray-600 dark:text-gray-300 mb-3 line-clamp-3">
                         {banner.description}
                       </p>
                     )}
                     {banner.buttonText && (
-                      <div className="mt-3">
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-mint text-white group-hover:bg-mint/80 transition-colors">
-                          {banner.buttonText}
-                        </span>
-                      </div>
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-mint text-white group-hover:bg-mint/80 transition-colors">
+                        {banner.buttonText}
+                      </span>
                     )}
                   </div>
-                </div>
-                <div className="absolute inset-0 bg-gradient-to-r from-mint/5 to-soft-blue/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                )}
+                <div className="absolute inset-0 bg-gradient-to-r from-mint/5 to-soft-blue/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
               </div>
             ))}
           </div>
