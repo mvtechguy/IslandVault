@@ -1,4 +1,4 @@
-import type { Express } from "express";
+import express, { type Express } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { setupAuth, isAuthenticated, isAdmin } from "./auth";
@@ -68,6 +68,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     next();
   });
 
+  // Serve uploaded files statically
+  app.use('/uploads', express.static('uploads', {
+    maxAge: '1y',
+    etag: false
+  }));
+
   // Error handler for multer
   app.use((error: any, req: any, res: any, next: any) => {
     if (error instanceof multer.MulterError) {
@@ -88,6 +94,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       console.log("Object request path:", req.path);
       console.log("Object request params:", req.params);
+      console.log("User authenticated:", !!req.user, "User ID:", userId);
       console.log("Full URL:", req.url);
       
       const objectFile = await objectStorageService.getObjectEntityFile(req.path);
@@ -101,7 +108,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.sendStatus(403);
       }
       console.log("Serving object file:", objectFile);
-      objectStorageService.downloadObject(objectFile, res);
+      await objectStorageService.downloadObject(objectFile, res);
     } catch (error) {
       console.error("Error checking object access:", error);
       if (error instanceof ObjectNotFoundError) {

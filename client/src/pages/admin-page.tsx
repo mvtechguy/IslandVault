@@ -1750,11 +1750,14 @@ export default function AdminPage() {
                         className="w-full max-w-md mx-auto h-auto object-contain rounded-lg border border-gray-200 dark:border-gray-600"
                         onError={(e) => {
                           console.log('Image failed to load:', selectedTopup.slipPath);
+                          console.log('Image src attribute:', e.currentTarget.src);
                           e.currentTarget.style.display = 'none';
-                          const fallback = document.createElement('div');
-                          fallback.className = 'mt-2 p-4 border-2 border-dashed border-red-300 rounded-lg text-center';
-                          fallback.innerHTML = '<p class="text-sm text-red-600">Unable to load slip image</p><p class="text-xs text-gray-500">Path: ' + selectedTopup.slipPath + '</p>';
-                          e.currentTarget.parentNode?.appendChild(fallback);
+                          if (!e.currentTarget.parentNode?.querySelector('.fallback-message')) {
+                            const fallback = document.createElement('div');
+                            fallback.className = 'mt-2 p-4 border-2 border-dashed border-red-300 rounded-lg text-center fallback-message';
+                            fallback.innerHTML = '<p class="text-sm text-red-600">Unable to load slip image</p><p class="text-xs text-gray-500">Path: ' + selectedTopup.slipPath + '</p>';
+                            e.currentTarget.parentNode?.appendChild(fallback);
+                          }
                         }}
                       />
                       <div className="flex items-center justify-center mt-2">
