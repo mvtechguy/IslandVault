@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useBranding } from "@/hooks/use-branding";
 import { useAuth } from "@/hooks/use-auth";
-import { Redirect } from "wouter";
+import { Redirect, useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -29,10 +29,39 @@ export default function OnboardPage() {
   const { appName, logoUrl } = useBranding();
   const { user, isLoading } = useAuth();
   const [currentStep, setCurrentStep] = useState(0);
+  const [, setLocation] = useLocation();
+
+  // Real-time redirect for approved users
+  useEffect(() => {
+    if (!isLoading && user && user.status === 'APPROVED') {
+      setTimeout(() => {
+        setLocation('/');
+      }, 2000); // 2 second delay to show success message
+    }
+  }, [user?.status, isLoading, setLocation]);
 
   // Redirect to home if user is approved
-  if (!isLoading && user && user.status === 'ACTIVE') {
-    return <Redirect to="/" />;
+  if (!isLoading && user && user.status === 'APPROVED') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-warm-white to-mint/5 dark:from-dark-navy dark:to-charcoal flex items-center justify-center">
+        <Card className="w-full max-w-md mx-4">
+          <CardContent className="text-center p-8">
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <CheckCircle className="w-8 h-8 text-green-600" />
+            </div>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+              Profile Approved!
+            </h2>
+            <p className="text-gray-600 dark:text-gray-400 mb-4">
+              Welcome to {appName}! Redirecting you to the home page...
+            </p>
+            <div className="flex justify-center">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-mint"></div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   const steps = [

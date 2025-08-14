@@ -32,6 +32,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   loginMutation: any;
   registerMutation: any;
+  logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -85,12 +86,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
   });
 
+  const logout = async () => {
+    try {
+      await apiRequest('POST', '/api/logout', {});
+      queryClient.removeQueries({ queryKey: ['/api/me'] });
+      queryClient.clear();
+      toast({
+        title: "Logged out successfully",
+      });
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
+
   const contextValue: AuthContextType = {
     user: user || null,
     isLoading,
     isAuthenticated: !!user,
     loginMutation,
     registerMutation,
+    logout,
   };
 
   return (

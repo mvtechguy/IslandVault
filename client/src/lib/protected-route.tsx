@@ -23,6 +23,11 @@ export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRout
     return <Redirect to="/auth" />;
   }
 
+  // If user is not approved and not trying to access onboard page, redirect to onboard
+  if (user.status !== 'APPROVED' && window.location.pathname !== '/onboard') {
+    return <Redirect to="/onboard" />;
+  }
+
   if (requireAdmin && user.role !== 'ADMIN' && user.role !== 'SUPERADMIN') {
     return (
       <div className="flex items-center justify-center min-h-screen">
