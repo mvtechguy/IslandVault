@@ -1,9 +1,12 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Heart, MapPin, MessageCircle, Eye, MoreHorizontal, Camera } from "lucide-react";
+import { Heart, MapPin, MessageCircle, Eye, MoreHorizontal, Camera, UserCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import type { Post } from "@shared/schema";
@@ -20,6 +23,11 @@ interface UserCardProps {
       profilePhotoPath?: string;
       shortBio?: string;
       dateOfBirth: string;
+      useRealIdentity?: boolean;
+      fakeFullName?: string;
+      fakeAge?: number;
+      fakeIsland?: string;
+      fakeAtoll?: string;
     };
   };
 }
@@ -29,6 +37,8 @@ export function UserCard({ post }: UserCardProps) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [liked, setLiked] = useState(false);
+  const [showIdentityDialog, setShowIdentityDialog] = useState(false);
+  const [requestMessage, setRequestMessage] = useState("");
 
   const isOwnPost = user?.id === post.userId;
   const canConnect = user?.status === 'APPROVED' && !isOwnPost;
@@ -45,7 +55,12 @@ export function UserCard({ post }: UserCardProps) {
     return age;
   };
 
-  const age = calculateAge(post.user.dateOfBirth);
+  // Determine if user is using fake identity and what to display
+  const isUsingFakeIdentity = post.user.useRealIdentity === false;
+  const displayName = isUsingFakeIdentity && post.user.fakeFullName ? post.user.fakeFullName : post.user.fullName;
+  const displayAge = isUsingFakeIdentity && post.user.fakeAge ? post.user.fakeAge : calculateAge(post.user.dateOfBirth);
+  const displayIsland = isUsingFakeIdentity && post.user.fakeIsland ? post.user.fakeIsland : post.user.island;
+  const displayAtoll = isUsingFakeIdentity && post.user.fakeAtoll ? post.user.fakeAtoll : post.user.atoll;
 
   const likeMutation = useMutation({
     mutationFn: async () => {
@@ -90,6 +105,32 @@ export function UserCard({ post }: UserCardProps) {
     },
   });
 
+  const identityRevealMutation = useMutation({
+    mutationFn: async () => {
+      return apiRequest("POST", "/api/image-reveal/request", {
+        targetUserId: post.userId,
+        postId: post.id,
+        requestType: "REAL_IDENTITY",
+        message: requestMessage
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Identity reveal request sent!",
+        description: "Your request is pending approval",
+      });
+      setShowIdentityDialog(false);
+      setRequestMessage("");
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to send request",
+        description: error.message || "Something went wrong",
+        variant: "destructive",
+      });
+    },
+  });
+
   return (
     <Card className="w-full max-w-lg mx-auto bg-gradient-to-br from-white via-gray-50 to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 shadow-xl rounded-3xl overflow-hidden border-0 hover:shadow-2xl hover:scale-[1.02] transition-all duration-500 backdrop-blur-sm">
       {/* Header with Profile and Pin */}
@@ -115,12 +156,19 @@ export function UserCard({ post }: UserCardProps) {
           </div>
           
           <div className="flex-1 min-w-0">
-            <h3 className="font-bold text-xl text-gray-900 dark:text-white truncate">{post.user.fullName}</h3>
+            <div className="flex items-center gap-2">
+              <h3 className="font-bold text-xl text-gray-900 dark:text-white truncate">{displayName}</h3>
+              {isUsingFakeIdentity && (
+                <Badge variant="secondary" className="text-xs">
+                  🎭 Hidden
+                </Badge>
+              )}
+            </div>
             <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400 mt-1">
               <MapPin className="w-4 h-4 text-mint" />
-              <span className="font-medium">{post.user.island}, {post.user.atoll}</span>
+              <span className="font-medium">{displayIsland}, {displayAtoll}</span>
               <span className="w-1 h-1 bg-gray-400 rounded-full"></span>
-              <span className="font-medium">{age} years</span>
+              <span className="font-medium">{displayAge} years</span>
             </div>
           </div>
         </div>
@@ -224,6 +272,58 @@ export function UserCard({ post }: UserCardProps) {
           </div>
 
           <div className="flex items-center space-x-3">
+            {/* Real Identity Request Button */}
+            {!isOwnPost && isUsingFakeIdentity && (
+              <Dialog open={showIdentityDialog} onOpenChange={setShowIdentityDialog}>
+                <DialogTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center space-x-2 text-orange-600 hover:text-orange-700 border-orange-200 hover:bg-orange-50 dark:border-orange-800 dark:text-orange-400 dark:hover:text-orange-300 dark:hover:bg-orange-950/20 rounded-xl px-3 py-2 transition-all duration-200"
+                  >
+                    <UserCheck className="w-4 h-4" />
+                    <span className="font-medium">Request Real Identity</span>
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Request Real Identity</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      This user is currently using a hidden identity. Send a request to see their real information.
+                    </p>
+                    <div>
+                      <Label htmlFor="message">Optional Message</Label>
+                      <Textarea
+                        id="message"
+                        value={requestMessage}
+                        onChange={(e) => setRequestMessage(e.target.value)}
+                        placeholder="Let them know why you'd like to see their real identity..."
+                        className="mt-1"
+                        rows={3}
+                      />
+                    </div>
+                    <div className="flex justify-end space-x-2">
+                      <Button
+                        variant="outline"
+                        onClick={() => setShowIdentityDialog(false)}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        onClick={() => identityRevealMutation.mutate()}
+                        disabled={identityRevealMutation.isPending}
+                        className="bg-orange-600 hover:bg-orange-700"
+                      >
+                        {identityRevealMutation.isPending ? "Sending..." : "Send Request"}
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            )}
+
             {canConnect && (
               <Button
                 onClick={() => connectMutation.mutate()}

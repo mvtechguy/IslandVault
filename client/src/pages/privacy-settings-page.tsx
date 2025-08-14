@@ -38,7 +38,7 @@ export default function PrivacySettingsPage() {
 
   // Update privacy settings
   const privacyMutation = useMutation({
-    mutationFn: (data: any) => apiRequest('/api/profile/privacy', { method: 'PUT', body: data }),
+    mutationFn: (data: any) => apiRequest("PUT", '/api/profile/privacy', data),
     onSuccess: () => {
       toast({
         title: "Privacy Settings Updated",
@@ -65,12 +65,12 @@ export default function PrivacySettingsPage() {
 
   useEffect(() => {
     if (privacySettings) {
-      setUseRealIdentity(privacySettings.useRealIdentity ?? true);
+      setUseRealIdentity((privacySettings as any).useRealIdentity ?? true);
       setFakeProfile({
-        fakeFullName: privacySettings.fakeFullName || '',
-        fakeAge: privacySettings.fakeAge?.toString() || '',
-        fakeIsland: privacySettings.fakeIsland || '',
-        fakeAtoll: privacySettings.fakeAtoll || ''
+        fakeFullName: (privacySettings as any).fakeFullName || '',
+        fakeAge: (privacySettings as any).fakeAge?.toString() || '',
+        fakeIsland: (privacySettings as any).fakeIsland || '',
+        fakeAtoll: (privacySettings as any).fakeAtoll || ''
       });
     }
   }, [privacySettings]);
@@ -220,9 +220,9 @@ export default function PrivacySettingsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {revealsData?.reveals && revealsData.reveals.length > 0 ? (
+            {(revealsData as any)?.reveals && (revealsData as any).reveals.length > 0 ? (
               <div className="space-y-3">
-                {revealsData.reveals.map((reveal: any) => (
+                {(revealsData as any).reveals.map((reveal: any) => (
                   <div key={reveal.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
                     <div>
                       <h4 className="font-medium">{reveal.targetUser?.fullName}</h4>
