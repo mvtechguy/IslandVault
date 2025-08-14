@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Heart, Bell, Moon, Sun, Coins, Plus, Filter, Search, Shield } from "lucide-react";
 import { Redirect, useLocation } from "wouter";
@@ -33,6 +33,107 @@ const createPostSchema = insertPostSchema.extend({
 });
 
 type CreatePostFormData = z.infer<typeof createPostSchema>;
+
+// Smart Banner Component with Aspect Ratio Preservation
+function SmartBanner({ banner, onClick }: { banner: any; onClick: () => void }) {
+  const imageRef = useRef<HTMLImageElement>(null);
+  const [aspectRatio, setAspectRatio] = useState<number>(16/9); // Default 16:9
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageError, setImageError] = useState(false);
+
+  // Handle image load to calculate aspect ratio
+  const handleImageLoad = () => {
+    if (imageRef.current) {
+      const { naturalWidth, naturalHeight } = imageRef.current;
+      if (naturalWidth && naturalHeight) {
+        const ratio = naturalWidth / naturalHeight;
+        // Constrain aspect ratio between 1:2 (0.5) and 3:1 (3.0) for UI consistency
+        const constrainedRatio = Math.max(0.5, Math.min(3.0, ratio));
+        setAspectRatio(constrainedRatio);
+        setImageLoaded(true);
+      }
+    }
+  };
+
+  const handleImageError = () => {
+    setImageError(true);
+    setImageLoaded(true);
+  };
+
+  return (
+    <div
+      className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-mint/10 to-soft-blue/10 border border-mint/20 cursor-pointer group"
+      onClick={onClick}
+    >
+      {banner.imageUrl && !imageError ? (
+        // Smart aspect ratio image banner
+        <div className="relative">
+          <div 
+            className="w-full overflow-hidden"
+            style={{ 
+              aspectRatio: aspectRatio.toString(),
+              maxHeight: '300px', // Maximum height constraint
+              minHeight: '120px'  // Minimum height constraint
+            }}
+          >
+            <img
+              ref={imageRef}
+              src={banner.imageUrl}
+              alt={banner.title}
+              className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ${
+                imageLoaded ? 'opacity-100' : 'opacity-0'
+              }`}
+              loading="lazy"
+              onLoad={handleImageLoad}
+              onError={handleImageError}
+            />
+            {/* Loading placeholder */}
+            {!imageLoaded && (
+              <div className="absolute inset-0 bg-gray-200 dark:bg-gray-700 animate-pulse flex items-center justify-center">
+                <div className="w-8 h-8 rounded-full border-2 border-mint border-t-transparent animate-spin" />
+              </div>
+            )}
+          </div>
+          {/* Content overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+          <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
+            <h3 className="text-lg font-semibold mb-1 drop-shadow-lg">
+              {banner.title}
+            </h3>
+            {banner.description && (
+              <p className="text-sm text-white/90 mb-2 line-clamp-2 drop-shadow">
+                {banner.description}
+              </p>
+            )}
+            {banner.buttonText && (
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-white/20 backdrop-blur-sm text-white border border-white/30 group-hover:bg-white/30 transition-colors">
+                {banner.buttonText}
+              </span>
+            )}
+          </div>
+        </div>
+      ) : (
+        // Text-only banner fallback (for no image or image error)
+        <div className="p-6">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white group-hover:text-mint transition-colors mb-2">
+            {banner.title}
+          </h3>
+          {banner.description && (
+            <p className="text-sm text-gray-600 dark:text-gray-300 mb-3 line-clamp-3">
+              {banner.description}
+            </p>
+          )}
+          {banner.buttonText && (
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-mint text-white group-hover:bg-mint/80 transition-colors">
+              {banner.buttonText}
+            </span>
+          )}
+        </div>
+      )}
+      <div className="absolute inset-0 bg-gradient-to-r from-mint/5 to-soft-blue/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+    </div>
+  );
+}
 
 export default function HomePage() {
   const { user } = useAuth();
@@ -243,60 +344,11 @@ export default function HomePage() {
         {banners && banners.length > 0 && (
           <div className="mt-6 space-y-4">
             {banners.map((banner: any) => (
-              <div
+              <SmartBanner
                 key={banner.id}
-                className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-mint/10 to-soft-blue/10 border border-mint/20 cursor-pointer group"
+                banner={banner}
                 onClick={() => handleBannerClick(banner)}
-              >
-                {banner.imageUrl ? (
-                  // Full-width image banner
-                  <div className="relative">
-                    <div className="w-full aspect-[16/9] max-h-[200px] overflow-hidden">
-                      <img
-                        src={banner.imageUrl}
-                        alt={banner.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        loading="lazy"
-                      />
-                    </div>
-                    {/* Content overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
-                    <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
-                      <h3 className="text-lg font-semibold mb-1 drop-shadow-lg">
-                        {banner.title}
-                      </h3>
-                      {banner.description && (
-                        <p className="text-sm text-white/90 mb-2 line-clamp-2 drop-shadow">
-                          {banner.description}
-                        </p>
-                      )}
-                      {banner.buttonText && (
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-white/20 backdrop-blur-sm text-white border border-white/30 group-hover:bg-white/30 transition-colors">
-                          {banner.buttonText}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                ) : (
-                  // Text-only banner fallback
-                  <div className="p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white group-hover:text-mint transition-colors mb-2">
-                      {banner.title}
-                    </h3>
-                    {banner.description && (
-                      <p className="text-sm text-gray-600 dark:text-gray-300 mb-3 line-clamp-3">
-                        {banner.description}
-                      </p>
-                    )}
-                    {banner.buttonText && (
-                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-mint text-white group-hover:bg-mint/80 transition-colors">
-                        {banner.buttonText}
-                      </span>
-                    )}
-                  </div>
-                )}
-                <div className="absolute inset-0 bg-gradient-to-r from-mint/5 to-soft-blue/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-              </div>
+              />
             ))}
           </div>
         )}
