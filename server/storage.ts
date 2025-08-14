@@ -389,7 +389,7 @@ export class DatabaseStorage implements IStorage {
       })
       .from(connectionRequests)
       .leftJoin(users, eq(connectionRequests.requesterId, users.id))
-      .leftJoin(sql.raw(`users as target_user ON connection_requests.target_user_id = target_user.id`))
+      .leftJoin(alias(users, 'target_user'), eq(connectionRequests.targetUserId, alias(users, 'target_user').id))
       .where(conditions)
       .orderBy(desc(connectionRequests.createdAt))
       .limit(limit)
