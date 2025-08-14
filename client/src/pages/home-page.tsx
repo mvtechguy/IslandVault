@@ -1,6 +1,10 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Heart, Bell, Moon, Sun, Coins, Plus, Filter, Search, Shield } from "lucide-react";
+import { Heart, Bell, Moon, Sun, Coins, Plus, Filter, Search, Shield, Sparkles, Zap, Star, MapPin, Cpu, Activity } from "lucide-react";
+import { QuantumCard } from "@/components/QuantumCard";
+import { QuantumButton } from "@/components/QuantumButton";
+import { QuantumProfileCard } from "@/components/QuantumProfileCard";
+import { QuantumHeader } from "@/components/QuantumHeader";
 import { Redirect, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,7 +18,7 @@ import { useTheme } from "@/lib/theme-provider";
 import { useToast } from "@/hooks/use-toast";
 import { UserCard } from "@/components/UserCard";
 
-import { BottomNavigation } from "@/components/BottomNavigation";
+import { QuantumBottomNav } from "@/components/QuantumBottomNav";
 import { apiRequest, getQueryFn } from "@/lib/queryClient";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -140,84 +144,114 @@ export default function HomePage() {
   const unreadNotifications = notifications?.filter((n: any) => !n.seen).length || 0;
 
   return (
-    <div className="min-h-screen bg-warm-white dark:bg-dark-navy text-gray-800 dark:text-gray-200 transition-colors duration-300">
-      {/* Mobile Header */}
-      <header className="bg-white dark:bg-charcoal shadow-sm border-b border-gray-100 dark:border-gray-700 sticky top-0 z-50">
+    <div className="min-h-screen relative overflow-hidden">
+      {/* Quantum Background Effects */}
+      <div className="quantum-particles"></div>
+      
+      {/* Futuristic Header */}
+      <header className="bg-gradient-to-r from-slate-900/95 to-slate-800/95 border-b border-cyan-400/20 sticky top-0 z-50 backdrop-blur-xl shadow-2xl">
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-gradient-to-br from-mint to-soft-blue rounded-xl flex items-center justify-center">
-              <Heart className="w-4 h-4 text-white" />
+            <div className="w-10 h-10 bg-gradient-to-br from-cyan-400 to-purple-600 rounded-xl flex items-center justify-center neural-pulse">
+              <Cpu className="w-5 h-5 text-white" />
             </div>
-            <h1 className="text-xl font-bold bg-gradient-to-r from-mint to-soft-blue bg-clip-text text-transparent">
-              Kaiveni
+            <h1 className="text-2xl font-bold holo-text">
+              Quantum Match
             </h1>
           </div>
           <div className="flex items-center space-x-3">
-            {/* Coin Balance with Plus Button */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setLocation('/coins')}
-              className="flex items-center space-x-2 bg-gradient-to-r from-mint/10 to-soft-blue/10 hover:from-mint/20 hover:to-soft-blue/20 border border-mint/20 rounded-full px-3 py-1"
-            >
-              <div className="flex items-center space-x-1">
-                <Coins className="w-4 h-4 text-mint" />
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            {/* Quantum Credits */}
+            <QuantumCard glow={false} className="px-3 py-1">
+              <QuantumButton
+                variant="ghost"
+                size="sm"
+                onClick={() => setLocation('/coins')}
+                className="flex items-center space-x-2"
+              >
+                <Zap className="w-4 h-4 text-yellow-400" />
+                <span className="text-sm font-bold text-yellow-400">
                   {coinBalance?.coins || 0}
                 </span>
-              </div>
-              <div className="w-5 h-5 bg-gradient-to-r from-mint to-soft-blue rounded-full flex items-center justify-center">
-                <Plus className="w-3 h-3 text-white" />
-              </div>
-            </Button>
-            {/* Theme Toggle */}
-            <Button
+                <span className="text-xs text-muted-foreground">Credits</span>
+                <Plus className="w-3 h-3 text-cyan-400" />
+              </QuantumButton>
+            </QuantumCard>
+            
+            {/* Quantum Controls */}
+            <QuantumButton
               variant="ghost"
-              size="sm"
+              size="icon"
               onClick={toggleTheme}
-              className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600"
+              quantum
             >
               {theme === "light" ? (
-                <Moon className="w-4 h-4 text-gray-600" />
+                <Moon className="w-4 h-4" />
               ) : (
                 <Sun className="w-4 h-4 text-yellow-400" />
               )}
-            </Button>
-            {/* Notifications */}
-            <Button
-              variant="ghost"
-              size="sm"
-              className="relative w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600"
-            >
-              <Bell className="w-4 h-4 text-gray-600 dark:text-gray-300" />
-              {unreadNotifications > 0 && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 bg-blush rounded-full text-xs text-white flex items-center justify-center">
-                  {unreadNotifications}
-                </span>
-              )}
-            </Button>
+            </QuantumButton>
             
-            {/* Admin Dashboard Access - Only for Admin Users */}
+            {/* Neural Notifications */}
+            <QuantumButton
+              variant="ghost"
+              size="icon"
+              className="relative"
+            >
+              <Bell className="w-4 h-4" />
+              {unreadNotifications > 0 && (
+                <Badge className="absolute -top-2 -right-2 w-5 h-5 flex items-center justify-center p-0 bg-gradient-to-r from-red-500 to-pink-500 text-xs neural-pulse">
+                  {unreadNotifications > 99 ? "99+" : unreadNotifications}
+                </Badge>
+              )}
+            </QuantumButton>
+            
+            {/* Admin Quantum Access */}
             {user && (user.role === 'ADMIN' || user.role === 'SUPERADMIN') && (
-              <Button
+              <QuantumButton
                 variant="ghost"
-                size="sm"
+                size="icon"
                 onClick={() => window.location.href = '/admin'}
-                className="w-8 h-8 rounded-lg bg-orange-100 dark:bg-orange-900/20 hover:bg-orange-200 dark:hover:bg-orange-900/40 border border-orange-300 dark:border-orange-600"
-                title="Admin Dashboard"
+                className="bg-gradient-to-r from-orange-600/20 to-red-600/20 border border-orange-400/30"
+                title="Quantum Admin Console"
+                quantum
               >
-                <Shield className="w-4 h-4 text-orange-600 dark:text-orange-400" />
-              </Button>
+                <Shield className="w-4 h-4 text-orange-400" />
+              </QuantumButton>
             )}
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="pb-20 px-4">
+      {/* Quantum Main Content */}
+      <main className="pb-20 px-4 relative z-10">
+        {/* Neural Status Panel */}
+        <QuantumCard floating className="mt-6 mb-8">
+          <div className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold holo-text">Neural Network Status</h2>
+              <Badge className="bg-gradient-to-r from-green-500 to-emerald-500 text-white border-0 neural-pulse">
+                <Activity className="h-3 w-3 mr-1" />
+                ONLINE
+              </Badge>
+            </div>
+            <div className="grid grid-cols-3 gap-4 text-center">
+              <div>
+                <div className="text-2xl font-bold text-cyan-400">{postsData?.total || 0}</div>
+                <div className="text-xs text-muted-foreground">Active Profiles</div>
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-purple-400">AI</div>
+                <div className="text-xs text-muted-foreground">Match Engine</div>
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-pink-400">∞</div>
+                <div className="text-xs text-muted-foreground">Possibilities</div>
+              </div>
+            </div>
+          </div>
+        </QuantumCard>
 
-
-        {/* Quick Filters */}
+        {/* Quantum Filters */}
         <div className="mt-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold">Pinned Posts</h2>
@@ -270,35 +304,58 @@ export default function HomePage() {
             </div>
           ) : postsData?.posts && postsData.posts.length > 0 ? (
             postsData.posts.map((post: any) => (
-              <UserCard key={post.id} post={post} />
+              <QuantumProfileCard 
+                key={post.id} 
+                post={post}
+                onConnect={(userId, postId) => {
+                  console.log("Quantum connection initiated:", userId, postId);
+                }}
+                onLike={(postId) => {
+                  console.log("Neural like activated:", postId);
+                }}
+              />
             ))
           ) : (
-            <div className="text-center py-12">
-              <Heart className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                No posts yet
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400 mb-4">
-                Be the first to create a post and start connecting!
-              </p>
-              {user?.status === 'APPROVED' && (
-                <Button
-                  onClick={() => setShowCreatePost(true)}
-                  className="bg-gradient-to-r from-mint to-soft-blue hover:shadow-lg"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Create Post
-                </Button>
-              )}
-            </div>
+            <QuantumCard floating particles className="text-center py-16">
+              <div className="space-y-6">
+                <div className="mx-auto w-24 h-24 bg-gradient-to-br from-cyan-400 to-purple-600 rounded-full flex items-center justify-center neural-pulse">
+                  <Sparkles className="w-12 h-12 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-2xl font-bold holo-text mb-2">
+                    Neural Network Initializing
+                  </h3>
+                  <p className="text-muted-foreground mb-6">
+                    Be the first to join the quantum connection matrix and start making meaningful matches!
+                  </p>
+                  {user?.status === 'APPROVED' && (
+                    <QuantumButton
+                      onClick={() => setShowCreatePost(true)}
+                      quantum
+                      pulse
+                      className="bg-gradient-to-r from-cyan-600 to-purple-600 hover:from-cyan-500 hover:to-purple-500 text-white border-0"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Initialize Neural Profile
+                    </QuantumButton>
+                  )}
+                </div>
+              </div>
+            </QuantumCard>
           )}
         </div>
 
-        {/* Create Post Modal */}
+        {/* Quantum Profile Creation Matrix */}
         <Dialog open={showCreatePost} onOpenChange={setShowCreatePost}>
-          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Create a New Post</DialogTitle>
+          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto quantum-glow">
+            <DialogHeader className="border-b border-cyan-400/20 pb-4">
+              <DialogTitle className="text-xl holo-text flex items-center space-x-2">
+                <Cpu className="h-5 w-5 text-cyan-400" />
+                <span>Neural Profile Matrix</span>
+              </DialogTitle>
+              <p className="text-sm text-muted-foreground mt-2">
+                Initialize your quantum connection profile to start matching with compatible souls
+              </p>
             </DialogHeader>
             <form onSubmit={createPostForm.handleSubmit(onCreatePost as any)} className="space-y-4">
               <div>
@@ -431,8 +488,8 @@ export default function HomePage() {
         </Dialog>
       </main>
 
-      {/* Bottom Navigation */}
-      <BottomNavigation />
+      {/* Quantum Bottom Navigation */}
+      <QuantumBottomNav notifications={unreadNotifications} />
     </div>
   );
 }
