@@ -471,7 +471,7 @@ export const banners = pgTable("banners", {
   id: serial("id").primaryKey(),
   title: varchar("title", { length: 255 }).notNull(),
   description: text("description"),
-  imageUrl: varchar("image_url", { length: 500 }).notNull(),
+  imageUrl: varchar("image_url", { length: 500 }),
   linkUrl: varchar("link_url", { length: 500 }),
   buttonText: varchar("button_text", { length: 100 }),
   status: bannerStatusEnum("status").default("ACTIVE"),
