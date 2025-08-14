@@ -83,39 +83,43 @@ export default function AdminPage() {
   }, [statusFilter]);
 
   // Fetch pending users
-  const { data: usersData } = useQuery<{users: any[], total: number}>({
+  const { data: usersData, refetch: refetchUsers } = useQuery<{users: any[], total: number}>({
     queryKey: ["/api/admin/queues/users", statusFilter],
     queryFn: getQueryFn({ 
       on401: "throw"
     }),
     enabled: !!user && (user.role === "ADMIN" || user.role === "SUPERADMIN"),
+    refetchInterval: 3000, // Auto-refresh every 3 seconds
   });
 
   // Fetch pending posts
-  const { data: postsData } = useQuery<{posts: any[], total: number}>({
+  const { data: postsData, refetch: refetchPosts } = useQuery<{posts: any[], total: number}>({
     queryKey: ["/api/admin/queues/posts", statusFilter],
     queryFn: getQueryFn({ 
       on401: "throw"
     }),
     enabled: !!user && (user.role === "ADMIN" || user.role === "SUPERADMIN"),
+    refetchInterval: 4000, // Auto-refresh every 4 seconds
   });
 
   // Fetch pending topups
-  const { data: topupsData } = useQuery<{topups: any[], total: number}>({
+  const { data: topupsData, refetch: refetchTopups } = useQuery<{topups: any[], total: number}>({
     queryKey: ["/api/admin/queues/topups", statusFilter],
     queryFn: getQueryFn({ 
       on401: "throw"
     }),
     enabled: !!user && (user.role === "ADMIN" || user.role === "SUPERADMIN"),
+    refetchInterval: 6000, // Auto-refresh every 6 seconds
   });
 
   // Fetch pending connection requests
-  const { data: connectionsData } = useQuery<{requests: any[], total: number}>({
+  const { data: connectionsData, refetch: refetchConnections } = useQuery<{requests: any[], total: number}>({
     queryKey: ["/api/admin/queues/connect/" + statusFilter],
     queryFn: getQueryFn({ 
       on401: "throw"
     }),
     enabled: !!user && (user.role === "ADMIN" || user.role === "SUPERADMIN"),
+    refetchInterval: 5000, // Auto-refresh every 5 seconds
   });
 
   // Fetch admin chat inbox

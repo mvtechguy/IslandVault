@@ -132,6 +132,13 @@ export const users = pgTable("users", {
   status: userStatusEnum("status").default("PENDING"),
   role: userRoleEnum("role").default("USER"),
   coins: integer("coins").default(0),
+  // Privacy & Identity System
+  useRealIdentity: boolean("use_real_identity").default(true),
+  fakeFullName: varchar("fake_full_name", { length: 255 }),
+  fakeAge: integer("fake_age"),
+  fakeIsland: varchar("fake_island", { length: 64 }),
+  fakeAtoll: varchar("fake_atoll", { length: 64 }),
+  fakeProfilePhotoPath: varchar("fake_profile_photo_path", { length: 255 }),
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
   updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`),
   deletedAt: timestamp("deleted_at")
@@ -195,6 +202,36 @@ export const connectionRequests = pgTable("connection_requests", {
   connRequesterIdx: index("conn_requester_idx").on(table.requesterId),
   connTargetIdx: index("conn_target_idx").on(table.targetUserId),
   connStatusIdx: index("conn_status_idx").on(table.status)
+}));
+
+// Image reveal requests table
+export const imageRevealRequests = pgTable("image_reveal_requests", {
+  id: serial("id").primaryKey(),
+  requesterId: integer("requester_id").notNull().references(() => users.id),
+  targetUserId: integer("target_user_id").notNull().references(() => users.id),
+  postId: integer("post_id").references(() => posts.id),
+  requestType: varchar("request_type", { length: 20 }).notNull(), // 'MORE_IMAGES', 'REAL_IDENTITY'
+  status: requestStatusEnum("status").default("PENDING"),
+  message: text("message"), // Optional message from requester
+  adminNote: varchar("admin_note", { length: 255 }),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
+}, (table) => ({
+  revealRequesterIdx: index("reveal_requester_idx").on(table.requesterId),
+  revealTargetIdx: index("reveal_target_idx").on(table.targetUserId),
+  revealStatusIdx: index("reveal_status_idx").on(table.status)
+}));
+
+// Identity reveals table - tracks when users reveal real identity to specific users
+export const identityReveals = pgTable("identity_reveals", {
+  id: serial("id").primaryKey(),
+  revealerId: integer("revealer_id").notNull().references(() => users.id),
+  targetUserId: integer("target_user_id").notNull().references(() => users.id),
+  revealedAt: timestamp("revealed_at").default(sql`CURRENT_TIMESTAMP`),
+  isActive: boolean("is_active").default(true) // Can be revoked
+}, (table) => ({
+  uniqueIdentityReveal: index("unique_identity_reveal").on(table.revealerId, table.targetUserId),
+  identityRevealTargetIdx: index("identity_reveal_target_idx").on(table.targetUserId)
 }));
 
 // Coin top-ups table

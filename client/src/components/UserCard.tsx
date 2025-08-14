@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Heart, MapPin, MessageCircle, Eye, MoreHorizontal } from "lucide-react";
+import { Heart, MapPin, MessageCircle, Eye, MoreHorizontal, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -136,61 +136,27 @@ export function UserCard({ post }: UserCardProps) {
           {post.description}
         </p>
 
-        {/* Enhanced Multiple Images Display */}
+        {/* Primary Image Display - 1:1 Aspect Ratio */}
         {post.images && Array.isArray(post.images) && post.images.length > 0 && (
           <div className="mb-4">
-            {post.images.length === 1 ? (
-              <div className="relative group">
+            <div className="relative group">
+              <div className="aspect-square w-full overflow-hidden rounded-2xl shadow-lg group-hover:shadow-xl transition-shadow duration-300">
                 <img
                   src={post.images[0].startsWith('/uploads') ? post.images[0] : `/uploads/posts/${post.images[0]}`}
                   alt="Post image"
-                  className="w-full h-64 object-cover rounded-2xl shadow-lg group-hover:shadow-xl transition-shadow duration-300"
+                  className="w-full h-full object-cover"
                   onError={(e) => {
                     (e.target as HTMLImageElement).style.display = 'none';
                   }}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              </div>
-            ) : post.images.length === 2 ? (
-              <div className="grid grid-cols-2 gap-3">
-                {post.images.slice(0, 2).map((image: string, index: number) => (
-                  <div key={index} className="relative group">
-                    <img
-                      src={image.startsWith('/uploads') ? image : `/uploads/posts/${image}`}
-                      alt={`Post image ${index + 1}`}
-                      className="w-full h-32 object-cover rounded-xl shadow-md group-hover:shadow-lg transition-shadow duration-300"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = 'none';
-                      }}
-                    />
+                {post.images.length > 1 && (
+                  <div className="absolute top-3 right-3 bg-black/70 text-white px-2 py-1 rounded-full text-xs font-medium">
+                    +{post.images.length - 1} more
                   </div>
-                ))}
+                )}
               </div>
-            ) : (
-              <div className="grid grid-cols-2 gap-3">
-                {post.images.slice(0, 3).map((image: string, index: number) => (
-                  <div key={index} className={`relative group ${index === 0 ? 'col-span-2' : ''}`}>
-                    <img
-                      src={image.startsWith('/uploads') ? image : `/uploads/posts/${image}`}
-                      alt={`Post image ${index + 1}`}
-                      className={`w-full object-cover rounded-xl shadow-md group-hover:shadow-lg transition-shadow duration-300 ${
-                        index === 0 ? 'h-40' : 'h-28'
-                      }`}
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = 'none';
-                      }}
-                    />
-                    {index === 2 && post.images.length > 3 && (
-                      <div className="absolute inset-0 bg-black/70 rounded-xl flex items-center justify-center">
-                        <span className="text-white font-bold text-lg">
-                          +{post.images.length - 3}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            </div>
           </div>
         )}
 
@@ -243,6 +209,18 @@ export function UserCard({ post }: UserCardProps) {
                 <span className="font-medium">View Post</span>
               </Button>
             </Link>
+
+            {/* Request More Images Button */}
+            {!isOwnPost && post.images && post.images.length > 1 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="flex items-center space-x-2 text-gray-600 hover:text-mint dark:text-gray-400 dark:hover:text-mint hover:bg-mint/10 rounded-xl px-3 py-2 transition-all duration-200"
+              >
+                <Camera className="w-5 h-5" />
+                <span className="font-medium">More Images</span>
+              </Button>
+            )}
           </div>
 
           <div className="flex items-center space-x-3">

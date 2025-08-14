@@ -19,6 +19,7 @@ import PostDetailsPage from "@/pages/post-details-page";
 import BrowsePostsPage from "@/pages/browse-posts-page";
 import CreatePostPage from "@/pages/create-post-page";
 import InboxPage from "@/pages/inbox-page";
+import PrivacySettingsPage from "@/pages/privacy-settings-page";
 
 
 
@@ -69,6 +70,11 @@ function Router() {
       <Route path="/inbox">
         <ProtectedRoute>
           <InboxPage />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/privacy-settings">
+        <ProtectedRoute>
+          <PrivacySettingsPage />
         </ProtectedRoute>
       </Route>
       <Route component={NotFound} />

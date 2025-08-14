@@ -44,17 +44,21 @@ import {
   messageReceipts,
   chatBlocks,
   chatReports,
-  visitors
+  visitors,
+  imageRevealRequests,
+  identityReveals
 } from "@shared/schema";
 import { eq, and, desc, asc, sql, count, ne, or, isNull } from "drizzle-orm";
 
 export interface IStorage {
   // Users
   getUser(id: number): Promise<User | undefined>;
+  getUserById(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   getUserByPhone(phone: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, user: Partial<User>): Promise<User | undefined>;
+  updateUserPrivacy(id: number, privacy: any): Promise<User | undefined>;
   getUsersForAdmin(status?: string, limit?: number, offset?: number): Promise<{ users: User[], total: number }>;
   
   // Posts  
@@ -169,6 +173,10 @@ export class DatabaseStorage implements IStorage {
     return user || undefined;
   }
 
+  async getUserById(id: number): Promise<User | undefined> {
+    return this.getUser(id);
+  }
+
   async getUserByPhone(phone: string): Promise<User | undefined> {
     if (!phone) return undefined;
     const [user] = await db.select().from(users).where(eq(users.phone, phone));
@@ -195,6 +203,21 @@ export class DatabaseStorage implements IStorage {
     const [user] = await db
       .update(users)
       .set(userData)
+      .where(eq(users.id, id))
+      .returning();
+    return user || undefined;
+  }
+
+  async updateUserPrivacy(id: number, privacy: any): Promise<User | undefined> {
+    const [user] = await db
+      .update(users)
+      .set({
+        useRealIdentity: privacy.useRealIdentity,
+        fakeFullName: privacy.fakeFullName,
+        fakeAge: privacy.fakeAge,
+        fakeIsland: privacy.fakeIsland,
+        fakeAtoll: privacy.fakeAtoll
+      })
       .where(eq(users.id, id))
       .returning();
     return user || undefined;
@@ -1183,6 +1206,39 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(conversationParticipants)
       .where(eq(conversationParticipants.conversationId, conversationId));
+  }
+
+  // Privacy & Identity Management
+  async createImageRevealRequest(request: any): Promise<any> {
+    const [createdRequest] = await db
+      .insert(imageRevealRequests)
+      .values(request)
+      .returning();
+    return createdRequest;
+  }
+
+  async getIdentityReveals(userId: number): Promise<any[]> {
+    const reveals = await db
+      .select({
+        id: identityReveals.id,
+        revealerId: identityReveals.revealerId,
+        targetUserId: identityReveals.targetUserId,
+        revealedAt: identityReveals.revealedAt,
+        isActive: identityReveals.isActive
+      })
+      .from(identityReveals)
+      .where(eq(identityReveals.revealerId, userId));
+    
+    return reveals;
+  }
+
+  async getChatInboxForAdmin(): Promise<any[]> {
+    // Simple implementation for now
+    return [];
+  }
+
+  async getUserChatsForAdmin(limit = 50, offset = 0): Promise<{ conversations: any[], total: number }> {
+    return this.getAllConversations(limit, offset);
   }
 }
 

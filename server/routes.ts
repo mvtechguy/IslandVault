@@ -854,6 +854,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Privacy profile routes
+  app.get('/api/profile/privacy', isAuthenticated, async (req, res) => {
+    try {
+      const user = await storage.getUserById(req.user!.id);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      res.json({
+        useRealIdentity: user.useRealIdentity ?? true,
+        fakeFullName: user.fakeFullName,
+        fakeAge: user.fakeAge,
+        fakeIsland: user.fakeIsland,
+        fakeAtoll: user.fakeAtoll,
+        fakeProfilePhotoPath: user.fakeProfilePhotoPath
+      });
+    } catch (error) {
+      console.error('Get privacy settings error:', error);
+      res.status(500).json({ error: 'Failed to get privacy settings' });
+    }
+  });
+
+  app.put('/api/profile/privacy', isAuthenticated, async (req, res) => {
+    try {
+      const { useRealIdentity, fakeFullName, fakeAge, fakeIsland, fakeAtoll } = req.body;
+      
+      await storage.updateUserPrivacy(req.user!.id, {
+        useRealIdentity,
+        fakeFullName,
+        fakeAge,
+        fakeIsland,
+        fakeAtoll
+      });
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Update privacy settings error:', error);
+      res.status(500).json({ error: 'Failed to update privacy settings' });
+    }
+  });
+
+  // Image reveal request routes
+  app.post('/api/image-reveal/request', isAuthenticated, async (req, res) => {
+    try {
+      const { targetUserId, postId, requestType, message } = req.body;
+      
+      const revealRequest = await storage.createImageRevealRequest({
+        requesterId: req.user!.id,
+        targetUserId,
+        postId,
+        requestType, // 'MORE_IMAGES' or 'REAL_IDENTITY'
+        message,
+        status: 'PENDING'
+      });
+      
+      res.json(revealRequest);
+    } catch (error) {
+      console.error('Create image reveal request error:', error);
+      res.status(500).json({ error: 'Failed to create reveal request' });
+    }
+  });
+
+  app.get('/api/identity/reveals', isAuthenticated, async (req, res) => {
+    try {
+      const reveals = await storage.getIdentityReveals(req.user!.id);
+      res.json({ reveals });
+    } catch (error) {
+      console.error('Get identity reveals error:', error);
+      res.status(500).json({ error: 'Failed to get identity reveals' });
+    }
+  });
+
   // Admin endpoints
   app.get("/api/admin/queues/users/:status", isAdmin, async (req, res) => {
     try {
