@@ -438,24 +438,25 @@ export default function ProfilePage() {
                           {post.description}
                         </p>
                         {post.images && post.images.length > 0 && (
-                          <div className="mt-2">
-                            <div className="flex space-x-2 overflow-x-auto">
-                              {post.images.slice(0, 3).map((image: string, index: number) => (
-                                <img
-                                  key={index}
-                                  src={`/api/image-proxy/${image.split('/').pop()}`}
-                                  alt={`Post image ${index + 1}`}
-                                  className="w-16 h-16 object-cover rounded border border-gray-200 dark:border-gray-600 flex-shrink-0"
-                                  onError={(e) => {
-                                    console.log("Post image failed to load:", e.currentTarget.src);
-                                    e.currentTarget.style.display = 'none';
-                                  }}
-                                />
+                          <div className="mt-3">
+                            <div className="flex space-x-2 overflow-x-auto pb-2">
+                              {post.images.slice(0, 4).map((image: string, index: number) => (
+                                <div key={index} className="relative aspect-square w-20 h-20 flex-shrink-0">
+                                  <img
+                                    src={image.startsWith('/uploads') ? image : `/uploads/posts/${image}`}
+                                    alt={`Post image ${index + 1}`}
+                                    className="w-full h-full object-cover rounded-lg border border-gray-200 dark:border-gray-600"
+                                    onError={(e) => {
+                                      console.log("Post image failed to load:", e.currentTarget.src);
+                                      e.currentTarget.style.display = 'none';
+                                    }}
+                                  />
+                                </div>
                               ))}
-                              {post.images.length > 3 && (
-                                <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600 flex items-center justify-center flex-shrink-0">
-                                  <span className="text-xs text-gray-600 dark:text-gray-400">
-                                    +{post.images.length - 3}
+                              {post.images.length > 4 && (
+                                <div className="w-20 h-20 bg-gray-100 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 flex items-center justify-center flex-shrink-0">
+                                  <span className="text-xs font-semibold text-gray-600 dark:text-gray-400">
+                                    +{post.images.length - 4}
                                   </span>
                                 </div>
                               )}
