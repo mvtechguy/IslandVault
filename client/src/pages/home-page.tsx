@@ -156,7 +156,7 @@ export default function HomePage() {
               <Cpu className="w-5 h-5 text-white" />
             </div>
             <h1 className="text-2xl font-bold holo-text">
-              Quantum Match
+              Kaiveni
             </h1>
           </div>
           <div className="flex items-center space-x-3">
@@ -222,39 +222,39 @@ export default function HomePage() {
         </div>
       </header>
 
-      {/* Quantum Main Content */}
-      <main className="pb-20 px-4 relative z-10">
-        {/* Neural Status Panel */}
-        <QuantumCard floating className="mt-6 mb-8">
-          <div className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold holo-text">Neural Network Status</h2>
-              <Badge className="bg-gradient-to-r from-green-500 to-emerald-500 text-white border-0 neural-pulse">
-                <Activity className="h-3 w-3 mr-1" />
+      {/* Main Content */}
+      <main className="pb-20 px-3 relative z-10 space-y-4">
+        {/* Status Panel */}
+        <QuantumCard floating className="mt-3">
+          <div className="p-3">
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="text-sm font-medium text-cyan-400">Platform Status</h2>
+              <Badge className="bg-gradient-to-r from-green-500 to-emerald-500 text-white border-0 text-xs">
+                <Activity className="h-2 w-2 mr-1" />
                 ONLINE
               </Badge>
             </div>
-            <div className="grid grid-cols-3 gap-4 text-center">
+            <div className="grid grid-cols-3 gap-2 text-center">
               <div>
-                <div className="text-2xl font-bold text-cyan-400">{postsData?.total || 0}</div>
-                <div className="text-xs text-muted-foreground">Active Profiles</div>
+                <div className="text-lg font-bold text-cyan-400">{postsData?.total || 0}</div>
+                <div className="text-xs text-muted-foreground">Users</div>
               </div>
               <div>
-                <div className="text-2xl font-bold text-purple-400">AI</div>
-                <div className="text-xs text-muted-foreground">Match Engine</div>
+                <div className="text-lg font-bold text-purple-400">Smart</div>
+                <div className="text-xs text-muted-foreground">Matching</div>
               </div>
               <div>
-                <div className="text-2xl font-bold text-pink-400">∞</div>
-                <div className="text-xs text-muted-foreground">Possibilities</div>
+                <div className="text-lg font-bold text-pink-400">∞</div>
+                <div className="text-xs text-muted-foreground">Connections</div>
               </div>
             </div>
           </div>
         </QuantumCard>
 
-        {/* Quantum Filters */}
-        <div className="mt-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold">Pinned Posts</h2>
+        {/* Filters */}
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-medium">Featured Posts</h2>
             <Button
               variant="ghost"
               size="sm"
@@ -265,21 +265,21 @@ export default function HomePage() {
               All Filters
             </Button>
           </div>
-          <div className="flex space-x-3 overflow-x-auto pb-2">
+          <div className="flex space-x-2 overflow-x-auto pb-2">
             <div className="flex space-x-2 min-w-max">
-              <Badge variant="default" className="bg-mint hover:bg-mint/80 text-white whitespace-nowrap">
+              <Badge variant="default" className="bg-cyan-600 hover:bg-cyan-700 text-white whitespace-nowrap text-xs">
                 All
               </Badge>
-              <Badge variant="outline" className="whitespace-nowrap hover:border-mint">
+              <Badge variant="outline" className="whitespace-nowrap hover:border-cyan-400 text-xs">
                 Male
               </Badge>
-              <Badge variant="outline" className="whitespace-nowrap hover:border-mint">
+              <Badge variant="outline" className="whitespace-nowrap hover:border-cyan-400 text-xs">
                 Female
               </Badge>
-              <Badge variant="outline" className="whitespace-nowrap hover:border-mint">
+              <Badge variant="outline" className="whitespace-nowrap hover:border-cyan-400 text-xs">
                 20-30
               </Badge>
-              <Badge variant="outline" className="whitespace-nowrap hover:border-mint">
+              <Badge variant="outline" className="whitespace-nowrap hover:border-cyan-400 text-xs">
                 Malé
               </Badge>
             </div>
@@ -287,7 +287,7 @@ export default function HomePage() {
         </div>
 
         {/* User Cards Feed */}
-        <div className="mt-6 space-y-4">
+        <div className="space-y-3">
           {postsLoading ? (
             // Loading skeleton
             <div className="space-y-4">
@@ -308,10 +308,10 @@ export default function HomePage() {
                 key={post.id} 
                 post={post}
                 onConnect={(userId, postId) => {
-                  console.log("Quantum connection initiated:", userId, postId);
+                  console.log("Connection requested:", userId, postId);
                 }}
                 onLike={(postId) => {
-                  console.log("Neural like activated:", postId);
+                  console.log("Post liked:", postId);
                 }}
               />
             ))
@@ -322,11 +322,11 @@ export default function HomePage() {
                   <Sparkles className="w-12 h-12 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-2xl font-bold holo-text mb-2">
-                    Neural Network Initializing
+                  <h3 className="text-xl font-bold holo-text mb-2">
+                    Welcome to Kaiveni
                   </h3>
                   <p className="text-muted-foreground mb-6">
-                    Be the first to join the quantum connection matrix and start making meaningful matches!
+                    Be the first to create your profile and start connecting with people from the Maldives!
                   </p>
                   {user?.status === 'APPROVED' && (
                     <QuantumButton
@@ -336,7 +336,7 @@ export default function HomePage() {
                       className="bg-gradient-to-r from-cyan-600 to-purple-600 hover:from-cyan-500 hover:to-purple-500 text-white border-0"
                     >
                       <Plus className="w-4 h-4 mr-2" />
-                      Initialize Neural Profile
+                      Create Your Profile
                     </QuantumButton>
                   )}
                 </div>
@@ -345,16 +345,16 @@ export default function HomePage() {
           )}
         </div>
 
-        {/* Quantum Profile Creation Matrix */}
+        {/* Create Profile Dialog */}
         <Dialog open={showCreatePost} onOpenChange={setShowCreatePost}>
           <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto quantum-glow">
             <DialogHeader className="border-b border-cyan-400/20 pb-4">
               <DialogTitle className="text-xl holo-text flex items-center space-x-2">
                 <Cpu className="h-5 w-5 text-cyan-400" />
-                <span>Neural Profile Matrix</span>
+                <span>Create Your Profile</span>
               </DialogTitle>
               <p className="text-sm text-muted-foreground mt-2">
-                Initialize your quantum connection profile to start matching with compatible souls
+                Tell others about yourself and what you're looking for
               </p>
             </DialogHeader>
             <form onSubmit={createPostForm.handleSubmit(onCreatePost as any)} className="space-y-4">

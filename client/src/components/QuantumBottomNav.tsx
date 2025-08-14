@@ -12,11 +12,11 @@ export function QuantumBottomNav({ notifications = 0, connections = 0 }: Quantum
   const [location, setLocation] = useLocation();
 
   const navItems = [
-    { path: "/", icon: Home, label: "Neural Hub", active: location === "/" },
-    { path: "/browse", icon: Search, label: "Quantum Scan", active: location === "/browse" },
-    { path: "/connections", icon: Heart, label: "Bonds", count: connections, active: location === "/connections" },
-    { path: "/inbox", icon: MessageSquare, label: "Neural Link", count: notifications, active: location === "/inbox" },
-    { path: "/profile", icon: User, label: "Matrix", active: location === "/profile" }
+    { path: "/", icon: Home, label: "Home", active: location === "/" },
+    { path: "/browse", icon: Search, label: "Browse", active: location === "/browse" },
+    { path: "/connections", icon: Heart, label: "Matches", count: connections, active: location === "/connections" },
+    { path: "/inbox", icon: MessageSquare, label: "Messages", count: notifications, active: location === "/inbox" },
+    { path: "/profile", icon: User, label: "Profile", active: location === "/profile" }
   ];
 
   return (
@@ -46,11 +46,7 @@ export function QuantumBottomNav({ notifications = 0, connections = 0 }: Quantum
           </QuantumButton>
         ))}
       </div>
-      
-      {/* Quantum Energy Indicator */}
-      <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-        <div className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse"></div>
-      </div>
+
     </div>
   );
 }

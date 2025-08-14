@@ -41,7 +41,7 @@ export function QuantumHeader({ title, onSearch, showSearch = false, notificatio
               <Input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search quantum matches..."
+                placeholder="Search profiles..."
                 className="pl-10 bg-background/50 border-cyan-400/30 focus:border-cyan-400 quantum-glow"
               />
             </div>
