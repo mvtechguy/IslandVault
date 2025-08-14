@@ -142,7 +142,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         aclRules: [
           {
             group: {
-              type: ObjectAccessGroupType.ADMIN_ONLY,
+              type: "ADMIN_ONLY",
               id: "admins"
             },
             permission: ObjectPermission.READ

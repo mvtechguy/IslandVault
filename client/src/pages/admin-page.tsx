@@ -629,10 +629,10 @@ export default function AdminPage() {
             </div>
 
             <TabsContent value="users" className="space-y-4">
-              {usersData?.users?.length > 0 ? (
+              {usersData?.users && usersData.users.length > 0 ? (
                 <>
                   <div className="space-y-3">
-                    {usersData.users
+                    {usersData?.users
                       .slice(usersPage * itemsPerPage, (usersPage + 1) * itemsPerPage)
                       .map((user: any) => (
                         <Card key={user.id}>
@@ -697,7 +697,7 @@ export default function AdminPage() {
                   {/* Pagination Controls */}
                   <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
                     <div className="text-sm text-gray-600 dark:text-gray-400">
-                      Showing {usersPage * itemsPerPage + 1}-{Math.min((usersPage + 1) * itemsPerPage, usersData.users.length)} of {usersData.users.length}
+                      Showing {usersPage * itemsPerPage + 1}-{Math.min((usersPage + 1) * itemsPerPage, usersData?.users?.length || 0)} of {usersData?.users?.length || 0}
                     </div>
                     <div className="flex space-x-2">
                       <Button
@@ -712,7 +712,7 @@ export default function AdminPage() {
                         variant="outline"
                         size="sm"
                         onClick={() => setUsersPage(usersPage + 1)}
-                        disabled={(usersPage + 1) * itemsPerPage >= usersData.users.length}
+                        disabled={(usersPage + 1) * itemsPerPage >= (usersData?.users?.length || 0)}
                       >
                         Next
                       </Button>
@@ -731,7 +731,7 @@ export default function AdminPage() {
               {postsData?.posts?.length > 0 ? (
                 <>
                   <div className="space-y-3">
-                    {postsData.posts
+                    {postsData?.posts
                       .slice(postsPage * itemsPerPage, (postsPage + 1) * itemsPerPage)
                       .map((post: any) => (
                         <Card key={post.id}>
@@ -781,7 +781,7 @@ export default function AdminPage() {
                   {/* Pagination Controls */}
                   <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
                     <div className="text-sm text-gray-600 dark:text-gray-400">
-                      Showing {postsPage * itemsPerPage + 1}-{Math.min((postsPage + 1) * itemsPerPage, postsData.posts.length)} of {postsData.posts.length}
+                      Showing {postsPage * itemsPerPage + 1}-{Math.min((postsPage + 1) * itemsPerPage, postsData?.posts?.length || 0)} of {postsData?.posts?.length || 0}
                     </div>
                     <div className="flex space-x-2">
                       <Button
@@ -796,7 +796,7 @@ export default function AdminPage() {
                         variant="outline"
                         size="sm"
                         onClick={() => setPostsPage(postsPage + 1)}
-                        disabled={(postsPage + 1) * itemsPerPage >= postsData.posts.length}
+                        disabled={(postsPage + 1) * itemsPerPage >= (postsData?.posts?.length || 0)}
                       >
                         Next
                       </Button>
@@ -815,7 +815,7 @@ export default function AdminPage() {
               {topupsData?.topups?.length > 0 ? (
                 <>
                   <div className="space-y-3">
-                    {topupsData.topups
+                    {topupsData?.topups
                       .slice(topupsPage * itemsPerPage, (topupsPage + 1) * itemsPerPage)
                       .map((topup: any) => (
                         <Card key={topup.id}>
@@ -874,7 +874,7 @@ export default function AdminPage() {
                   {/* Pagination Controls */}
                   <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
                     <div className="text-sm text-gray-600 dark:text-gray-400">
-                      Showing {topupsPage * itemsPerPage + 1}-{Math.min((topupsPage + 1) * itemsPerPage, topupsData.topups.length)} of {topupsData.topups.length}
+                      Showing {topupsPage * itemsPerPage + 1}-{Math.min((topupsPage + 1) * itemsPerPage, topupsData?.topups?.length || 0)} of {topupsData?.topups?.length || 0}
                     </div>
                     <div className="flex space-x-2">
                       <Button
@@ -889,7 +889,7 @@ export default function AdminPage() {
                         variant="outline"
                         size="sm"
                         onClick={() => setTopupsPage(topupsPage + 1)}
-                        disabled={(topupsPage + 1) * itemsPerPage >= topupsData.topups.length}
+                        disabled={(topupsPage + 1) * itemsPerPage >= (topupsData?.topups?.length || 0)}
                       >
                         Next
                       </Button>
@@ -1017,10 +1017,10 @@ export default function AdminPage() {
                 </div>
               </div>
 
-              {chatInboxData?.conversations?.length > 0 ? (
+              {chatInboxData?.conversations && chatInboxData.conversations.length > 0 ? (
                 <>
                   <div className="space-y-3">
-                    {chatInboxData.conversations
+                    {chatInboxData?.conversations
                       .slice(chatPage * itemsPerPage, (chatPage + 1) * itemsPerPage)
                       .map((conv: any) => (
                         <Card key={conv.conversation.id} className="border-l-4 border-l-soft-blue">
@@ -1080,7 +1080,7 @@ export default function AdminPage() {
                   {/* Pagination Controls */}
                   <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
                     <div className="text-sm text-gray-600 dark:text-gray-400">
-                      Showing {chatPage * itemsPerPage + 1}-{Math.min((chatPage + 1) * itemsPerPage, chatInboxData.conversations.length)} of {chatInboxData.conversations.length}
+                      Showing {chatPage * itemsPerPage + 1}-{Math.min((chatPage + 1) * itemsPerPage, chatInboxData?.conversations?.length || 0)} of {chatInboxData?.conversations?.length || 0}
                     </div>
                     <div className="flex space-x-2">
                       <Button
@@ -1095,7 +1095,7 @@ export default function AdminPage() {
                         variant="outline"
                         size="sm"
                         onClick={() => setChatPage(chatPage + 1)}
-                        disabled={(chatPage + 1) * itemsPerPage >= chatInboxData.conversations.length}
+                        disabled={(chatPage + 1) * itemsPerPage >= (chatInboxData?.conversations?.length || 0)}
                       >
                         Next
                       </Button>

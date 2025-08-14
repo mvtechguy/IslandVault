@@ -24,19 +24,19 @@ export default function InboxPage() {
   const [newMessage, setNewMessage] = useState("");
   const { sendMessage, messages, isConnected } = useChat(selectedConversation?.id);
 
-  const { data: conversations, isLoading: conversationsLoading } = useQuery({
+  const { data: conversations, isLoading: conversationsLoading } = useQuery<any[]>({
     queryKey: ["/api/conversations"],
     enabled: !!user,
     retry: false,
   });
 
-  const { data: sentRequests } = useQuery({
+  const { data: sentRequests } = useQuery<any[]>({
     queryKey: ["/api/connect/sent"],
     enabled: !!user,
     retry: false,
   });
 
-  const { data: receivedRequests } = useQuery({
+  const { data: receivedRequests } = useQuery<any[]>({
     queryKey: ["/api/connect/received"],
     enabled: !!user,
     retry: false,
