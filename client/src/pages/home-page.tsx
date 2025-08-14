@@ -189,6 +189,7 @@ export default function HomePage() {
             <Button
               variant="ghost"
               size="sm"
+              onClick={() => setLocation('/notifications')}
               className="relative w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600"
             >
               <Bell className="w-4 h-4 text-gray-600 dark:text-gray-300" />

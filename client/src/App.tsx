@@ -20,6 +20,7 @@ import BrowsePostsPage from "@/pages/browse-posts-page";
 import CreatePostPage from "@/pages/create-post-page";
 import InboxPage from "@/pages/inbox-page";
 import PrivacySettingsPage from "@/pages/privacy-settings-page";
+import NotificationsPage from "@/pages/notifications-page";
 
 
 
@@ -75,6 +76,11 @@ function Router() {
       <Route path="/privacy-settings">
         <ProtectedRoute>
           <PrivacySettingsPage />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/notifications">
+        <ProtectedRoute>
+          <NotificationsPage />
         </ProtectedRoute>
       </Route>
       <Route component={NotFound} />

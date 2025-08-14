@@ -533,6 +533,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         res.json({ message: "Post unliked", liked: false });
       } else {
         await storage.likePost(postId, req.user!.id);
+        
+        // Send notification to post owner (only if not liking own post)
+        if (post.userId !== req.user!.id) {
+          const liker = await storage.getUser(req.user!.id);
+          await storage.createNotification({
+            userId: post.userId,
+            type: 'POST_LIKED',
+            data: { 
+              likerName: liker?.fullName || 'Someone',
+              likerId: req.user!.id,
+              postTitle: post.title || 'your post',
+              postId: postId
+            },
+            seen: false
+          });
+        }
+        
         res.json({ message: "Post liked", liked: true });
       }
     } catch (error) {
@@ -651,6 +668,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Send Telegram notification to target user
       if (targetUser) {
         await telegramService.notifyConnectionRequest(targetUser.id, user?.fullName || 'Unknown User');
+      }
+
+      // Send notification to target user about new connection request
+      if (targetUser) {
+        await storage.createNotification({
+          userId: targetUser.id,
+          type: 'CONNECTION_REQUEST_RECEIVED',
+          data: { 
+            requesterName: user?.fullName || 'Unknown User',
+            requesterId: req.user!.id,
+            postTitle: post?.title || null,
+            requestId: request.id
+          },
+          seen: false
+        });
       }
 
       // Send admin notification (only for non-admin users)
@@ -854,6 +886,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Mark single notification as seen (alternative route)
+  app.post("/api/notifications/:id/mark-seen", isAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.markNotificationSeen(id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error marking notification as seen:", error);
+      res.status(500).json({ message: "Failed to update notification" });
+    }
+  });
+
+  // Mark all notifications as seen for user
+  app.post("/api/notifications/mark-all-seen", isAuthenticated, async (req, res) => {
+    try {
+      await storage.markAllNotificationsSeen(req.user!.id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error marking all notifications as seen:", error);
+      res.status(500).json({ message: "Failed to update notifications" });
+    }
+  });
+
   // Privacy profile routes
   app.get('/api/profile/privacy', isAuthenticated, async (req, res) => {
     try {
@@ -907,6 +962,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         requestType, // 'MORE_IMAGES' or 'REAL_IDENTITY'
         message,
         status: 'PENDING'
+      });
+      
+      // Send notification to target user about the reveal request
+      const requester = await storage.getUser(req.user!.id);
+      const targetUser = await storage.getUser(targetUserId);
+      
+      await storage.createNotification({
+        userId: targetUserId,
+        type: requestType === 'REAL_IDENTITY' ? 'IDENTITY_REVEAL_REQUEST' : 'IMAGE_REVEAL_REQUEST',
+        data: { 
+          requesterName: requester?.fullName || 'Someone',
+          requesterId: req.user!.id,
+          message: message || null,
+          requestId: revealRequest.id,
+          requestType
+        },
+        seen: false
       });
       
       res.json(revealRequest);
@@ -1037,6 +1109,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const newStatus = action === 'approve' ? 'APPROVED' : 'REJECTED';
       await storage.updateConnectionRequest(requestId, { status: newStatus });
+
+      // Send notification to requester about response
+      const requesterUser = await storage.getUser(request.requesterId);
+      const targetUserData = await storage.getUser(request.targetUserId);
+      
+      await storage.createNotification({
+        userId: request.requesterId,
+        type: action === 'approve' ? 'CONNECTION_REQUEST_APPROVED' : 'CONNECTION_REQUEST_REJECTED',
+        data: { 
+          targetName: targetUserData?.fullName || 'Unknown User',
+          targetUserId: request.targetUserId,
+          requestId: requestId
+        },
+        seen: false
+      });
 
       // If approved, create conversation
       if (action === 'approve') {

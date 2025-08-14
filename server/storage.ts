@@ -662,6 +662,13 @@ export class DatabaseStorage implements IStorage {
       .where(eq(notifications.id, id));
   }
 
+  async markAllNotificationsSeen(userId: number): Promise<void> {
+    await db
+      .update(notifications)
+      .set({ seen: true })
+      .where(and(eq(notifications.userId, userId), eq(notifications.seen, false)));
+  }
+
   // Audit
   async createAudit(auditData: Omit<Audit, 'id' | 'createdAt'>): Promise<Audit> {
     const [audit] = await db
