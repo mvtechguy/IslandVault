@@ -909,6 +909,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Delete notification
+  app.delete("/api/notifications/:id", isAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteNotification(id, req.user!.id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting notification:", error);
+      res.status(500).json({ message: "Failed to delete notification" });
+    }
+  });
+
   // Privacy profile routes
   app.get('/api/profile/privacy', isAuthenticated, async (req, res) => {
     try {

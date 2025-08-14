@@ -1,6 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { storage } from "./storage";
 
 const app = express();
 
@@ -76,6 +77,16 @@ app.use((req, res, next) => {
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = parseInt(process.env.PORT || '5000', 10);
+  // Auto-cleanup notifications every hour (delete seen notifications older than 24 hours)
+  setInterval(async () => {
+    try {
+      await storage.deleteOldNotifications();
+      console.log('Cleaned up old notifications');
+    } catch (error) {
+      console.error('Error cleaning up notifications:', error);
+    }
+  }, 60 * 60 * 1000); // Run every hour
+
   server.listen({
     port,
     host: "0.0.0.0",

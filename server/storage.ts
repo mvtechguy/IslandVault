@@ -669,6 +669,23 @@ export class DatabaseStorage implements IStorage {
       .where(and(eq(notifications.userId, userId), eq(notifications.seen, false)));
   }
 
+  async deleteNotification(id: number, userId: number): Promise<void> {
+    await db
+      .delete(notifications)
+      .where(and(eq(notifications.id, id), eq(notifications.userId, userId)));
+  }
+
+  async deleteOldNotifications(): Promise<void> {
+    // Delete notifications older than 24 hours that have been seen
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    await db
+      .delete(notifications)
+      .where(and(
+        eq(notifications.seen, true),
+        sql`${notifications.createdAt} < ${twentyFourHoursAgo}`
+      ));
+  }
+
   // Audit
   async createAudit(auditData: Omit<Audit, 'id' | 'createdAt'>): Promise<Audit> {
     const [audit] = await db
