@@ -488,8 +488,15 @@ export default function HomePage() {
         </Dialog>
       </main>
 
-      {/* Quantum Bottom Navigation */}
-      <QuantumBottomNav notifications={unreadNotifications} />
+      {/* Bottom Navigation */}
+      <QuantumBottomNav 
+        notifications={unreadNotifications} 
+        onCreatePost={() => user?.status === 'APPROVED' ? setShowCreatePost(true) : toast({
+          title: "Account not approved",
+          description: "Please wait for admin approval to create posts.",
+          variant: "destructive"
+        })}
+      />
     </div>
   );
 }

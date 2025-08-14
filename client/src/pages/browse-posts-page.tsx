@@ -10,7 +10,7 @@ import { Link } from "wouter";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { calculateAge } from "@/lib/utils";
 import { MobileHeader } from "@/components/MobileHeader";
-import { BottomNavigation } from "@/components/BottomNavigation";
+import { QuantumBottomNav } from "@/components/QuantumBottomNav";
 
 // Import the Maldives data
 const maldivesData = [
@@ -464,7 +464,7 @@ export default function BrowsePostsPage() {
         </div>
       </div>
       
-      <BottomNavigation />
+      <QuantumBottomNav />
     </div>
   );
 }

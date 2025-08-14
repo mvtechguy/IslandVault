@@ -1,4 +1,4 @@
-import { Home, Search, Heart, MessageSquare, User, Zap } from "lucide-react";
+import { Home, Search, Heart, MessageSquare, User, Zap, Plus } from "lucide-react";
 import { useLocation } from "wouter";
 import { Badge } from "@/components/ui/badge";
 import { QuantumButton } from "./QuantumButton";
@@ -6,14 +6,23 @@ import { QuantumButton } from "./QuantumButton";
 interface QuantumBottomNavProps {
   notifications?: number;
   connections?: number;
+  onCreatePost?: () => void;
 }
 
-export function QuantumBottomNav({ notifications = 0, connections = 0 }: QuantumBottomNavProps) {
+export function QuantumBottomNav({ notifications = 0, connections = 0, onCreatePost }: QuantumBottomNavProps) {
   const [location, setLocation] = useLocation();
 
   const navItems = [
     { path: "/", icon: Home, label: "Home", active: location === "/" },
     { path: "/browse", icon: Search, label: "Browse", active: location === "/browse" },
+    { 
+      path: "create", 
+      icon: Plus, 
+      label: "Create", 
+      active: false, 
+      special: true,
+      onClick: onCreatePost 
+    },
     { path: "/connections", icon: Heart, label: "Matches", count: connections, active: location === "/connections" },
     { path: "/inbox", icon: MessageSquare, label: "Messages", count: notifications, active: location === "/inbox" },
     { path: "/profile", icon: User, label: "Profile", active: location === "/profile" }
@@ -27,14 +36,20 @@ export function QuantumBottomNav({ notifications = 0, connections = 0 }: Quantum
             key={item.path}
             variant="ghost"
             size="sm"
-            onClick={() => setLocation(item.path)}
+            onClick={() => item.onClick ? item.onClick() : setLocation(item.path)}
             className={`relative flex flex-col items-center space-y-1 p-2 rounded-lg transition-all ${
               item.active 
                 ? "bg-gradient-to-r from-cyan-600/30 to-purple-600/30 border border-cyan-400/50" 
                 : "hover:bg-slate-700/50"
             }`}
           >
-            <item.icon className={`h-5 w-5 ${item.active ? "text-cyan-400" : "text-muted-foreground"}`} />
+            {item.special ? (
+              <div className="w-8 h-8 bg-gradient-to-r from-cyan-400 to-purple-600 rounded-full flex items-center justify-center neural-pulse">
+                <item.icon className="w-4 h-4 text-white" />
+              </div>
+            ) : (
+              <item.icon className={`h-5 w-5 ${item.active ? "text-cyan-400" : "text-muted-foreground"}`} />
+            )}
             <span className={`text-xs ${item.active ? "text-cyan-400 font-medium" : "text-muted-foreground"}`}>
               {item.label}
             </span>

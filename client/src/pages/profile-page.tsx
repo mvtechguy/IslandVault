@@ -15,7 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/use-auth";
 import { useTheme } from "@/lib/theme-provider";
 import { useToast } from "@/hooks/use-toast";
-import { BottomNavigation } from "@/components/BottomNavigation";
+import { QuantumBottomNav } from "@/components/QuantumBottomNav";
 import { apiRequest, getQueryFn } from "@/lib/queryClient";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -800,7 +800,7 @@ export default function ProfilePage() {
         </DialogContent>
       </Dialog>
 
-      <BottomNavigation />
+      <QuantumBottomNav />
     </div>
   );
 }
