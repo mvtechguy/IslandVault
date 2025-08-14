@@ -5,11 +5,10 @@ import { QuantumButton } from "./QuantumButton";
 
 interface QuantumBottomNavProps {
   notifications?: number;
-  connections?: number;
   onCreatePost?: () => void;
 }
 
-export function QuantumBottomNav({ notifications = 0, connections = 0, onCreatePost }: QuantumBottomNavProps) {
+export function QuantumBottomNav({ notifications = 0, onCreatePost }: QuantumBottomNavProps) {
   const [location, setLocation] = useLocation();
 
   const navItems = [
@@ -23,7 +22,6 @@ export function QuantumBottomNav({ notifications = 0, connections = 0, onCreateP
       special: true,
       onClick: onCreatePost 
     },
-    { path: "/connections", icon: Heart, label: "Matches", count: connections, active: location === "/connections" },
     { path: "/inbox", icon: MessageSquare, label: "Messages", count: notifications, active: location === "/inbox" },
     { path: "/profile", icon: User, label: "Profile", active: location === "/profile" }
   ];
