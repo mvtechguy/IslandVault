@@ -1551,7 +1551,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/admin/banners", isAdmin, async (req, res) => {
     try {
-      const banner = await storage.createBanner(req.body);
+      // Process the banner data to handle date fields properly
+      const bannerData = {
+        ...req.body,
+        startDate: req.body.startDate && req.body.startDate !== "" ? new Date(req.body.startDate) : null,
+        endDate: req.body.endDate && req.body.endDate !== "" ? new Date(req.body.endDate) : null,
+        orderIndex: req.body.orderIndex ? parseInt(req.body.orderIndex) : 0,
+        isVisible: req.body.isVisible !== undefined ? req.body.isVisible : true
+      };
+      
+      const banner = await storage.createBanner(bannerData);
       res.json(banner);
     } catch (error) {
       console.error("Error creating banner:", error);
@@ -1562,7 +1571,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/admin/banners/:id", isAdmin, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const banner = await storage.updateBanner(id, req.body);
+      
+      // Process the banner data to handle date fields properly
+      const bannerData = {
+        ...req.body,
+        startDate: req.body.startDate && req.body.startDate !== "" ? new Date(req.body.startDate) : null,
+        endDate: req.body.endDate && req.body.endDate !== "" ? new Date(req.body.endDate) : null,
+        orderIndex: req.body.orderIndex ? parseInt(req.body.orderIndex) : 0,
+        isVisible: req.body.isVisible !== undefined ? req.body.isVisible : true
+      };
+      
+      const banner = await storage.updateBanner(id, bannerData);
       if (!banner) {
         return res.status(404).json({ message: "Banner not found" });
       }
