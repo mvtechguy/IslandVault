@@ -1601,47 +1601,121 @@ export default function AdminPage() {
                   )}
                 </div>
 
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <Label>Full Name:</Label>
-                    <p className="font-medium">{selectedUser.fullName}</p>
-                  </div>
-                  <div>
-                    <Label>Username:</Label>
-                    <p>{selectedUser.username}</p>
-                  </div>
-                  <div>
-                    <Label>Email:</Label>
-                    <p>{selectedUser.email || "Not provided"}</p>
-                  </div>
-                  <div>
-                    <Label>Age:</Label>
-                    <p>{calculateAge(selectedUser.dateOfBirth)} years</p>
-                  </div>
-                  <div>
-                    <Label>Gender:</Label>
-                    <p>{selectedUser.gender}</p>
-                  </div>
-                  <div>
-                    <Label>Location:</Label>
-                    <p>{selectedUser.island}, {selectedUser.atoll}</p>
-                  </div>
-                  <div>
-                    <Label>Religion:</Label>
-                    <p>{selectedUser.religion || "Not specified"}</p>
-                  </div>
-                  <div>
-                    <Label>Job/Education:</Label>
-                    <p>{selectedUser.job || "Not specified"}</p>
-                  </div>
-                </div>
-                
-                {selectedUser.shortBio && (
-                  <div>
-                    <Label>Bio:</Label>
-                    <p className="text-sm mt-1">{selectedUser.shortBio}</p>
-                  </div>
+                {/* Real Information Section */}
+                <Card className="mb-4">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm text-green-700 dark:text-green-400">
+                      🔒 Real Information
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <Label>Full Name:</Label>
+                        <p className="font-medium">{selectedUser.fullName}</p>
+                      </div>
+                      <div>
+                        <Label>Username:</Label>
+                        <p>{selectedUser.username}</p>
+                      </div>
+                      <div>
+                        <Label>Email:</Label>
+                        <p>{selectedUser.email || "Not provided"}</p>
+                      </div>
+                      <div>
+                        <Label>Age:</Label>
+                        <p>{calculateAge(selectedUser.dateOfBirth)} years</p>
+                      </div>
+                      <div>
+                        <Label>Gender:</Label>
+                        <p>{selectedUser.gender}</p>
+                      </div>
+                      <div>
+                        <Label>Location:</Label>
+                        <p>{selectedUser.island}, {selectedUser.atoll}</p>
+                      </div>
+                      <div>
+                        <Label>Phone:</Label>
+                        <p>{selectedUser.phone || "Not provided"}</p>
+                      </div>
+                      <div>
+                        <Label>Identity Status:</Label>
+                        <p className={selectedUser.useRealIdentity !== false ? "text-green-600 font-medium" : "text-orange-600 font-medium"}>
+                          {selectedUser.useRealIdentity !== false ? "Using Real Identity" : "Using Fake Identity"}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Fake Information Section */}
+                {selectedUser.useRealIdentity === false && (selectedUser.fakeFullName || selectedUser.fakeAge || selectedUser.fakeIsland) && (
+                  <Card className="mb-4">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm text-orange-700 dark:text-orange-400">
+                        🎭 Fake Identity (What Others See)
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <Label>Fake Name:</Label>
+                          <p className="font-medium">{selectedUser.fakeFullName || "Not set"}</p>
+                        </div>
+                        <div>
+                          <Label>Fake Age:</Label>
+                          <p>{selectedUser.fakeAge || "Not set"}</p>
+                        </div>
+                        <div>
+                          <Label>Fake Location:</Label>
+                          <p>{selectedUser.fakeIsland && selectedUser.fakeAtoll ? `${selectedUser.fakeIsland}, ${selectedUser.fakeAtoll}` : "Not set"}</p>
+                        </div>
+                        <div>
+                          <Label>Profile Visibility:</Label>
+                          <p className="text-orange-600 font-medium">Others see fake details</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
                 )}
+
+                {/* Additional Information Section */}
+                <Card className="mb-4">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm text-blue-700 dark:text-blue-400">
+                      📋 Additional Information
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <Label>Religion:</Label>
+                        <p>{selectedUser.religion || "Not specified"}</p>
+                      </div>
+                      <div>
+                        <Label>Job/Education:</Label>
+                        <p>{selectedUser.job || "Not specified"}</p>
+                      </div>
+                      <div>
+                        <Label>Registration Date:</Label>
+                        <p>{new Date(selectedUser.createdAt).toLocaleDateString()}</p>
+                      </div>
+                      <div>
+                        <Label>Account Status:</Label>
+                        <Badge className={getStatusColor(selectedUser.status)}>
+                          {selectedUser.status}
+                        </Badge>
+                      </div>
+                    </div>
+                    {selectedUser.shortBio && (
+                      <div className="mt-4">
+                        <Label>Bio:</Label>
+                        <p className="text-sm mt-1 p-2 bg-gray-50 dark:bg-gray-800 rounded">{selectedUser.shortBio}</p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
 
                 <div>
                   <Label htmlFor="adminNote">Admin Note:</Label>
