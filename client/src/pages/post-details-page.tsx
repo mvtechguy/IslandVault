@@ -161,26 +161,28 @@ export default function PostDetailsPage() {
 
         {/* Main post card */}
         <Card className="bg-gradient-to-br from-white via-gray-50 to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 shadow-xl rounded-3xl border-0 overflow-hidden mb-6">
-          {/* Post Images */}
+          {/* Post Images - 1:1 Aspect Ratio */}
           {post.images && post.images.length > 0 && (
             <div className="relative">
               {post.images.length === 1 ? (
-                <img
-                  src={post.images[0].startsWith('/uploads') ? post.images[0] : `/uploads/posts/${post.images[0]}`}
-                  alt={post.title || "Post image"}
-                  className="w-full h-80 object-cover"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).style.display = 'none';
-                  }}
-                />
+                <div className="aspect-square w-full overflow-hidden">
+                  <img
+                    src={post.images[0].startsWith('/uploads') ? post.images[0] : `/uploads/posts/${post.images[0]}`}
+                    alt={post.title || "Post image"}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = 'none';
+                    }}
+                  />
+                </div>
               ) : (
                 <div className="grid grid-cols-2 gap-2 p-4">
                   {post.images.slice(0, 4).map((image, index) => (
-                    <div key={index} className="relative">
+                    <div key={index} className="relative aspect-square overflow-hidden rounded-xl">
                       <img
                         src={image.startsWith('/uploads') ? image : `/uploads/posts/${image}`}
                         alt={`Post image ${index + 1}`}
-                        className="w-full h-40 object-cover rounded-xl"
+                        className="w-full h-full object-cover"
                         onError={(e) => {
                           (e.target as HTMLImageElement).style.display = 'none';
                         }}
@@ -198,7 +200,7 @@ export default function PostDetailsPage() {
               )}
               
               {post.isPinned && (
-                <div className="absolute top-4 right-4">
+                <div className="absolute top-4 right-4 z-10">
                   <Badge className="bg-gradient-to-r from-amber-400 via-yellow-500 to-orange-500 text-white px-3 py-1.5 rounded-full shadow-lg">
                     ✨ Pinned
                   </Badge>
@@ -262,12 +264,12 @@ export default function PostDetailsPage() {
 
             {/* Post content */}
             {post.title && (
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-3">{post.title}</h2>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-3 break-words">{post.title}</h2>
             )}
             
-            <p className="text-gray-700 dark:text-gray-300 leading-relaxed mb-4">
+            <div className="text-gray-700 dark:text-gray-300 leading-relaxed mb-4 break-words whitespace-pre-wrap overflow-wrap-anywhere">
               {post.description}
-            </p>
+            </div>
 
             {/* Preferences */}
             {post.preferences && (
