@@ -1471,7 +1471,31 @@ export default function AdminPage() {
             </DialogHeader>
             {selectedUser && (
               <div className="space-y-4">
+                {/* Profile Picture */}
+                <div className="flex justify-center mb-4">
+                  {selectedUser.profilePhotoPath ? (
+                    <img
+                      src={selectedUser.profilePhotoPath.startsWith('http') 
+                        ? selectedUser.profilePhotoPath 
+                        : `/uploads/profiles/${selectedUser.profilePhotoPath}`}
+                      alt={`${selectedUser.fullName}'s profile`}
+                      className="w-24 h-24 object-cover rounded-full border-2 border-gray-200 dark:border-gray-600"
+                      onError={(e) => {
+                        e.currentTarget.src = '/uploads/profiles/default-avatar.png';
+                      }}
+                    />
+                  ) : (
+                    <div className="w-24 h-24 bg-gradient-to-br from-mint to-soft-blue rounded-full flex items-center justify-center text-white font-bold text-xl">
+                      {selectedUser.fullName?.charAt(0)?.toUpperCase() || 'U'}
+                    </div>
+                  )}
+                </div>
+
                 <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <Label>Full Name:</Label>
+                    <p className="font-medium">{selectedUser.fullName}</p>
+                  </div>
                   <div>
                     <Label>Username:</Label>
                     <p>{selectedUser.username}</p>
@@ -1712,11 +1736,55 @@ export default function AdminPage() {
 
                 <div>
                   <Label>Bank Slip:</Label>
-                  <div className="mt-2 p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-center">
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Bank slip image would be displayed here
-                    </p>
-                  </div>
+                  {selectedTopup.slipPath ? (
+                    <div className="mt-2">
+                      <img
+                        src={selectedTopup.slipPath.startsWith('http') 
+                          ? selectedTopup.slipPath 
+                          : selectedTopup.slipPath.startsWith('/objects') 
+                            ? selectedTopup.slipPath
+                            : selectedTopup.slipPath.startsWith('/uploads') 
+                              ? selectedTopup.slipPath 
+                              : `/uploads/slips/${selectedTopup.slipPath}`}
+                        alt="Bank Transfer Slip"
+                        className="w-full max-w-md mx-auto h-auto object-contain rounded-lg border border-gray-200 dark:border-gray-600"
+                        onError={(e) => {
+                          console.log('Image failed to load:', selectedTopup.slipPath);
+                          e.currentTarget.style.display = 'none';
+                          const fallback = document.createElement('div');
+                          fallback.className = 'mt-2 p-4 border-2 border-dashed border-red-300 rounded-lg text-center';
+                          fallback.innerHTML = '<p class="text-sm text-red-600">Unable to load slip image</p><p class="text-xs text-gray-500">Path: ' + selectedTopup.slipPath + '</p>';
+                          e.currentTarget.parentNode?.appendChild(fallback);
+                        }}
+                      />
+                      <div className="flex items-center justify-center mt-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const imageUrl = selectedTopup.slipPath.startsWith('http') 
+                              ? selectedTopup.slipPath 
+                              : selectedTopup.slipPath.startsWith('/objects') 
+                                ? selectedTopup.slipPath
+                                : selectedTopup.slipPath.startsWith('/uploads') 
+                                  ? selectedTopup.slipPath 
+                                  : `/uploads/slips/${selectedTopup.slipPath}`;
+                            window.open(imageUrl, '_blank');
+                          }}
+                          className="text-xs"
+                        >
+                          <Eye className="w-3 h-3 mr-1" />
+                          View Full Size
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="mt-2 p-4 border-2 border-dashed border-red-300 dark:border-red-600 rounded-lg text-center">
+                      <p className="text-sm text-red-600 dark:text-red-400">
+                        No slip image uploaded
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 <div>
