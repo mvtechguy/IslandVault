@@ -144,86 +144,90 @@ export default function HomePage() {
   const unreadNotifications = notifications?.filter((n: any) => !n.seen).length || 0;
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
+    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-slate-50 to-white dark:from-slate-900 dark:to-slate-800">
       {/* Quantum Background Effects */}
       <div className="quantum-particles"></div>
       
       {/* Futuristic Header */}
-      <header className="bg-gradient-to-r from-slate-900/95 to-slate-800/95 border-b border-cyan-400/20 sticky top-0 z-50 backdrop-blur-xl shadow-2xl">
-        <div className="flex items-center justify-between px-4 py-3">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-cyan-400 to-purple-600 rounded-xl flex items-center justify-center neural-pulse">
-              <Cpu className="w-5 h-5 text-white" />
+      <header className="fixed top-0 left-0 right-0 bg-gradient-to-r from-slate-900/95 to-slate-800/95 border-b border-cyan-400/20 z-50 backdrop-blur-xl shadow-2xl">
+        <div className="container mx-auto flex items-center justify-between px-3 py-2 sm:px-4 sm:py-3">
+          {/* Left Section - Logo */}
+          <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-shrink-0">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-cyan-400 to-purple-600 rounded-lg sm:rounded-xl flex items-center justify-center neural-pulse">
+              <Cpu className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
             </div>
-            <h1 className="text-2xl font-bold holo-text">
+            <h1 className="text-lg sm:text-xl lg:text-2xl font-bold holo-text truncate">
               Kaiveni
             </h1>
           </div>
-          <div className="flex items-center space-x-3">
-            {/* Quantum Credits */}
-            <QuantumCard glow={false} className="px-3 py-1">
+          
+          {/* Right Section - Controls */}
+          <div className="flex items-center space-x-1 sm:space-x-2 lg:space-x-3">
+            {/* Credits - Hide text on very small screens */}
+            <QuantumCard glow={false} className="px-2 py-1 sm:px-3">
               <QuantumButton
                 variant="ghost"
                 size="sm"
                 onClick={() => setLocation('/coins')}
-                className="flex items-center space-x-2"
+                className="flex items-center space-x-1 sm:space-x-2"
               >
-                <Zap className="w-4 h-4 text-yellow-400" />
-                <span className="text-sm font-bold text-yellow-400">
+                <Zap className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-400" />
+                <span className="text-xs sm:text-sm font-bold text-yellow-400">
                   {coinBalance?.coins || 0}
                 </span>
-                <span className="text-xs text-muted-foreground">Credits</span>
-                <Plus className="w-3 h-3 text-cyan-400" />
+                <span className="hidden sm:inline text-xs text-muted-foreground">Credits</span>
+                <Plus className="w-2 h-2 sm:w-3 sm:h-3 text-cyan-400" />
               </QuantumButton>
             </QuantumCard>
             
-            {/* Quantum Controls */}
+            {/* Theme Toggle */}
             <QuantumButton
               variant="ghost"
               size="icon"
               onClick={toggleTheme}
               quantum
+              className="w-8 h-8 sm:w-9 sm:h-9"
             >
               {theme === "light" ? (
-                <Moon className="w-4 h-4" />
+                <Moon className="w-3 h-3 sm:w-4 sm:h-4" />
               ) : (
-                <Sun className="w-4 h-4 text-yellow-400" />
+                <Sun className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-400" />
               )}
             </QuantumButton>
             
-            {/* Neural Notifications */}
+            {/* Notifications */}
             <QuantumButton
               variant="ghost"
               size="icon"
-              className="relative"
+              className="relative w-8 h-8 sm:w-9 sm:h-9"
             >
-              <Bell className="w-4 h-4" />
+              <Bell className="w-3 h-3 sm:w-4 sm:h-4" />
               {unreadNotifications > 0 && (
-                <Badge className="absolute -top-2 -right-2 w-5 h-5 flex items-center justify-center p-0 bg-gradient-to-r from-red-500 to-pink-500 text-xs neural-pulse">
+                <Badge className="absolute -top-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center p-0 bg-gradient-to-r from-red-500 to-pink-500 text-xs neural-pulse">
                   {unreadNotifications > 99 ? "99+" : unreadNotifications}
                 </Badge>
               )}
             </QuantumButton>
             
-            {/* Admin Quantum Access */}
+            {/* Admin Access - Show only on larger screens for admins */}
             {user && (user.role === 'ADMIN' || user.role === 'SUPERADMIN') && (
               <QuantumButton
                 variant="ghost"
                 size="icon"
                 onClick={() => window.location.href = '/admin'}
-                className="bg-gradient-to-r from-orange-600/20 to-red-600/20 border border-orange-400/30"
-                title="Quantum Admin Console"
+                className="hidden sm:flex w-8 h-8 sm:w-9 sm:h-9 bg-gradient-to-r from-orange-600/20 to-red-600/20 border border-orange-400/30"
+                title="Admin Console"
                 quantum
               >
-                <Shield className="w-4 h-4 text-orange-400" />
+                <Shield className="w-3 h-3 sm:w-4 sm:h-4 text-orange-400" />
               </QuantumButton>
             )}
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="pb-20 px-3 relative z-10 space-y-4">
+      {/* Main Content with top padding for fixed header */}
+      <main className="pt-16 sm:pt-20 pb-20 px-3 relative z-10 space-y-4">
         {/* Status Panel */}
         <QuantumCard floating className="mt-3">
           <div className="p-3">
