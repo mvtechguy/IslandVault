@@ -1513,6 +1513,77 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ================== BANNER MANAGEMENT ==================
+  
+  // Public banners endpoint
+  app.get("/api/banners", async (req, res) => {
+    try {
+      const banners = await storage.getActiveBanners();
+      res.json(banners);
+    } catch (error) {
+      console.error("Error fetching banners:", error);
+      res.status(500).json({ message: "Failed to fetch banners" });
+    }
+  });
+
+  // Banner click tracking
+  app.post("/api/banners/:id/click", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.incrementBannerClick(id);
+      res.json({ message: "Click tracked successfully" });
+    } catch (error) {
+      console.error("Error tracking banner click:", error);
+      res.status(500).json({ message: "Failed to track click" });
+    }
+  });
+
+  // Admin banner management
+  app.get("/api/admin/banners", isAdmin, async (req, res) => {
+    try {
+      const banners = await storage.getBanners();
+      res.json(banners);
+    } catch (error) {
+      console.error("Error fetching admin banners:", error);
+      res.status(500).json({ message: "Failed to fetch banners" });
+    }
+  });
+
+  app.post("/api/admin/banners", isAdmin, async (req, res) => {
+    try {
+      const banner = await storage.createBanner(req.body);
+      res.json(banner);
+    } catch (error) {
+      console.error("Error creating banner:", error);
+      res.status(500).json({ message: "Failed to create banner" });
+    }
+  });
+
+  app.put("/api/admin/banners/:id", isAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const banner = await storage.updateBanner(id, req.body);
+      if (!banner) {
+        return res.status(404).json({ message: "Banner not found" });
+      }
+      res.json(banner);
+    } catch (error) {
+      console.error("Error updating banner:", error);
+      res.status(500).json({ message: "Failed to update banner" });
+    }
+  });
+
+  app.delete("/api/admin/banners/:id", isAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteBanner(id);
+      res.json({ message: "Banner deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting banner:", error);
+      res.status(500).json({ message: "Failed to delete banner" });
+    }
+  });
+
   // ================== BANK ACCOUNT MANAGEMENT ==================
 
   // Admin bank account management

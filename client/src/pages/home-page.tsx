@@ -49,13 +49,19 @@ export default function HomePage() {
   const [showFilters, setShowFilters] = useState(false);
   const [postImages, setPostImages] = useState<string[]>([]);
 
-  // Fetch posts (both pinned and regular posts for home page)
+  // Fetch banners for home page
+  const { data: banners, isLoading: bannersLoading } = useQuery<any[]>({
+    queryKey: ["/api/banners"],
+    queryFn: getQueryFn({ on401: "throw" }),
+  });
+
+  // Fetch pinned posts only for home page
   const { data: postsData, isLoading: postsLoading } = useQuery<{
     posts: any[];
     total: number;
     hasMore: boolean;
   }>({
-    queryKey: ["/api/posts"],
+    queryKey: ["/api/posts", { pinned: true }],
     queryFn: getQueryFn({ on401: "throw" }),
   });
 
@@ -130,6 +136,21 @@ export default function HomePage() {
       });
     },
   });
+
+  // Banner click tracking mutation
+  const bannerClickMutation = useMutation({
+    mutationFn: (bannerId: number) => apiRequest("POST", `/api/banners/${bannerId}/click`, {}),
+    onSuccess: () => {
+      // Track click for analytics
+    },
+  });
+
+  const handleBannerClick = (banner: any) => {
+    bannerClickMutation.mutate(banner.id);
+    if (banner.linkUrl) {
+      window.open(banner.linkUrl, '_blank');
+    }
+  };
 
   const onCreatePost = (data: CreatePostFormData) => {
     const postData = {
@@ -218,7 +239,48 @@ export default function HomePage() {
 
       {/* Main Content */}
       <main className="pb-20 px-4">
-
+        {/* Banners Section */}
+        {banners && banners.length > 0 && (
+          <div className="mt-6 space-y-4">
+            {banners.map((banner: any) => (
+              <div
+                key={banner.id}
+                className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-mint/10 to-soft-blue/10 border border-mint/20 cursor-pointer group"
+                onClick={() => handleBannerClick(banner)}
+              >
+                <div className="p-6 flex items-center space-x-4">
+                  {banner.imageUrl && (
+                    <div className="flex-shrink-0 w-16 h-16 rounded-xl overflow-hidden bg-white dark:bg-gray-700">
+                      <img
+                        src={banner.imageUrl}
+                        alt={banner.title}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white group-hover:text-mint transition-colors">
+                      {banner.title}
+                    </h3>
+                    {banner.description && (
+                      <p className="text-sm text-gray-600 dark:text-gray-300 mt-1 line-clamp-2">
+                        {banner.description}
+                      </p>
+                    )}
+                    {banner.buttonText && (
+                      <div className="mt-3">
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-mint text-white group-hover:bg-mint/80 transition-colors">
+                          {banner.buttonText}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="absolute inset-0 bg-gradient-to-r from-mint/5 to-soft-blue/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Quick Filters */}
         <div className="mt-6">

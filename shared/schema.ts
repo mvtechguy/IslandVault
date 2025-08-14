@@ -27,6 +27,7 @@ export const ledgerReasonEnum = pgEnum("ledger_reason", ["TOPUP", "POST", "CONNE
 export const conversationStatusEnum = pgEnum("conversation_status", ["ACTIVE", "BLOCKED", "CLOSED"]);
 export const messageReceiptStatusEnum = pgEnum("message_receipt_status", ["DELIVERED", "READ"]);
 export const chatReportStatusEnum = pgEnum("chat_report_status", ["PENDING", "REVIEWED"]);
+export const bannerStatusEnum = pgEnum("banner_status", ["ACTIVE", "INACTIVE", "EXPIRED"]);
 
 // Visitor tracking table
 export const visitors = pgTable("visitors", {
@@ -465,6 +466,28 @@ export const insertChatBlockSchema = createInsertSchema(chatBlocks).pick({
   reason: true
 });
 
+// Banners table
+export const banners = pgTable("banners", {
+  id: serial("id").primaryKey(),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description"),
+  imageUrl: varchar("image_url", { length: 500 }).notNull(),
+  linkUrl: varchar("link_url", { length: 500 }),
+  buttonText: varchar("button_text", { length: 100 }),
+  status: bannerStatusEnum("status").default("ACTIVE"),
+  orderIndex: integer("order_index").default(0), // For sorting banners
+  isVisible: boolean("is_visible").default(true),
+  startDate: timestamp("start_date"),
+  endDate: timestamp("end_date"),
+  clickCount: integer("click_count").default(0),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
+}, (table) => ({
+  bannerStatusIdx: index("banner_status_idx").on(table.status),
+  bannerOrderIdx: index("banner_order_idx").on(table.orderIndex),
+  bannerVisibilityIdx: index("banner_visibility_idx").on(table.isVisible)
+}));
+
 // Visitor types and schemas
 export type Visitor = typeof visitors.$inferSelect;
 export type InsertVisitor = typeof visitors.$inferInsert;
@@ -478,4 +501,21 @@ export const insertVisitorSchema = createInsertSchema(visitors).pick({
   sessionId: true,
   country: true,
   city: true
+});
+
+// Banner types and schemas
+export type Banner = typeof banners.$inferSelect;
+export type InsertBanner = z.infer<typeof insertBannerSchema>;
+
+export const insertBannerSchema = createInsertSchema(banners).pick({
+  title: true,
+  description: true,
+  imageUrl: true,
+  linkUrl: true,
+  buttonText: true,
+  status: true,
+  orderIndex: true,
+  isVisible: true,
+  startDate: true,
+  endDate: true
 });

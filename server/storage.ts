@@ -23,7 +23,9 @@ import {
   ChatReport,
   Visitor,
   InsertVisitor,
-  PostLike
+  PostLike,
+  Banner,
+  InsertBanner
 } from "@shared/schema";
 import { db } from "./db";
 import { 
@@ -46,7 +48,8 @@ import {
   chatReports,
   visitors,
   imageRevealRequests,
-  identityReveals
+  identityReveals,
+  banners
 } from "@shared/schema";
 import { eq, and, desc, asc, sql, count, ne, or, isNull } from "drizzle-orm";
 
@@ -79,6 +82,15 @@ export interface IStorage {
   pinPost(postId: number, days?: number): Promise<Post | undefined>;
   unpinPost(postId: number): Promise<Post | undefined>;
   searchPosts(query: string, filters?: any, limit?: number, offset?: number): Promise<{ posts: Post[], total: number }>;
+  
+  // Banners
+  getBanners(): Promise<Banner[]>;
+  getActiveBanners(): Promise<Banner[]>;
+  getBanner(id: number): Promise<Banner | undefined>;
+  createBanner(banner: InsertBanner): Promise<Banner>;
+  updateBanner(id: number, banner: Partial<Banner>): Promise<Banner | undefined>;
+  deleteBanner(id: number): Promise<void>;
+  incrementBannerClick(id: number): Promise<void>;
   
   // Connection Requests
   getConnectionRequest(id: number): Promise<ConnectionRequest | undefined>;
@@ -252,20 +264,27 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getApprovedPosts(limit = 20, offset = 0, filters?: any): Promise<{ posts: Post[], total: number }> {
-    const conditions = and(eq(posts.status, 'APPROVED'), isNull(posts.deletedAt));
+    let conditions = [eq(posts.status, 'APPROVED'), isNull(posts.deletedAt)];
+    
+    // If showOnlyPinned filter is true, only show pinned posts
+    if (filters?.showOnlyPinned) {
+      conditions.push(eq(posts.isPinned, true));
+    }
+    
+    const finalConditions = and(...conditions);
     
     const postsList = await db
       .select()
       .from(posts)
-      .where(conditions)
-      .orderBy(desc(posts.createdAt))
+      .where(finalConditions)
+      .orderBy(desc(posts.isPinned), desc(posts.createdAt))
       .limit(limit)
       .offset(offset);
 
     const [totalResult] = await db
       .select({ count: count() })
       .from(posts)
-      .where(conditions);
+      .where(finalConditions);
 
     return {
       posts: postsList,
@@ -1263,6 +1282,69 @@ export class DatabaseStorage implements IStorage {
 
   async getUserChatsForAdmin(limit = 50, offset = 0): Promise<{ conversations: any[], total: number }> {
     return this.getAllConversations(limit, offset);
+  }
+
+  // Banner Methods
+  async getBanners(): Promise<Banner[]> {
+    return await db
+      .select()
+      .from(banners)
+      .orderBy(asc(banners.orderIndex), desc(banners.createdAt));
+  }
+
+  async getActiveBanners(): Promise<Banner[]> {
+    const now = new Date();
+    return await db
+      .select()
+      .from(banners)
+      .where(
+        and(
+          eq(banners.status, 'ACTIVE'),
+          eq(banners.isVisible, true),
+          or(
+            isNull(banners.startDate),
+            sql`${banners.startDate} <= ${now}`
+          ),
+          or(
+            isNull(banners.endDate),
+            sql`${banners.endDate} >= ${now}`
+          )
+        )
+      )
+      .orderBy(asc(banners.orderIndex), desc(banners.createdAt));
+  }
+
+  async getBanner(id: number): Promise<Banner | undefined> {
+    const [banner] = await db.select().from(banners).where(eq(banners.id, id));
+    return banner || undefined;
+  }
+
+  async createBanner(banner: InsertBanner): Promise<Banner> {
+    const [created] = await db
+      .insert(banners)
+      .values(banner)
+      .returning();
+    return created;
+  }
+
+  async updateBanner(id: number, banner: Partial<Banner>): Promise<Banner | undefined> {
+    const [updated] = await db
+      .update(banners)
+      .set({ ...banner, updatedAt: new Date() })
+      .where(eq(banners.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  async deleteBanner(id: number): Promise<void> {
+    await db.delete(banners).where(eq(banners.id, id));
+  }
+
+  async incrementBannerClick(id: number): Promise<void> {
+    await db
+      .update(banners)
+      .set({ clickCount: sql`${banners.clickCount} + 1` })
+      .where(eq(banners.id, id));
   }
 }
 

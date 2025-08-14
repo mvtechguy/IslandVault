@@ -66,6 +66,23 @@ export default function AdminPage() {
   const [isEditingBankAccount, setIsEditingBankAccount] = useState(false);
   const [showAddBank, setShowAddBank] = useState(false);
 
+  // Banner Management State
+  const [selectedBanner, setSelectedBanner] = useState<any>(null);
+  const [bannerForm, setBannerForm] = useState({
+    title: "",
+    description: "",
+    imageUrl: "",
+    linkUrl: "",
+    buttonText: "",
+    status: "ACTIVE",
+    orderIndex: 0,
+    isVisible: true,
+    startDate: "",
+    endDate: ""
+  });
+  const [isEditingBanner, setIsEditingBanner] = useState(false);
+  const [showAddBanner, setShowAddBanner] = useState(false);
+
   // Pagination states
   const [usersPage, setUsersPage] = useState(0);
   const [postsPage, setPostsPage] = useState(0);
@@ -163,6 +180,13 @@ export default function AdminPage() {
   // Fetch bank accounts for admin
   const { data: banksData } = useQuery({
     queryKey: ["/api/admin/bank-accounts"],
+    queryFn: getQueryFn({ on401: "throw" }),
+    enabled: !!user && (user.role === "ADMIN" || user.role === "SUPERADMIN"),
+  });
+
+  // Fetch banners for admin
+  const { data: bannersData } = useQuery<any[]>({
+    queryKey: ["/api/admin/banners"],
     queryFn: getQueryFn({ on401: "throw" }),
     enabled: !!user && (user.role === "ADMIN" || user.role === "SUPERADMIN"),
   });
@@ -386,6 +410,80 @@ export default function AdminPage() {
     },
   });
 
+  // Banner management mutations
+  const createBannerMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const res = await apiRequest("POST", "/api/admin/banners", data);
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Banner created successfully" });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/banners"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/banners"] });
+      setShowAddBanner(false);
+      setBannerForm({
+        title: "",
+        description: "",
+        imageUrl: "",
+        linkUrl: "",
+        buttonText: "",
+        status: "ACTIVE",
+        orderIndex: 0,
+        isVisible: true,
+        startDate: "",
+        endDate: ""
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to create banner",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateBannerMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: any }) => {
+      const res = await apiRequest("PUT", `/api/admin/banners/${id}`, data);
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Banner updated successfully" });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/banners"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/banners"] });
+      setIsEditingBanner(false);
+      setSelectedBanner(null);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to update banner",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteBannerMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await apiRequest("DELETE", `/api/admin/banners/${id}`);
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Banner deleted successfully" });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/banners"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/banners"] });
+      setSelectedBanner(null);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to delete banner",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   // Populate form fields when settings are loaded
   useEffect(() => {
     if (brandingSettings) {
@@ -561,7 +659,7 @@ export default function AdminPage() {
           <Tabs defaultValue="users" className="w-full">
             {/* Mobile-friendly scrollable tabs */}
             <div className="w-full overflow-x-auto">
-              <TabsList className="inline-flex h-auto p-1 space-x-1 md:grid md:grid-cols-10 md:w-full">
+              <TabsList className="inline-flex h-auto p-1 space-x-1 md:grid md:grid-cols-11 md:w-full">
                 <TabsTrigger value="users" className="relative whitespace-nowrap px-3 py-2 text-xs md:text-sm">
                   Users
                   {pendingCounts.users > 0 && (
@@ -591,6 +689,9 @@ export default function AdminPage() {
                 </TabsTrigger>
                 <TabsTrigger value="banks" className="whitespace-nowrap px-3 py-2 text-xs md:text-sm">
                   Banks
+                </TabsTrigger>
+                <TabsTrigger value="banners" className="whitespace-nowrap px-3 py-2 text-xs md:text-sm">
+                  Banners
                 </TabsTrigger>
                 <TabsTrigger value="connections" className="relative whitespace-nowrap px-3 py-2 text-xs md:text-sm">
                   Connect
@@ -1366,6 +1467,115 @@ export default function AdminPage() {
               </Card>
             </TabsContent>
 
+            <TabsContent value="banners" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Banner Management</CardTitle>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Manage promotional banners displayed on the home page
+                  </p>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-lg font-semibold">Active Banners</h3>
+                    <Button onClick={() => setShowAddBanner(true)}>
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add Banner
+                    </Button>
+                  </div>
+                  
+                  {bannersData && bannersData.length > 0 ? (
+                    <div className="space-y-3">
+                      {bannersData.map((banner) => (
+                        <Card key={banner.id} className="p-4">
+                          <div className="flex items-start space-x-4">
+                            {banner.imageUrl && (
+                              <div className="flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
+                                <img
+                                  src={banner.imageUrl}
+                                  alt={banner.title}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-start justify-between">
+                                <div className="space-y-1">
+                                  <h4 className="font-medium text-gray-900 dark:text-white">
+                                    {banner.title}
+                                  </h4>
+                                  {banner.description && (
+                                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                                      {banner.description}
+                                    </p>
+                                  )}
+                                  <div className="flex items-center space-x-2 text-xs text-gray-500 dark:text-gray-400">
+                                    <Badge variant={banner.status === 'ACTIVE' ? 'default' : 'secondary'}>
+                                      {banner.status}
+                                    </Badge>
+                                    <span>•</span>
+                                    <span>Order: {banner.orderIndex}</span>
+                                    <span>•</span>
+                                    <span>{banner.clickCount || 0} clicks</span>
+                                  </div>
+                                </div>
+                                <div className="flex space-x-2">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                      setSelectedBanner(banner);
+                                      setBannerForm({
+                                        title: banner.title,
+                                        description: banner.description || "",
+                                        imageUrl: banner.imageUrl,
+                                        linkUrl: banner.linkUrl || "",
+                                        buttonText: banner.buttonText || "",
+                                        status: banner.status,
+                                        orderIndex: banner.orderIndex,
+                                        isVisible: banner.isVisible,
+                                        startDate: banner.startDate ? new Date(banner.startDate).toISOString().split('T')[0] : "",
+                                        endDate: banner.endDate ? new Date(banner.endDate).toISOString().split('T')[0] : ""
+                                      });
+                                      setIsEditingBanner(true);
+                                    }}
+                                  >
+                                    <Edit className="w-4 h-4" />
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                      if (confirm("Are you sure you want to delete this banner?")) {
+                                        deleteBannerMutation.mutate(banner.id);
+                                      }
+                                    }}
+                                    className="text-red-600 hover:text-red-700"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </Card>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
+                        <Plus className="w-8 h-8 text-gray-400" />
+                      </div>
+                      <p className="text-gray-600 dark:text-gray-400">No banners created</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">
+                        Create promotional banners to display on the home page
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
             <TabsContent value="branding" className="space-y-4">
               <Card>
                 <CardHeader>
@@ -1569,6 +1779,174 @@ export default function AdminPage() {
             </TabsContent>
           </Tabs>
         </div>
+
+        {/* Add/Edit Banner Dialog */}
+        {(showAddBanner || isEditingBanner) && (
+          <Dialog open={showAddBanner || isEditingBanner} onOpenChange={(open) => {
+            if (!open) {
+              setShowAddBanner(false);
+              setIsEditingBanner(false);
+              setSelectedBanner(null);
+              setBannerForm({
+                title: "",
+                description: "",
+                imageUrl: "",
+                linkUrl: "",
+                buttonText: "",
+                status: "ACTIVE",
+                orderIndex: 0,
+                isVisible: true,
+                startDate: "",
+                endDate: ""
+              });
+            }
+          }}>
+            <DialogContent className="sm:max-w-lg">
+              <DialogHeader>
+                <DialogTitle>
+                  {isEditingBanner ? 'Edit Banner' : 'Add Banner'}
+                </DialogTitle>
+                <DialogDescription>
+                  Create promotional banners for the home page
+                </DialogDescription>
+              </DialogHeader>
+              
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="banner-title">Title *</Label>
+                  <Input
+                    id="banner-title"
+                    placeholder="Enter banner title"
+                    value={bannerForm.title}
+                    onChange={(e) => setBannerForm(prev => ({ ...prev, title: e.target.value }))}
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="banner-description">Description</Label>
+                  <Textarea
+                    id="banner-description"
+                    placeholder="Enter banner description"
+                    value={bannerForm.description}
+                    onChange={(e) => setBannerForm(prev => ({ ...prev, description: e.target.value }))}
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="banner-image">Image URL *</Label>
+                  <Input
+                    id="banner-image"
+                    placeholder="Enter image URL"
+                    value={bannerForm.imageUrl}
+                    onChange={(e) => setBannerForm(prev => ({ ...prev, imageUrl: e.target.value }))}
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="banner-link">Link URL</Label>
+                  <Input
+                    id="banner-link"
+                    placeholder="Enter link URL (optional)"
+                    value={bannerForm.linkUrl}
+                    onChange={(e) => setBannerForm(prev => ({ ...prev, linkUrl: e.target.value }))}
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="banner-button">Button Text</Label>
+                  <Input
+                    id="banner-button"
+                    placeholder="Enter button text (optional)"
+                    value={bannerForm.buttonText}
+                    onChange={(e) => setBannerForm(prev => ({ ...prev, buttonText: e.target.value }))}
+                  />
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="banner-status">Status</Label>
+                    <Select value={bannerForm.status} onValueChange={(value) => setBannerForm(prev => ({ ...prev, status: value }))}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="ACTIVE">Active</SelectItem>
+                        <SelectItem value="INACTIVE">Inactive</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="banner-order">Order Index</Label>
+                    <Input
+                      id="banner-order"
+                      type="number"
+                      placeholder="0"
+                      value={bannerForm.orderIndex}
+                      onChange={(e) => setBannerForm(prev => ({ ...prev, orderIndex: parseInt(e.target.value) || 0 }))}
+                    />
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="banner-start">Start Date</Label>
+                    <Input
+                      id="banner-start"
+                      type="date"
+                      value={bannerForm.startDate}
+                      onChange={(e) => setBannerForm(prev => ({ ...prev, startDate: e.target.value }))}
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="banner-end">End Date</Label>
+                    <Input
+                      id="banner-end"
+                      type="date"
+                      value={bannerForm.endDate}
+                      onChange={(e) => setBannerForm(prev => ({ ...prev, endDate: e.target.value }))}
+                    />
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex justify-end space-x-2 pt-4">
+                <Button variant="outline" onClick={() => {
+                  setShowAddBanner(false);
+                  setIsEditingBanner(false);
+                  setSelectedBanner(null);
+                }}>
+                  Cancel
+                </Button>
+                <Button onClick={() => {
+                  if (!bannerForm.title || !bannerForm.imageUrl) {
+                    toast({
+                      title: "Missing required fields",
+                      description: "Title and Image URL are required",
+                      variant: "destructive",
+                    });
+                    return;
+                  }
+                  
+                  const formData = {
+                    ...bannerForm,
+                    startDate: bannerForm.startDate ? new Date(bannerForm.startDate).toISOString() : null,
+                    endDate: bannerForm.endDate ? new Date(bannerForm.endDate).toISOString() : null
+                  };
+                  
+                  if (isEditingBanner && selectedBanner) {
+                    updateBannerMutation.mutate({ id: selectedBanner.id, data: formData });
+                  } else {
+                    createBannerMutation.mutate(formData);
+                  }
+                }}>
+                  {isEditingBanner ? 'Update Banner' : 'Create Banner'}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        )}
 
         {/* User Review Modal */}
         <Dialog open={!!selectedUser} onOpenChange={() => setSelectedUser(null)}>
