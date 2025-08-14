@@ -102,12 +102,36 @@ export default function ProfilePage() {
     },
   });
 
+  const [editingPost, setEditingPost] = useState<any>(null);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+
+  // Edit post mutation
+  const updatePostMutation = useMutation({
+    mutationFn: async ({ postId, postData }: { postId: number, postData: any }) => {
+      const res = await apiRequest("PATCH", `/api/posts/${postId}`, postData);
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Post updated",
+        description: "Your post has been updated successfully.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/posts/my"] });
+      setShowEditDialog(false);
+      setEditingPost(null);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to update post",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const editPost = (post: any) => {
-    // TODO: Implement edit post functionality
-    toast({
-      title: "Edit functionality",
-      description: "Post editing will be available soon.",
-    });
+    setEditingPost(post);
+    setShowEditDialog(true);
   };
 
   const deletePost = (postId: number) => {
@@ -733,6 +757,53 @@ export default function ProfilePage() {
       </main>
 
       {/* Bottom Navigation */}
+      {/* Edit Post Dialog */}
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Post</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="edit-title">Title (Optional)</Label>
+              <Input
+                id="edit-title"
+                value={editingPost?.title || ""}
+                onChange={(e) => setEditingPost({...editingPost, title: e.target.value})}
+                placeholder="Post title..."
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-description">Description</Label>
+              <Textarea
+                id="edit-description"
+                value={editingPost?.description || ""}
+                onChange={(e) => setEditingPost({...editingPost, description: e.target.value})}
+                placeholder="Tell us about yourself and what you're looking for..."
+                rows={4}
+              />
+            </div>
+          </div>
+          <div className="flex justify-end space-x-2 mt-6">
+            <Button variant="outline" onClick={() => setShowEditDialog(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={() => updatePostMutation.mutate({ 
+                postId: editingPost.id, 
+                postData: { 
+                  title: editingPost.title, 
+                  description: editingPost.description 
+                }
+              })}
+              disabled={updatePostMutation.isPending}
+            >
+              {updatePostMutation.isPending ? "Updating..." : "Update Post"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <BottomNavigation />
     </div>
   );

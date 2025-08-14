@@ -703,6 +703,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update post endpoint
+  app.patch("/api/posts/:id", isAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { title, description } = req.body;
+      
+      // Check if the user owns this post
+      const existingPost = await storage.getPost(id);
+      if (!existingPost || existingPost.authorId !== req.user!.id) {
+        return res.status(403).json({ message: "Not authorized to edit this post" });
+      }
+
+      const updatedPost = await storage.updatePost(id, { 
+        title, 
+        description,
+        status: 'PENDING' // Reset to pending on edit
+      });
+      
+      if (!updatedPost) {
+        return res.status(404).json({ message: "Post not found" });
+      }
+
+      res.json(updatedPost);
+    } catch (error) {
+      console.error("Error updating post:", error);
+      res.status(500).json({ message: "Failed to update post" });
+    }
+  });
+
   // Get coin packages
   app.get("/api/coins/packages", async (req, res) => {
     try {
@@ -909,6 +938,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error rejecting user:", error);
       res.status(500).json({ message: "Failed to reject user" });
+    }
+  });
+
+  // Connection request approval endpoint
+  app.put("/api/connect/requests/:id", isAuthenticated, async (req, res) => {
+    try {
+      const requestId = parseInt(req.params.id);
+      const { action } = req.body; // 'approve' or 'reject'
+      
+      if (!['approve', 'reject'].includes(action)) {
+        return res.status(400).json({ message: "Invalid action" });
+      }
+
+      const request = await storage.getConnectionRequest(requestId);
+      if (!request) {
+        return res.status(404).json({ message: "Connection request not found" });
+      }
+
+      // Check if user is authorized (can only respond to requests sent to them)
+      if (request.targetUserId !== req.user!.id) {
+        return res.status(403).json({ message: "Not authorized to respond to this request" });
+      }
+
+      const newStatus = action === 'approve' ? 'APPROVED' : 'REJECTED';
+      await storage.updateConnectionRequest(requestId, { status: newStatus });
+
+      // If approved, create conversation
+      if (action === 'approve') {
+        const conversation = await storage.createConversation({
+          participantIds: [request.requesterId, request.targetUserId]
+        });
+
+        // Add both users as participants
+        await storage.addConversationParticipants(conversation.id, [
+          { userId: request.requesterId, role: 'MEMBER' },
+          { userId: request.targetUserId, role: 'MEMBER' }
+        ]);
+      }
+
+      res.json({ success: true, status: newStatus });
+    } catch (error) {
+      console.error("Error handling connection request:", error);
+      res.status(500).json({ message: "Failed to handle connection request" });
     }
   });
 

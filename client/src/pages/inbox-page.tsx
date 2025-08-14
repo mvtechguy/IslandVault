@@ -22,7 +22,7 @@ export default function InboxPage() {
   const queryClient = useQueryClient();
   const [selectedConversation, setSelectedConversation] = useState<any>(null);
   const [newMessage, setNewMessage] = useState("");
-  const { sendMessage, messages, isConnected } = useChat(selectedConversation?.id);
+  const { sendMessage, getMessages, connected } = useChat(user?.id);
 
   const { data: conversations, isLoading: conversationsLoading } = useQuery<any[]>({
     queryKey: ["/api/conversations"],
@@ -68,13 +68,12 @@ export default function InboxPage() {
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !selectedConversation) return;
 
-    try {
-      await sendMessage(newMessage.trim());
+    if (sendMessage(selectedConversation.conversation.id, newMessage.trim())) {
       setNewMessage("");
-    } catch (error) {
+    } else {
       toast({
         title: "Failed to send message",
-        description: "Please try again.",
+        description: "Please check your connection and try again.",
         variant: "destructive",
       });
     }
@@ -125,7 +124,7 @@ export default function InboxPage() {
                 <div>
                   <h3 className="font-semibold">{selectedConversation.otherUser?.fullName}</h3>
                   <p className="text-xs text-gray-500">
-                    {isConnected ? 'Online' : 'Offline'}
+                    {connected ? 'Online' : 'Offline'}
                   </p>
                 </div>
               </div>
@@ -134,7 +133,7 @@ export default function InboxPage() {
             <CardContent className="flex flex-col h-full p-0">
               {/* Messages */}
               <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                {messages.length === 0 ? (
+                {getMessages(selectedConversation.conversation.id).length === 0 ? (
                   <div className="text-center py-8">
                     <MessageCircle className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                     <p className="text-gray-600 dark:text-gray-400">
@@ -142,7 +141,7 @@ export default function InboxPage() {
                     </p>
                   </div>
                 ) : (
-                  messages.map((message) => (
+                  getMessages(selectedConversation.conversation.id).map((message) => (
                     <div
                       key={message.id}
                       className={`flex ${

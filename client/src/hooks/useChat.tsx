@@ -73,20 +73,20 @@ export function useChat(userId: number) {
       type: 'chat_message',
       conversationId,
       body,
-      attachments
+      attachments: attachments || []
     }));
     
     return true;
   }, [socket, connected]);
   
-  const getConversationMessages = useCallback((conversationId: number) => {
+  const getMessages = useCallback((conversationId: number) => {
     return messages[conversationId] || [];
   }, [messages]);
   
-  return { 
-    connected, 
-    messages, 
-    sendMessage, 
-    getConversationMessages 
+  return {
+    connected,
+    sendMessage,
+    getMessages,
+    messages: Object.values(messages).flat()
   };
 }
