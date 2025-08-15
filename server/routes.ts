@@ -2217,6 +2217,131 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ================== COMPREHENSIVE POST MANAGEMENT ==================
+  
+  // Get all posts for admin management
+  app.get("/api/admin/posts", isAdmin, async (req, res) => {
+    try {
+      const status = req.query.status as string;
+      const limit = parseInt(req.query.limit as string) || 50;
+      const offset = parseInt(req.query.offset as string) || 0;
+      
+      const result = await storage.getPostsForAdmin(status === "ALL" ? undefined : status, limit, offset);
+      res.json(result);
+    } catch (error) {
+      console.error("Error fetching all posts:", error);
+      res.status(500).json({ message: "Failed to fetch posts" });
+    }
+  });
+
+  app.get("/api/admin/posts/:id", isAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const post = await storage.getPost(id);
+      if (!post) {
+        return res.status(404).json({ message: "Post not found" });
+      }
+      res.json(post);
+    } catch (error) {
+      console.error("Error fetching post:", error);
+      res.status(500).json({ message: "Failed to fetch post" });
+    }
+  });
+
+  app.put("/api/admin/posts/:id", isAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const postData = req.body;
+      
+      const updatedPost = await storage.updatePost(id, postData);
+      
+      await storage.createAudit({
+        adminId: req.user!.id,
+        action: 'POST_UPDATED',
+        entity: 'posts',
+        entityId: id,
+        meta: { changes: postData },
+        ip: req.ip || null
+      });
+
+      res.json(updatedPost);
+    } catch (error) {
+      console.error("Error updating post:", error);
+      res.status(500).json({ message: "Failed to update post" });
+    }
+  });
+
+  app.delete("/api/admin/posts/:id", isAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { reason } = req.body;
+      
+      // Mark post as deleted by setting deletedAt timestamp
+      await storage.updatePost(id, { deletedAt: new Date() });
+      
+      await storage.createAudit({
+        adminId: req.user!.id,
+        action: 'POST_DELETED',
+        entity: 'posts',
+        entityId: id,
+        meta: { reason },
+        ip: req.ip || null
+      });
+
+      res.json({ message: "Post deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting post:", error);
+      res.status(500).json({ message: "Failed to delete post" });
+    }
+  });
+
+  app.post("/api/admin/posts/:id/hide", isAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { reason } = req.body;
+      
+      // Hide post by setting status to HIDDEN
+      await storage.updatePost(id, { status: 'HIDDEN' });
+      
+      await storage.createAudit({
+        adminId: req.user!.id,
+        action: 'POST_HIDDEN',
+        entity: 'posts',
+        entityId: id,
+        meta: { reason },
+        ip: req.ip || null
+      });
+
+      res.json({ message: "Post hidden successfully" });
+    } catch (error) {
+      console.error("Error hiding post:", error);
+      res.status(500).json({ message: "Failed to hide post" });
+    }
+  });
+
+  app.post("/api/admin/posts/:id/show", isAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      
+      // Show post by setting status to APPROVED
+      await storage.updatePost(id, { status: 'APPROVED' });
+      
+      await storage.createAudit({
+        adminId: req.user!.id,
+        action: 'POST_SHOWN',
+        entity: 'posts',
+        entityId: id,
+        meta: {},
+        ip: req.ip || null
+      });
+
+      res.json({ message: "Post shown successfully" });
+    } catch (error) {
+      console.error("Error showing post:", error);
+      res.status(500).json({ message: "Failed to show post" });
+    }
+  });
+
   // ================== CONNECTION REQUEST ENDPOINTS ==================
 
   // Send connection request

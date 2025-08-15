@@ -116,6 +116,25 @@ export default function AdminPage() {
   });
   const [deleteReason, setDeleteReason] = useState("");
 
+  // Post Management State
+  const [selectedPostForManagement, setSelectedPostForManagement] = useState<any>(null);
+  const [showPostManagement, setShowPostManagement] = useState(false);
+  const [postSearchQuery, setPostSearchQuery] = useState("");
+  const [postStatusFilter, setPostStatusFilter] = useState("ALL");
+  const [postManagementPage, setPostManagementPage] = useState(0);
+  const [showPostEdit, setShowPostEdit] = useState(false);
+  const [showDeletePost, setShowDeletePost] = useState(false);
+  const [showHidePost, setShowHidePost] = useState(false);
+  const [postEditForm, setPostEditForm] = useState({
+    title: "",
+    description: "",
+    preferences: {} as any,
+    status: "",
+    images: [] as string[]
+  });
+  const [deletePostReason, setDeletePostReason] = useState("");
+  const [hidePostReason, setHidePostReason] = useState("");
+
   // Pagination states
   const [usersPage, setUsersPage] = useState(0);
   const [postsPage, setPostsPage] = useState(0);
@@ -243,6 +262,20 @@ export default function AdminPage() {
     queryKey: ["/api/admin/users", selectedUserForManagement?.id, "connections"],
     queryFn: getQueryFn({ on401: "throw" }),
     enabled: !!selectedUserForManagement && !!user && (user.role === "ADMIN" || user.role === "SUPERADMIN"),
+  });
+
+  // Fetch all posts for management
+  const { data: allPostsData, refetch: refetchAllPosts } = useQuery<{posts: any[], total: number}>({
+    queryKey: ["/api/admin/posts", postStatusFilter === "ALL" ? undefined : postStatusFilter, postManagementPage],
+    queryFn: getQueryFn({ on401: "throw" }),
+    enabled: !!user && (user.role === "ADMIN" || user.role === "SUPERADMIN"),
+  });
+
+  // Fetch specific post for management
+  const { data: selectedPostData } = useQuery<any>({
+    queryKey: ["/api/admin/posts", selectedPostForManagement?.id],
+    queryFn: getQueryFn({ on401: "throw" }),
+    enabled: !!selectedPostForManagement && !!user && (user.role === "ADMIN" || user.role === "SUPERADMIN"),
   });
 
   // Fetch visitor statistics
@@ -462,6 +495,87 @@ export default function AdminPage() {
     onError: (error: Error) => {
       toast({
         title: "Failed to remove coins",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Post Management Mutations
+  const updatePostMutation = useMutation({
+    mutationFn: async ({ id, postData }: { id: number; postData: any }) => {
+      const res = await apiRequest("PUT", `/api/admin/posts/${id}`, postData);
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Post updated successfully" });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/posts"] });
+      setShowPostEdit(false);
+      setSelectedPostForManagement(null);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to update post",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deletePostMutation = useMutation({
+    mutationFn: async ({ id, reason }: { id: number; reason: string }) => {
+      const res = await apiRequest("DELETE", `/api/admin/posts/${id}`, { reason });
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Post deleted successfully" });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/posts"] });
+      setShowDeletePost(false);
+      setSelectedPostForManagement(null);
+      setDeletePostReason("");
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to delete post",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const hidePostMutation = useMutation({
+    mutationFn: async ({ id, reason }: { id: number; reason: string }) => {
+      const res = await apiRequest("POST", `/api/admin/posts/${id}/hide`, { reason });
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Post hidden successfully" });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/posts"] });
+      setShowHidePost(false);
+      setSelectedPostForManagement(null);
+      setHidePostReason("");
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to hide post",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const showPostMutation = useMutation({
+    mutationFn: async ({ id }: { id: number }) => {
+      const res = await apiRequest("POST", `/api/admin/posts/${id}/show`);
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Post shown successfully" });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/posts"] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to show post",
         description: error.message,
         variant: "destructive",
       });
@@ -810,7 +924,7 @@ export default function AdminPage() {
           <Tabs defaultValue="users" className="w-full">
             {/* Mobile-friendly scrollable tabs */}
             <div className="w-full overflow-x-auto">
-              <TabsList className="inline-flex h-auto p-1 space-x-1 md:grid md:grid-cols-12 md:w-full">
+              <TabsList className="inline-flex h-auto p-1 space-x-1 md:grid md:grid-cols-13 md:w-full">
                 <TabsTrigger value="users" className="relative whitespace-nowrap px-3 py-2 text-xs md:text-sm">
                   Users
                   {pendingCounts.users > 0 && (
@@ -829,6 +943,9 @@ export default function AdminPage() {
                       {pendingCounts.posts}
                     </Badge>
                   )}
+                </TabsTrigger>
+                <TabsTrigger value="post-management" className="whitespace-nowrap px-3 py-2 text-xs md:text-sm">
+                  Posts Mgmt
                 </TabsTrigger>
                 <TabsTrigger value="topups" className="relative whitespace-nowrap px-3 py-2 text-xs md:text-sm">
                   Topups
@@ -1193,6 +1310,194 @@ export default function AdminPage() {
                 <div className="text-center py-8">
                   <Users className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                   <p className="text-gray-600 dark:text-gray-400">No users found</p>
+                </div>
+              )}
+            </TabsContent>
+
+            {/* Comprehensive Post Management Tab */}
+            <TabsContent value="post-management" className="space-y-4">
+              <div className="flex flex-col md:flex-row gap-4 mb-6">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Input
+                    placeholder="Search posts by title, description, or user..."
+                    value={postSearchQuery}
+                    onChange={(e) => setPostSearchQuery(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                <Select
+                  value={postStatusFilter}
+                  onValueChange={(value) => {
+                    setPostStatusFilter(value);
+                    setPostManagementPage(0);
+                  }}
+                >
+                  <SelectTrigger className="w-full md:w-48">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL">All Posts</SelectItem>
+                    <SelectItem value="PENDING">Pending</SelectItem>
+                    <SelectItem value="APPROVED">Approved</SelectItem>
+                    <SelectItem value="REJECTED">Rejected</SelectItem>
+                    <SelectItem value="HIDDEN">Hidden</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {allPostsData?.posts && allPostsData.posts.length > 0 ? (
+                <>
+                  <div className="space-y-3">
+                    {allPostsData.posts
+                      .filter((post: any) => {
+                        const matchesSearch = !postSearchQuery || 
+                          post.title?.toLowerCase().includes(postSearchQuery.toLowerCase()) ||
+                          post.description?.toLowerCase().includes(postSearchQuery.toLowerCase()) ||
+                          post.user?.username?.toLowerCase().includes(postSearchQuery.toLowerCase());
+                        const matchesStatus = postStatusFilter === "ALL" || post.status === postStatusFilter;
+                        return matchesSearch && matchesStatus;
+                      })
+                      .slice(postManagementPage * itemsPerPage, (postManagementPage + 1) * itemsPerPage)
+                      .map((post: any) => (
+                        <Card key={post.id}>
+                          <CardContent className="pt-4">
+                            <div className="flex items-start justify-between mb-3">
+                              <div className="flex-1">
+                                {post.title && (
+                                  <h3 className="font-semibold text-lg">{post.title}</h3>
+                                )}
+                                <p className="text-sm text-gray-700 dark:text-gray-300 mt-1">
+                                  {post.description}
+                                </p>
+                                <div className="flex flex-wrap gap-2 mt-2 text-xs text-gray-500 dark:text-gray-400">
+                                  <span>By: {post.user?.username}</span>
+                                  <span>•</span>
+                                  <span>{formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}</span>
+                                  {post.preferences && (
+                                    <>
+                                      <span>•</span>
+                                      <span>Preferences: {JSON.stringify(post.preferences)}</span>
+                                    </>
+                                  )}
+                                </div>
+                                {post.images && post.images.length > 0 && (
+                                  <div className="flex flex-wrap gap-1 mt-2">
+                                    <Badge variant="secondary" className="text-xs">
+                                      {post.images.length} image(s)
+                                    </Badge>
+                                  </div>
+                                )}
+                              </div>
+                              <div className="flex flex-col items-end gap-2">
+                                <Badge className={getStatusColor(post.status)}>
+                                  {post.status}
+                                </Badge>
+                                {post.status === "HIDDEN" && (
+                                  <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
+                                    Hidden
+                                  </Badge>
+                                )}
+                                {post.deletedAt && (
+                                  <Badge variant="secondary" className="bg-red-100 text-red-800">
+                                    Deleted
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+                            
+                            <div className="flex flex-wrap gap-2 mt-3">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  setSelectedPostForManagement(post);
+                                  setPostEditForm({
+                                    title: post.title || "",
+                                    description: post.description || "",
+                                    preferences: post.preferences || {},
+                                    status: post.status || "",
+                                    images: post.images || []
+                                  });
+                                  setShowPostEdit(true);
+                                }}
+                                className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                              >
+                                <Edit className="w-3 h-3 mr-1" />
+                                Edit
+                              </Button>
+                              
+                              {post.status !== "HIDDEN" ? (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    setSelectedPostForManagement(post);
+                                    setShowHidePost(true);
+                                  }}
+                                  className="text-orange-600 border-orange-200 hover:bg-orange-50"
+                                >
+                                  <EyeOff className="w-3 h-3 mr-1" />
+                                  Hide
+                                </Button>
+                              ) : (
+                                <Button
+                                  size="sm"
+                                  onClick={() => showPostMutation.mutate({ id: post.id })}
+                                  disabled={showPostMutation.isPending}
+                                  className="bg-green-100 text-green-700 hover:bg-green-200"
+                                >
+                                  <Eye className="w-3 h-3 mr-1" />
+                                  Show
+                                </Button>
+                              )}
+                              
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  setSelectedPostForManagement(post);
+                                  setShowDeletePost(true);
+                                }}
+                                className="text-red-600 border-red-200 hover:bg-red-50"
+                              >
+                                <Trash2 className="w-3 h-3 mr-1" />
+                                Delete
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                  </div>
+                  
+                  {/* Pagination */}
+                  <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <div className="text-sm text-gray-600 dark:text-gray-400">
+                      Showing {postManagementPage * itemsPerPage + 1}-{Math.min((postManagementPage + 1) * itemsPerPage, (allPostsData?.posts || []).length)} of {(allPostsData?.posts || []).length}
+                    </div>
+                    <div className="flex space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPostManagementPage(Math.max(0, postManagementPage - 1))}
+                        disabled={postManagementPage === 0}
+                      >
+                        Previous
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPostManagementPage(postManagementPage + 1)}
+                        disabled={(postManagementPage + 1) * itemsPerPage >= (allPostsData?.posts?.length || 0)}
+                      >
+                        Next
+                      </Button>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                  No posts found.
                 </div>
               )}
             </TabsContent>
@@ -3401,6 +3706,201 @@ export default function AdminPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Post Edit Dialog */}
+      {showPostEdit && selectedPostForManagement && (
+        <Dialog open={showPostEdit} onOpenChange={setShowPostEdit}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Edit Post</DialogTitle>
+              <DialogDescription>
+                Update post details and settings
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="post-title">Title</Label>
+                <Input
+                  id="post-title"
+                  value={postEditForm.title}
+                  onChange={(e) => setPostEditForm(prev => ({ ...prev, title: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Label htmlFor="post-description">Description</Label>
+                <Textarea
+                  id="post-description"
+                  value={postEditForm.description}
+                  onChange={(e) => setPostEditForm(prev => ({ ...prev, description: e.target.value }))}
+                  rows={4}
+                />
+              </div>
+              <div>
+                <Label htmlFor="preferences">Preferences (JSON)</Label>
+                <Textarea
+                  id="preferences"
+                  value={JSON.stringify(postEditForm.preferences, null, 2)}
+                  onChange={(e) => {
+                    try {
+                      const parsed = JSON.parse(e.target.value);
+                      setPostEditForm(prev => ({ ...prev, preferences: parsed }));
+                    } catch (error) {
+                      // Keep the current value for now, user might be editing
+                    }
+                  }}
+                  rows={6}
+                  placeholder='{"ageMin": 18, "ageMax": 65, "gender": "ANY"}'
+                />
+              </div>
+              <div>
+                <Label htmlFor="images">Images (JSON Array)</Label>
+                <Textarea
+                  id="images"
+                  value={JSON.stringify(postEditForm.images, null, 2)}
+                  onChange={(e) => {
+                    try {
+                      const parsed = JSON.parse(e.target.value);
+                      if (Array.isArray(parsed)) {
+                        setPostEditForm(prev => ({ ...prev, images: parsed }));
+                      }
+                    } catch (error) {
+                      // Keep the current value for now, user might be editing
+                    }
+                  }}
+                  rows={3}
+                  placeholder='["image1.jpg", "image2.jpg"]'
+                />
+              </div>
+              <div>
+                <Label htmlFor="status">Status</Label>
+                <Select
+                  value={postEditForm.status}
+                  onValueChange={(value) => setPostEditForm(prev => ({ ...prev, status: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="PENDING">Pending</SelectItem>
+                    <SelectItem value="APPROVED">Approved</SelectItem>
+                    <SelectItem value="REJECTED">Rejected</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex justify-end space-x-2 pt-4">
+                <Button variant="outline" onClick={() => setShowPostEdit(false)}>
+                  Cancel
+                </Button>
+                <Button
+                  onClick={() => {
+                    updatePostMutation.mutate({
+                      id: selectedPostForManagement.id,
+                      postData: postEditForm
+                    });
+                  }}
+                  disabled={updatePostMutation.isPending}
+                >
+                  {updatePostMutation.isPending ? "Saving..." : "Save Changes"}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Delete Post Dialog */}
+      {showDeletePost && selectedPostForManagement && (
+        <AlertDialog open={showDeletePost} onOpenChange={setShowDeletePost}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Post</AlertDialogTitle>
+              <AlertDialogDescription>
+                This action cannot be undone. This will permanently delete the post.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="my-4">
+              <Label htmlFor="deletePostReason">Reason for deletion</Label>
+              <Textarea
+                id="deletePostReason"
+                value={deletePostReason}
+                onChange={(e) => setDeletePostReason(e.target.value)}
+                placeholder="Enter reason for deleting this post..."
+                className="mt-1"
+              />
+            </div>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => {
+                  if (deletePostReason.trim()) {
+                    deletePostMutation.mutate({
+                      id: selectedPostForManagement.id,
+                      reason: deletePostReason
+                    });
+                  } else {
+                    toast({
+                      title: "Reason required",
+                      description: "Please provide a reason for deletion",
+                      variant: "destructive",
+                    });
+                  }
+                }}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                Delete Post
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
+
+      {/* Hide Post Dialog */}
+      {showHidePost && selectedPostForManagement && (
+        <AlertDialog open={showHidePost} onOpenChange={setShowHidePost}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Hide Post</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will hide the post from users while keeping it in the system.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="my-4">
+              <Label htmlFor="hidePostReason">Reason for hiding</Label>
+              <Textarea
+                id="hidePostReason"
+                value={hidePostReason}
+                onChange={(e) => setHidePostReason(e.target.value)}
+                placeholder="Enter reason for hiding this post..."
+                className="mt-1"
+              />
+            </div>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => {
+                  if (hidePostReason.trim()) {
+                    hidePostMutation.mutate({
+                      id: selectedPostForManagement.id,
+                      reason: hidePostReason
+                    });
+                  } else {
+                    toast({
+                      title: "Reason required",
+                      description: "Please provide a reason for hiding",
+                      variant: "destructive",
+                    });
+                  }
+                }}
+                className="bg-orange-600 hover:bg-orange-700"
+              >
+                Hide Post
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
+
     </div>
   );
 }
