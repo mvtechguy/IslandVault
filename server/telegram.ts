@@ -141,6 +141,15 @@ export class TelegramService {
     await this.sendAdminNotification(message);
   }
 
+  async notifyAdminUserResubmission(username: string, fullName: string, island: string, atoll: string): Promise<void> {
+    const message = `🔄 <b>Profile Resubmitted for Review</b>\n\n` +
+                   `• Username: ${username}\n` +
+                   `• Name: ${fullName}\n` +
+                   `• Location: ${island}, ${atoll}\n\n` +
+                   `User has updated their profile after rejection and resubmitted for approval.`;
+    await this.sendAdminNotification(message);
+  }
+
   async notifyAdminNewPost(username: string, title: string, description: string): Promise<void> {
     const message = `📝 <b>New Post Submitted</b>\n\n` +
                    `• User: ${username}\n` +

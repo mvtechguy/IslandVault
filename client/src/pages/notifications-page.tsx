@@ -145,7 +145,7 @@ const getNotificationDescription = (notification: Notification) => {
     case 'PROFILE_APPROVED':
       return 'Welcome to Kaiveni! You can now create posts and connect with others.';
     case 'PROFILE_REJECTED':
-      return data?.note || 'Please update your profile and try again.';
+      return data?.note ? `Admin feedback: "${data.note}"` : 'Please update your profile and try again.';
     case 'POST_APPROVED':
       return 'Your post is now visible to other users.';
     case 'POST_REJECTED':
@@ -393,6 +393,37 @@ export default function NotificationsPage() {
                             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 break-words">
                               {getNotificationDescription(notification)}
                             </p>
+                            
+                            {/* Action buttons for specific notification types */}
+                            {notification.type === 'PROFILE_REJECTED' && (
+                              <div className="flex gap-2 mt-3">
+                                <Button
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setLocation('/profile');
+                                  }}
+                                  className="bg-blush hover:bg-blush/90 text-white text-xs px-3 py-1"
+                                >
+                                  <User className="w-3 h-3 mr-1" />
+                                  Edit Profile
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    // Mark notification as seen and show help modal
+                                    markAsSeenMutation.mutate(notification.id);
+                                  }}
+                                  className="text-xs px-3 py-1 border-gray-300"
+                                >
+                                  <AlertCircle className="w-3 h-3 mr-1" />
+                                  Need Help?
+                                </Button>
+                              </div>
+                            )}
+                            
                             <div className="flex items-center gap-2 mt-2">
                               <Clock className="w-3 h-3 text-gray-400" />
                               <span className="text-xs text-gray-500">

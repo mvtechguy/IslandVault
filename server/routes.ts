@@ -962,6 +962,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // User profile resubmission endpoint
+  app.post("/api/profile/resubmit", isAuthenticated, async (req, res) => {
+    try {
+      const user = await storage.getUser(req.user!.id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Only allow resubmission if user is currently rejected
+      if (user.status !== 'REJECTED') {
+        return res.status(400).json({ message: "Profile resubmission is only available for rejected profiles" });
+      }
+
+      // Update user status back to PENDING for admin review
+      const updatedUser = await storage.updateUser(req.user!.id, { status: 'PENDING' });
+      
+      // Create notification for admin about resubmission
+      await telegramService.notifyAdminUserResubmission(
+        user.username,
+        user.fullName,
+        user.island,
+        user.atoll
+      );
+
+      // Remove password from response
+      const { password, ...safeUser } = updatedUser!;
+      res.json(safeUser);
+    } catch (error) {
+      console.error("Error resubmitting profile:", error);
+      res.status(500).json({ message: "Failed to resubmit profile" });
+    }
+  });
+
   // Image reveal request routes
   app.post('/api/image-reveal/request', isAuthenticated, async (req, res) => {
     try {

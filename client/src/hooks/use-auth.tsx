@@ -2,6 +2,7 @@ import { createContext, useContext, ReactNode, useState, useEffect } from 'react
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
+import { useLocation } from 'wouter';
 
 interface User {
   id: number;
@@ -40,6 +41,7 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
   
   // Track previous user state for notifications
   const [previousUser, setPreviousUser] = useState<User | null>(null);
@@ -67,6 +69,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           title: "Profile Approved! 🎉",
           description: "Your profile has been approved. Welcome to Kaiveni!",
         });
+        
+        // Auto-redirect to home page after approval
+        const timer = setTimeout(() => {
+          setLocation('/');
+        }, 2000); // 2 second delay to show success message
+        
+        return () => clearTimeout(timer);
+      }
+      
+      // Check for status change to REJECTED
+      if (previousUser.status !== 'REJECTED' && user.status === 'REJECTED') {
+        toast({
+          title: "Profile Needs Updates ⚠️",
+          description: "Please check your notifications for details and update your profile.",
+          variant: "destructive",
+        });
+        
+        // Redirect to notifications page to see rejection reason
+        const timer = setTimeout(() => {
+          setLocation('/notifications');
+        }, 3000); // 3 second delay to read the message
+        
+        return () => clearTimeout(timer);
       }
       
       // Check for coin balance increase
@@ -83,7 +108,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (user) {
       setPreviousUser(user);
     }
-  }, [user, previousUser, toast]);
+  }, [user, previousUser, toast, setLocation]);
 
   const loginMutation = useMutation({
     mutationFn: async (credentials: { username: string; password: string }) => {

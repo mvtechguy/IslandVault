@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { User, Settings, Edit3, LogOut, Heart, Clock, CheckCircle, XCircle, Coins, History, Upload, Camera, Shield, Eye, EyeOff, Save } from "lucide-react";
+import { User, Settings, Edit3, LogOut, Heart, Clock, CheckCircle, XCircle, Coins, History, Upload, Camera, Shield, Eye, EyeOff, Save, AlertCircle, RotateCcw } from "lucide-react";
 import { CoinBalance } from "@/components/CoinBalance";
 import { LocalFileUploader } from "@/components/LocalFileUploader";
 import { Button } from "@/components/ui/button";
@@ -375,6 +375,61 @@ export default function ProfilePage() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Rejection Notice and Resubmit Button */}
+        {user.status === 'REJECTED' && (
+          <div className="mt-4">
+            <Card className="border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-800">
+              <CardContent className="pt-4">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 mt-0.5" />
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-red-800 dark:text-red-200 mb-1">
+                      Profile Needs Updates
+                    </h3>
+                    <p className="text-sm text-red-600 dark:text-red-300 mb-3">
+                      Your profile was not approved. Please review the feedback in your notifications, update your profile information, and resubmit for review.
+                    </p>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        onClick={() => setShowEditProfile(true)}
+                        className="bg-red-600 hover:bg-red-700 text-white"
+                      >
+                        <Edit3 className="w-4 h-4 mr-1" />
+                        Edit Profile
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={async () => {
+                          try {
+                            await apiRequest('POST', '/api/profile/resubmit');
+                            queryClient.invalidateQueries({ queryKey: ['/api/me'] });
+                            toast({
+                              title: "Profile Resubmitted! 🔄",
+                              description: "Your profile has been resubmitted for admin review.",
+                            });
+                          } catch (error: any) {
+                            toast({
+                              title: "Resubmission Failed",
+                              description: error.message || "Please try again later.",
+                              variant: "destructive",
+                            });
+                          }
+                        }}
+                        className="border-red-300 text-red-700 hover:bg-red-50"
+                      >
+                        <RotateCcw className="w-4 h-4 mr-1" />
+                        Resubmit for Review
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         {/* Profile Tabs */}
         <div className="mt-6">
