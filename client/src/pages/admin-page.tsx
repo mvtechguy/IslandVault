@@ -107,7 +107,7 @@ export default function AdminPage() {
       on401: "throw"
     }),
     enabled: !!user && (user.role === "ADMIN" || user.role === "SUPERADMIN"),
-    refetchInterval: 3000, // Auto-refresh every 3 seconds
+    refetchInterval: 15000, // Auto-refresh every 15 seconds
   });
 
   // Fetch pending posts
@@ -117,7 +117,7 @@ export default function AdminPage() {
       on401: "throw"
     }),
     enabled: !!user && (user.role === "ADMIN" || user.role === "SUPERADMIN"),
-    refetchInterval: 4000, // Auto-refresh every 4 seconds
+    refetchInterval: 20000, // Auto-refresh every 20 seconds
   });
 
   // Fetch pending topups
@@ -127,7 +127,7 @@ export default function AdminPage() {
       on401: "throw"
     }),
     enabled: !!user && (user.role === "ADMIN" || user.role === "SUPERADMIN"),
-    refetchInterval: 6000, // Auto-refresh every 6 seconds
+    refetchInterval: 30000, // Auto-refresh every 30 seconds
   });
 
   // Fetch pending connection requests
@@ -137,7 +137,7 @@ export default function AdminPage() {
       on401: "throw"
     }),
     enabled: !!user && (user.role === "ADMIN" || user.role === "SUPERADMIN"),
-    refetchInterval: 5000, // Auto-refresh every 5 seconds
+    refetchInterval: 25000, // Auto-refresh every 25 seconds
   });
 
   // Fetch admin chat inbox
@@ -2754,16 +2754,7 @@ export default function AdminPage() {
                     : "/api/admin/bank-accounts";
                   const method = isEditingBankAccount ? "PUT" : "POST";
                   
-                  // WHY: Network logging for debugging bank account creation
-                  if (process.env.NODE_ENV === 'development') {
-                    console.log(`[DEBUG] ${method} ${endpoint}`, bankAccountForm);
-                  }
-                  
                   const response = await apiRequest(method, endpoint, bankAccountForm);
-                  
-                  if (process.env.NODE_ENV === 'development') {
-                    console.log('[DEBUG] Bank account response:', response);
-                  }
                   
                   queryClient.invalidateQueries({ queryKey: ["/api/admin/bank-accounts"] });
                   toast({ 
@@ -2784,11 +2775,6 @@ export default function AdminPage() {
                   });
                   setBankAccountErrors({ bankName: "", accountNumber: "", accountName: "" });
                 } catch (error: any) {
-                  // WHY: Enhanced error logging for debugging
-                  if (process.env.NODE_ENV === 'development') {
-                    console.error('[DEBUG] Bank account error:', error);
-                  }
-                  
                   const errorMessage = error?.message || "Unknown error occurred";
                   toast({ 
                     title: isEditingBankAccount ? "Failed to update bank account" : "Failed to add bank account", 
