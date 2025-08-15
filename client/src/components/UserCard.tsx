@@ -181,11 +181,11 @@ export function UserCard({ post }: UserCardProps) {
         )}
         
         <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed mb-4">
-          {post.description}
+          {String(post.description)}
         </p>
 
         {/* Primary Image Display - 1:1 Aspect Ratio */}
-        {post.images && Array.isArray(post.images) && post.images.length > 0 && (
+        {Array.isArray(post.images) && post.images.length > 0 && (
           <div className="mb-4">
             <div className="relative group">
               <div className="aspect-square w-full overflow-hidden rounded-2xl shadow-lg group-hover:shadow-xl transition-shadow duration-300">
@@ -197,7 +197,7 @@ export function UserCard({ post }: UserCardProps) {
                     (e.target as HTMLImageElement).style.display = 'none';
                   }}
                 />
-                {post.images.length > 1 && (
+                                {Array.isArray(post.images) && post.images.length > 1 && (
                   <div className="absolute top-3 right-3 bg-black/70 text-white px-2 py-1 rounded-full text-xs font-medium">
                     +{post.images.length - 1} more
                   </div>
@@ -209,7 +209,7 @@ export function UserCard({ post }: UserCardProps) {
         )}
 
         {/* Preferences Tags */}
-        {post.preferences && typeof post.preferences === 'object' && (
+                    {post.preferences && typeof post.preferences === 'object' && !Array.isArray(post.preferences) && (
           <div className="flex flex-wrap gap-2 mb-4">
             {(post.preferences as any).ageMin && (post.preferences as any).ageMax && (
               <Badge variant="secondary" className="bg-mint/10 text-mint border-mint/20 text-xs font-medium px-2 py-1">
@@ -243,7 +243,7 @@ export function UserCard({ post }: UserCardProps) {
                 className="flex items-center space-x-2 text-gray-600 hover:text-rose-500 dark:text-gray-400 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/20 rounded-xl px-3 py-2 transition-all duration-200"
               >
                 <Heart className={`w-5 h-5 ${liked ? 'fill-current text-rose-500' : ''}`} />
-                <span className="font-medium">{post.likes || 0}</span>
+                                 <span className="font-medium">{Number(post.likes) || 0}</span>
               </Button>
             )}
             
@@ -259,7 +259,7 @@ export function UserCard({ post }: UserCardProps) {
             </Link>
 
             {/* Request More Images Button */}
-            {!isOwnPost && post.images && post.images.length > 1 && (
+            {!isOwnPost && Array.isArray(post.images) && post.images.length > 1 && (
               <Button
                 variant="ghost"
                 size="sm"

@@ -4,3 +4,7 @@ dist
 server/public
 vite.config.ts.*
 *.tar.gz
+# Ignore cookie files and local uploads
+*cookies*.txt
+uploads/
+public/uploads/

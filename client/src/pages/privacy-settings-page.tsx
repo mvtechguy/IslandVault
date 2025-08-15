@@ -30,9 +30,9 @@ export default function PrivacySettingsPage() {
   });
 
   // Fetch current privacy settings
-  const { data: privacySettings } = useQuery({
+  const { data: privacySettings } = useQuery<any>({
     queryKey: ["/api/profile/privacy"],
-    queryFn: getQueryFn(),
+    queryFn: getQueryFn({ on401: "throw" }),
     enabled: !!user,
   });
 
@@ -57,9 +57,9 @@ export default function PrivacySettingsPage() {
   });
 
   // Fetch identity reveals
-  const { data: revealsData } = useQuery({
+  const { data: revealsData } = useQuery<any>({
     queryKey: ["/api/identity/reveals"],
-    queryFn: getQueryFn(),
+    queryFn: getQueryFn({ on401: "throw" }),
     enabled: !!user,
   });
 

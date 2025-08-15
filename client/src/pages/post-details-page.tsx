@@ -57,7 +57,7 @@ export default function PostDetailsPage() {
     enabled: !!id,
   });
 
-  const { data: likeStatus } = useQuery({
+  const { data: likeStatus } = useQuery<{ liked: boolean }>({
     queryKey: [`/api/posts/${id}/like-status`],
     enabled: !!id && !!user,
   });
@@ -113,7 +113,7 @@ export default function PostDetailsPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-warm-white dark:bg-dark-navy">
-        <MobileHeader />
+        <MobileHeader title="Post Details" />
         <div className="flex items-center justify-center h-screen">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-mint"></div>
         </div>
@@ -125,7 +125,7 @@ export default function PostDetailsPage() {
   if (!post) {
     return (
       <div className="min-h-screen bg-warm-white dark:bg-dark-navy">
-        <MobileHeader />
+        <MobileHeader title="Post Details" />
         <div className="flex items-center justify-center h-screen">
           <div className="text-center">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Post not found</h2>
@@ -146,7 +146,7 @@ export default function PostDetailsPage() {
 
   return (
     <div className="min-h-screen bg-warm-white dark:bg-dark-navy pb-20">
-      <MobileHeader />
+      <MobileHeader title="Post Details" />
       
       <div className="max-w-4xl mx-auto px-4 py-6">
         {/* Header with back button */}
