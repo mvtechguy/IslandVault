@@ -2425,7 +2425,7 @@ export default function AdminPage() {
                 <div className="border rounded-lg max-h-96 overflow-y-auto bg-gray-50 dark:bg-gray-900/50">
                   {(conversationMessagesData?.messages || []).length > 0 ? (
                     <div className="p-4 space-y-3">
-                      {conversationMessagesData.messages
+                      {(conversationMessagesData?.messages || [])
                         .slice()
                         .reverse()
                         .map((msgData: any) => (
