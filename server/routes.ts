@@ -1963,6 +1963,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/admin/users/:id/connections", isAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const user = await storage.getUser(id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Get all connection requests sent by this user
+      const sentRequests = await storage.getUserConnectionRequests(id, 'sent');
+      
+      // Get all connection requests received by this user
+      const receivedRequests = await storage.getUserConnectionRequests(id, 'received');
+
+      res.json({ 
+        sent: sentRequests || [], 
+        received: receivedRequests || [] 
+      });
+    } catch (error) {
+      console.error("Error fetching user connections:", error);
+      res.status(500).json({ message: "Failed to fetch user connections" });
+    }
+  });
+
   app.post("/api/admin/users", isAdmin, async (req, res) => {
     try {
       const userData = req.body;
