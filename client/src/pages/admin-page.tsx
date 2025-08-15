@@ -2618,7 +2618,7 @@ export default function AdminPage() {
 
         {/* User Review Modal */}
         <Dialog open={!!selectedUser} onOpenChange={() => setSelectedUser(null)}>
-          <DialogContent className="max-w-lg" aria-labelledby="user-review-title" aria-describedby="user-review-desc">
+          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto" aria-labelledby="user-review-title" aria-describedby="user-review-desc">
             <DialogHeader>
               <DialogTitle id="user-review-title">Review User: {selectedUser?.fullName}</DialogTitle>
               <DialogDescription id="user-review-desc">
