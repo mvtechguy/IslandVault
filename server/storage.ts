@@ -509,21 +509,6 @@ export class DatabaseStorage implements IStorage {
       .where(eq(users.id, userId));
   }
 
-  // Connection Request methods
-  async getConnectionRequest(id: number): Promise<ConnectionRequest | undefined> {
-    const [request] = await db.select().from(connectionRequests).where(eq(connectionRequests.id, id));
-    return request || undefined;
-  }
-
-  async updateConnectionRequest(id: number, data: Partial<ConnectionRequest>): Promise<ConnectionRequest | undefined> {
-    const [updated] = await db
-      .update(connectionRequests)
-      .set(data)
-      .where(eq(connectionRequests.id, id))
-      .returning();
-    return updated || undefined;
-  }
-
   // Conversation methods
   async createConversation(data: { participantIds: number[] }): Promise<Conversation> {
     const [conversation] = await db

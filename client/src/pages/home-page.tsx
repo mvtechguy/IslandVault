@@ -181,17 +181,7 @@ export default function HomePage() {
   });
 
   // Fetch settings
-  const { data: settings } = useQuery<{
-    coinPriceMvr: string;
-    costPost: number;
-    costConnect: number;
-    bankAccountName?: string;
-    bankAccountNumber?: string;
-    bankBranch?: string;
-    bankName?: string;
-    maxUploadMb: number;
-    themeConfig?: any;
-  }>({
+  const { data: settings } = useQuery<any>({
     queryKey: ["/api/settings"],
     queryFn: getQueryFn({ on401: "throw" }),
   });

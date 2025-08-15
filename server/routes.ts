@@ -146,15 +146,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await objectStorageService.trySetObjectEntityAclPolicy(objectPath, {
         owner: req.user!.id.toString(),
         visibility: visibility as "public" | "private",
-        aclRules: [
-          {
-            group: {
-              type: "PRIVATE",
-              id: "admins"
-            },
-            permission: ObjectPermission.READ
-          }
-        ]
+                  aclRules: [
+            {
+              group: {
+                type: ObjectAccessGroupType.ADMIN_ONLY,
+                id: "admins"
+              },
+              permission: ObjectPermission.READ
+            }
+          ]
       });
       
       res.json({ success: true, objectPath });
@@ -666,8 +666,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const post = requestData.postId ? await storage.getPost(requestData.postId) : null;
 
       // Send Telegram notification to target user
-      if (targetUser) {
-        await telegramService.notifyConnectionRequest(targetUser.id, user?.fullName || 'Unknown User');
+      if (targetUser && user && user.fullName) {
+        await telegramService.notifyConnectionRequest(targetUser.id, user.fullName);
       }
 
       // Send notification to target user about new connection request
@@ -686,11 +686,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Send admin notification (only for non-admin users)
-      if (!isAdmin) {
+      if (!isAdmin && user && targetUser) {
         await telegramService.notifyAdminConnectionRequest(
-          user?.fullName || 'Unknown User',
-          targetUser?.fullName || 'Unknown User',
-          post?.title || null
+          user.fullName,
+          targetUser.fullName,
+          post?.title || undefined
         );
       }
 

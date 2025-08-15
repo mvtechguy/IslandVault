@@ -47,13 +47,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const { data: user, isLoading } = useQuery<User>({
     queryKey: ['/api/me'],
     retry: false,
-    refetchInterval: (data) => {
-      // Poll more frequently if user is pending approval
-      if (data?.status === 'PENDING_APPROVAL') {
-        return 3000; // 3 seconds
+    refetchInterval: (query) => {
+      const current = query.state.data as User | undefined;
+      if (current && (current as any).status === 'PENDING_APPROVAL') {
+        return 3000;
       }
-      // Normal polling for other states
-      return 10000; // 10 seconds
+      return 10000;
     },
     refetchIntervalInBackground: true,
   });
@@ -62,7 +61,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (user && previousUser) {
       // Check for status change to APPROVED
-      if (previousUser.status !== 'APPROVED' && user.status === 'APPROVED') {
+      if ((previousUser as any).status !== 'APPROVED' && (user as any).status === 'APPROVED') {
         toast({
           title: "Profile Approved! 🎉",
           description: "Your profile has been approved. Welcome to Kaiveni!",
@@ -70,8 +69,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       
       // Check for coin balance increase
-      if (user.coins > previousUser.coins) {
-        const coinDifference = user.coins - previousUser.coins;
+      if ((user as any).coins > (previousUser as any).coins) {
+        const coinDifference = (user as any).coins - (previousUser as any).coins;
         toast({
           title: "Coins Added!",
           description: `${coinDifference} coins have been added to your account.`,
@@ -139,7 +138,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const contextValue: AuthContextType = {
-    user: user || null,
+    user: (user as User) || null,
     isLoading,
     isAuthenticated: !!user,
     loginMutation,

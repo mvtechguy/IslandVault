@@ -54,6 +54,7 @@ export default function AdminPage() {
     bankName: "",
     accountNumber: "",
     accountName: "",
+    branchName: "",
     swiftCode: "",
     isActive: true,
     isPrimary: false
@@ -178,7 +179,7 @@ export default function AdminPage() {
   });
 
   // Fetch bank accounts for admin
-  const { data: banksData } = useQuery({
+  const { data: banksData } = useQuery<any[]>({
     queryKey: ["/api/admin/bank-accounts"],
     queryFn: getQueryFn({ on401: "throw" }),
     enabled: !!user && (user.role === "ADMIN" || user.role === "SUPERADMIN"),
@@ -573,7 +574,7 @@ export default function AdminPage() {
   const handleDeleteBank = async (bankId: number) => {
     if (confirm("Are you sure you want to delete this bank account?")) {
       try {
-        await apiRequest("/api/admin/bank-accounts/" + bankId, { method: "DELETE" });
+        await apiRequest("DELETE", "/api/admin/bank-accounts/" + bankId);
         queryClient.invalidateQueries({ queryKey: ["/api/admin/bank-accounts"] });
         toast({ title: "Bank account deleted successfully" });
       } catch (error) {
@@ -835,7 +836,7 @@ export default function AdminPage() {
             </TabsContent>
 
             <TabsContent value="posts" className="space-y-4">
-              {postsData?.posts?.length > 0 ? (
+              {(postsData?.posts || []).length > 0 ? (
                 <>
                   <div className="space-y-3">
                     {postsData?.posts
@@ -888,7 +889,7 @@ export default function AdminPage() {
                   {/* Pagination Controls */}
                   <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
                     <div className="text-sm text-gray-600 dark:text-gray-400">
-                      Showing {postsPage * itemsPerPage + 1}-{Math.min((postsPage + 1) * itemsPerPage, postsData?.posts?.length || 0)} of {postsData?.posts?.length || 0}
+                      Showing {postsPage * itemsPerPage + 1}-{Math.min((postsPage + 1) * itemsPerPage, (postsData?.posts || []).length)} of {(postsData?.posts || []).length}
                     </div>
                     <div className="flex space-x-2">
                       <Button
@@ -919,7 +920,7 @@ export default function AdminPage() {
             </TabsContent>
 
             <TabsContent value="topups" className="space-y-4">
-              {topupsData?.topups?.length > 0 ? (
+              {(topupsData?.topups || []).length > 0 ? (
                 <>
                   <div className="space-y-3">
                     {topupsData?.topups
@@ -981,7 +982,7 @@ export default function AdminPage() {
                   {/* Pagination Controls */}
                   <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
                     <div className="text-sm text-gray-600 dark:text-gray-400">
-                      Showing {topupsPage * itemsPerPage + 1}-{Math.min((topupsPage + 1) * itemsPerPage, topupsData?.topups?.length || 0)} of {topupsData?.topups?.length || 0}
+                      Showing {topupsPage * itemsPerPage + 1}-{Math.min((topupsPage + 1) * itemsPerPage, (topupsData?.topups || []).length)} of {(topupsData?.topups || []).length}
                     </div>
                     <div className="flex space-x-2">
                       <Button
@@ -1034,7 +1035,7 @@ export default function AdminPage() {
                 </Button>
               </div>
 
-              {packagesData?.length > 0 ? (
+              {Array.isArray(packagesData) && packagesData.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {packagesData.map((pkg: any) => (
                     <Card key={pkg.id} className={`relative ${pkg.isPopular ? 'border-mint' : ''}`}>
@@ -1417,7 +1418,7 @@ export default function AdminPage() {
                     </Button>
                   </div>
                   
-                  {banksData && banksData.length > 0 ? (
+                  {Array.isArray(banksData) && banksData.length > 0 ? (
                     <div className="space-y-3">
                       {banksData.map((bank) => (
                         <Card key={bank.id} className="p-4">
@@ -2317,7 +2318,14 @@ export default function AdminPage() {
                           if (!e.currentTarget.parentNode?.querySelector('.fallback-message')) {
                             const fallback = document.createElement('div');
                             fallback.className = 'mt-2 p-4 border-2 border-dashed border-red-300 rounded-lg text-center fallback-message';
-                            fallback.innerHTML = '<p class="text-sm text-red-600">Unable to load slip image</p><p class="text-xs text-gray-500">Path: ' + selectedTopup.slipPath + '</p>';
+                            const p1 = document.createElement('p');
+                            p1.className = 'text-sm text-red-600';
+                            p1.textContent = 'Unable to load slip image';
+                            const p2 = document.createElement('p');
+                            p2.className = 'text-xs text-gray-500';
+                            p2.textContent = 'Path: ' + selectedTopup.slipPath;
+                            fallback.appendChild(p1);
+                            fallback.appendChild(p2);
                             e.currentTarget.parentNode?.appendChild(fallback);
                           }
                         }}
@@ -2415,7 +2423,7 @@ export default function AdminPage() {
                 </div>
 
                 <div className="border rounded-lg max-h-96 overflow-y-auto bg-gray-50 dark:bg-gray-900/50">
-                  {conversationMessagesData?.messages?.length > 0 ? (
+                  {(conversationMessagesData?.messages || []).length > 0 ? (
                     <div className="p-4 space-y-3">
                       {conversationMessagesData.messages
                         .slice()
@@ -2653,7 +2661,15 @@ export default function AdminPage() {
               {bankAccountErrors.accountNumber && <p className="text-sm text-red-500 mt-1">{bankAccountErrors.accountNumber}</p>}
             </div>
 
-
+            <div>
+              <Label htmlFor="branchName">Branch Name</Label>
+              <Input
+                id="branchName"
+                value={bankAccountForm.branchName}
+                onChange={(e) => setBankAccountForm({ ...bankAccountForm, branchName: e.target.value })}
+                placeholder="Branch name"
+              />
+            </div>
 
             <div>
               <Label htmlFor="swiftCode">SWIFT Code (Optional)</Label>
@@ -2700,6 +2716,7 @@ export default function AdminPage() {
                   bankName: "",
                   accountNumber: "",
                   accountName: "",
+                  branchName: "",
                   swiftCode: "",
                   isActive: true,
                   isPrimary: false
@@ -2760,6 +2777,7 @@ export default function AdminPage() {
                     bankName: "",
                     accountNumber: "",
                     accountName: "",
+                    branchName: "",
                     swiftCode: "",
                     isActive: true,
                     isPrimary: false

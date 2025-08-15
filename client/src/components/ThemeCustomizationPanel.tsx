@@ -47,7 +47,7 @@ export function ThemeCustomizationPanel() {
   const queryClient = useQueryClient();
   
   // Load current settings including theme config
-  const { data: settings } = useQuery({
+  const { data: settings } = useQuery<{ themeConfig?: ThemeConfig }>({
     queryKey: ["/api/admin/settings"],
     queryFn: getQueryFn({ on401: "throw" }),
   });

@@ -141,8 +141,7 @@ export default function CreatePostPage() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <MobileHeader 
         title="Create Post" 
-        showBackButton={true} 
-        onBackClick={() => setLocation("/")} 
+        showBack 
       />
       
       <div className="container mx-auto p-4 max-w-2xl pb-20">
