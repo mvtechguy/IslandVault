@@ -36,16 +36,16 @@ export default function BuyCoinsPage() {
   const { data: coinBalance } = useQuery<{ coins: number }>({
     queryKey: ["/api/coins/balance"],
     queryFn: getQueryFn({ on401: "throw" }),
-    refetchInterval: 5000, // Check every 5 seconds
-    refetchIntervalInBackground: true,
+    refetchInterval: 30000, // Check every 30 seconds
+    refetchIntervalInBackground: false,
   });
 
   // Fetch topup history with polling
   const { data: topupHistory } = useQuery<any[]>({
     queryKey: ["/api/coins/topups"],
     queryFn: getQueryFn({ on401: "throw" }),
-    refetchInterval: 10000, // Check every 10 seconds
-    refetchIntervalInBackground: true,
+    refetchInterval: 60000, // Check every minute
+    refetchIntervalInBackground: false,
   });
 
   const submitTopupMutation = useMutation({

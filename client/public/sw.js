@@ -25,14 +25,17 @@ const CACHEABLE_API_ROUTES = [
   '/api/atolls',
 ];
 
+// Helper for development logging
+const isDev = location.hostname === 'localhost' || location.hostname === '127.0.0.1' || location.hostname.includes('.replit.dev');
+
 // Install event - cache essential assets
 self.addEventListener('install', (event) => {
-  console.log('[SW] Install event');
+  if (isDev) console.log('[SW] Install event');
   
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
-        console.log('[SW] Caching essential assets');
+        if (isDev) console.log('[SW] Caching essential assets');
         return cache.addAll(ESSENTIAL_ASSETS);
       })
       .then(() => {
@@ -47,7 +50,7 @@ self.addEventListener('install', (event) => {
 
 // Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
-  console.log('[SW] Activate event');
+  if (isDev) console.log('[SW] Activate event');
   
   event.waitUntil(
     caches.keys()
@@ -55,7 +58,7 @@ self.addEventListener('activate', (event) => {
         return Promise.all(
           cacheNames.map((cacheName) => {
             if (cacheName !== CACHE_NAME) {
-              console.log('[SW] Deleting old cache:', cacheName);
+              if (isDev) console.log('[SW] Deleting old cache:', cacheName);
               return caches.delete(cacheName);
             }
           })
@@ -359,4 +362,4 @@ self.addEventListener('unhandledrejection', (event) => {
   console.error('[SW] Unhandled promise rejection:', event.reason);
 });
 
-console.log('[SW] Service Worker loaded successfully');
+if (isDev) console.log('[SW] Service Worker loaded successfully');

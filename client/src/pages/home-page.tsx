@@ -170,8 +170,8 @@ export default function HomePage() {
   const { data: coinBalance } = useQuery<{ coins: number }>({
     queryKey: ["/api/coins/balance"],
     queryFn: getQueryFn({ on401: "throw" }),
-    refetchInterval: 5000, // Poll every 5 seconds
-    refetchIntervalInBackground: true,
+    refetchInterval: 60000, // Poll every minute
+    refetchIntervalInBackground: false,
   });
 
   // Fetch notifications

@@ -8,13 +8,13 @@ import { AuthProvider } from "@/hooks/use-auth";
 import { BrandingProvider } from "@/hooks/use-branding";
 import { ProtectedRoute } from "@/lib/protected-route";
 import NotFound from "@/pages/not-found";
+import ErrorBoundary from "@/components/ErrorBoundary";
 import HomePage from "@/pages/home-page";
 import AuthPage from "@/pages/auth-page";
 import ProfilePage from "@/pages/profile-page";
 import AdminPage from "@/pages/admin-page";
 import BuyCoinsPage from "@/pages/buy-coins-page";
 import OnboardPage from "@/pages/onboard-page";
-import PostDetailPage from "@/pages/post-detail-page";
 import PostDetailsPage from "@/pages/post-details-page";
 import BrowsePostsPage from "@/pages/browse-posts-page";
 import CreatePostPage from "@/pages/create-post-page";
@@ -90,18 +90,20 @@ function Router() {
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <BrandingProvider>
-        <ThemeProvider>
-          <AuthProvider>
-            <TooltipProvider>
-              <Toaster />
-              <Router />
-            </TooltipProvider>
-          </AuthProvider>
-        </ThemeProvider>
-      </BrandingProvider>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <BrandingProvider>
+          <ThemeProvider>
+            <AuthProvider>
+              <TooltipProvider>
+                <Toaster />
+                <Router />
+              </TooltipProvider>
+            </AuthProvider>
+          </ThemeProvider>
+        </BrandingProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }
 

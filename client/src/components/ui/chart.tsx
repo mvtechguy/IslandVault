@@ -78,6 +78,8 @@ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
 
   return (
     <style
+      // SAFETY: This is safe as it only generates CSS variables from controlled config objects
+      // No user input is used here, only predefined theme configurations
       dangerouslySetInnerHTML={{
         __html: Object.entries(THEMES)
           .map(

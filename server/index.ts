@@ -5,9 +5,23 @@ import { storage } from "./storage";
 
 const app = express();
 
-// Add CORS headers for development
+// Add CORS headers with proper origin checking
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+  const origin = req.headers.origin;
+  const allowedOrigins = [
+    'http://localhost:3000',
+    'http://localhost:5000',
+    'https://kaiveni.replit.app',
+    process.env.FRONTEND_URL
+  ].filter(Boolean);
+  
+  // In development, allow any localhost origin
+  if (process.env.NODE_ENV === 'development' && origin?.includes('localhost')) {
+    res.header('Access-Control-Allow-Origin', origin);
+  } else if (allowedOrigins.includes(origin)) {
+    res.header('Access-Control-Allow-Origin', origin);
+  }
+  
   res.header('Access-Control-Allow-Credentials', 'true');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');

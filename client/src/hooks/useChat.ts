@@ -124,18 +124,22 @@ export function useChat(conversationId?: number) {
 
       socket.send(JSON.stringify(messageData));
       
-      // Listen for response
+      // Listen for response with timeout
       const handleResponse = (event: MessageEvent) => {
         try {
           const data = JSON.parse(event.data);
           if (data.type === 'message_sent') {
             socket.removeEventListener('message', handleResponse);
+            clearTimeout(timeoutId);
             resolve(data.message);
           } else if (data.type === 'error') {
             socket.removeEventListener('message', handleResponse);
+            clearTimeout(timeoutId);
             reject(new Error(data.error));
           }
         } catch (error) {
+          socket.removeEventListener('message', handleResponse);
+          clearTimeout(timeoutId);
           reject(error);
         }
       };
@@ -143,7 +147,7 @@ export function useChat(conversationId?: number) {
       socket.addEventListener('message', handleResponse);
       
       // Timeout after 10 seconds
-      setTimeout(() => {
+      const timeoutId = setTimeout(() => {
         socket.removeEventListener('message', handleResponse);
         reject(new Error('Message send timeout'));
       }, 10000);
