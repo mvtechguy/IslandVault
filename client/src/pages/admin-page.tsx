@@ -267,7 +267,14 @@ export default function AdminPage() {
   // Fetch all posts for management
   const { data: allPostsData, refetch: refetchAllPosts } = useQuery<{posts: any[], total: number}>({
     queryKey: ["/api/admin/posts", postStatusFilter === "ALL" ? undefined : postStatusFilter, postManagementPage],
-    queryFn: getQueryFn({ on401: "throw" }),
+    queryFn: getQueryFn({ 
+      on401: "throw",
+      searchParams: {
+        status: postStatusFilter === "ALL" ? undefined : postStatusFilter,
+        limit: "50",
+        offset: (postManagementPage * 50).toString()
+      }
+    }),
     enabled: !!user && (user.role === "ADMIN" || user.role === "SUPERADMIN"),
   });
 
@@ -2863,7 +2870,11 @@ export default function AdminPage() {
                       {selectedPost.images.map((imageUrl: string, index: number) => (
                         <div key={index} className="relative">
                           <img
-                            src={imageUrl}
+                            src={imageUrl.startsWith('http') 
+                              ? imageUrl 
+                              : imageUrl.startsWith('/uploads') 
+                                ? imageUrl 
+                                : `/uploads/posts/${imageUrl}`}
                             alt={`Post image ${index + 1}`}
                             className="w-full h-32 object-cover rounded-lg border border-gray-200 dark:border-gray-600"
                             onError={(e) => {
