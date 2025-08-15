@@ -21,31 +21,31 @@ export default function BuyCoinsPage() {
   const [uploadedSlipUrl, setUploadedSlipUrl] = useState("");
 
   // Fetch coin packages
-  const { data: packages } = useQuery({
+  const { data: packages } = useQuery<any[]>({
     queryKey: ["/api/coins/packages"],
     queryFn: getQueryFn({ on401: "throw" }),
   });
 
   // Fetch bank accounts
-  const { data: bankAccounts } = useQuery({
+  const { data: bankAccounts } = useQuery<any[]>({
     queryKey: ["/api/bank-accounts"],
     queryFn: getQueryFn({ on401: "throw" }),
   });
 
   // Fetch coin balance with polling
-  const { data: coinBalance } = useQuery({
+  const { data: coinBalance } = useQuery<{ coins: number }>({
     queryKey: ["/api/coins/balance"],
     queryFn: getQueryFn({ on401: "throw" }),
-    refetchInterval: 5000, // Check every 5 seconds
-    refetchIntervalInBackground: true,
+    refetchInterval: 30000, // Check every 30 seconds
+    refetchIntervalInBackground: false,
   });
 
   // Fetch topup history with polling
-  const { data: topupHistory } = useQuery({
+  const { data: topupHistory } = useQuery<any[]>({
     queryKey: ["/api/coins/topups"],
     queryFn: getQueryFn({ on401: "throw" }),
-    refetchInterval: 10000, // Check every 10 seconds
-    refetchIntervalInBackground: true,
+    refetchInterval: 60000, // Check every minute
+    refetchIntervalInBackground: false,
   });
 
   const submitTopupMutation = useMutation({
@@ -84,10 +84,11 @@ export default function BuyCoinsPage() {
   };
 
   const handleUploadComplete = (result: UploadResult<Record<string, unknown>, Record<string, unknown>>) => {
-    if (result.successful.length > 0) {
-      const uploadedFile = result.successful[0];
+    const successful = (result as any)?.successful as Array<any> | undefined;
+    if (successful && successful.length > 0) {
+      const uploadedFile = successful[0];
       setUploadedSlipUrl(uploadedFile.uploadURL as string);
-      toast({
+            toast({
         title: "Slip uploaded successfully",
         description: "You can now submit your topup request.",
       });
@@ -414,9 +415,9 @@ export default function BuyCoinsPage() {
               <CardTitle>Topup History</CardTitle>
             </CardHeader>
             <CardContent>
-              {topupHistory?.length > 0 ? (
+              {(topupHistory || []).length > 0 ? (
                 <div className="space-y-3">
-                  {topupHistory.map((topup: any) => (
+                                     {(topupHistory || []).map((topup: any) => (
                     <div
                       key={topup.id}
                       className="flex items-center justify-between p-3 border border-gray-200 dark:border-gray-700 rounded-lg"

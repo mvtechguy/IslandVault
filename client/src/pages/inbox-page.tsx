@@ -22,7 +22,7 @@ export default function InboxPage() {
   const queryClient = useQueryClient();
   const [selectedConversation, setSelectedConversation] = useState<any>(null);
   const [newMessage, setNewMessage] = useState("");
-  const { sendMessage, getMessages, connected } = useChat(user?.id);
+  const { sendMessage, messages, isConnected } = useChat(selectedConversation?.conversation?.id);
 
   const { data: conversations, isLoading: conversationsLoading } = useQuery<any[]>({
     queryKey: ["/api/conversations"],
@@ -68,9 +68,10 @@ export default function InboxPage() {
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !selectedConversation) return;
 
-    if (sendMessage(selectedConversation.conversation.id, newMessage.trim())) {
+    try {
+      await sendMessage(newMessage.trim());
       setNewMessage("");
-    } else {
+        } catch {
       toast({
         title: "Failed to send message",
         description: "Please check your connection and try again.",
@@ -123,9 +124,9 @@ export default function InboxPage() {
                 </Avatar>
                 <div>
                   <h3 className="font-semibold">{selectedConversation.otherUser?.fullName}</h3>
-                  <p className="text-xs text-gray-500">
-                    {connected ? 'Online' : 'Offline'}
-                  </p>
+                                     <p className="text-xs text-gray-500">
+                     {isConnected ? 'Online' : 'Offline'}
+                   </p>
                 </div>
               </div>
             </CardHeader>
@@ -133,21 +134,21 @@ export default function InboxPage() {
             <CardContent className="flex flex-col h-full p-0">
               {/* Messages */}
               <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                {getMessages(selectedConversation.conversation.id).length === 0 ? (
+                {messages.length === 0 ? (
                   <div className="text-center py-8">
                     <MessageCircle className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                     <p className="text-gray-600 dark:text-gray-400">
                       Start your conversation!
                     </p>
                   </div>
-                ) : (
-                  getMessages(selectedConversation.conversation.id).map((message) => (
-                    <div
-                      key={message.id}
-                      className={`flex ${
-                        message.senderId === user.id ? 'justify-end' : 'justify-start'
-                      }`}
-                    >
+                                  ) : (
+                    messages.map((message) => (
+                      <div
+                        key={message.id}
+                        className={`flex ${
+                          message.senderId === user.id ? 'justify-end' : 'justify-start'
+                        }`}
+                      >
                       <div
                         className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
                           message.senderId === user.id

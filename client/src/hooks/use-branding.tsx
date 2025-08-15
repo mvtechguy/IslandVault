@@ -13,7 +13,7 @@ type BrandingContextType = {
 export const BrandingContext = createContext<BrandingContextType | null>(null);
 
 export function BrandingProvider({ children }: { children: ReactNode }) {
-  const { data: branding, isLoading } = useQuery({
+  const { data: branding, isLoading } = useQuery<{ appName?: string; logoUrl?: string; primaryColor?: string; tagline?: string } | null>({
     queryKey: ["/api/branding"],
     queryFn: getQueryFn({ on401: "returnNull" }),
   });

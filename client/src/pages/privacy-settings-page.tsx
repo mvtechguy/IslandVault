@@ -14,6 +14,7 @@ import { BottomNavigation } from "@/components/BottomNavigation";
 import { MobileHeader } from "@/components/MobileHeader";
 import { apiRequest, getQueryFn } from "@/lib/queryClient";
 import { getMaldivesData } from "@/data/maldives-data";
+import { UserPrivacySettings } from "@shared/schema";
 
 export default function PrivacySettingsPage() {
   const { user } = useAuth();
@@ -30,15 +31,15 @@ export default function PrivacySettingsPage() {
   });
 
   // Fetch current privacy settings
-  const { data: privacySettings } = useQuery({
+  const { data: privacySettings } = useQuery<UserPrivacySettings>({
     queryKey: ["/api/profile/privacy"],
-    queryFn: getQueryFn(),
+    queryFn: getQueryFn({ on401: "throw" }),
     enabled: !!user,
   });
 
   // Update privacy settings
   const privacyMutation = useMutation({
-    mutationFn: (data: any) => apiRequest("PUT", '/api/profile/privacy', data),
+    mutationFn: (data: UserPrivacySettings) => apiRequest("PUT", '/api/profile/privacy', data),
     onSuccess: () => {
       toast({
         title: "Privacy Settings Updated",
@@ -47,7 +48,7 @@ export default function PrivacySettingsPage() {
       queryClient.invalidateQueries({ queryKey: ["/api/profile/privacy"] });
       queryClient.invalidateQueries({ queryKey: ["/api/me"] });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Update Failed",
         description: error.message || "Failed to update privacy settings.",
@@ -57,20 +58,20 @@ export default function PrivacySettingsPage() {
   });
 
   // Fetch identity reveals
-  const { data: revealsData } = useQuery({
+  const { data: revealsData } = useQuery<any>({
     queryKey: ["/api/identity/reveals"],
-    queryFn: getQueryFn(),
+    queryFn: getQueryFn({ on401: "throw" }),
     enabled: !!user,
   });
 
   useEffect(() => {
     if (privacySettings) {
-      setUseRealIdentity((privacySettings as any).useRealIdentity ?? true);
+      setUseRealIdentity(privacySettings.useRealIdentity ?? true);
       setFakeProfile({
-        fakeFullName: (privacySettings as any).fakeFullName || '',
-        fakeAge: (privacySettings as any).fakeAge?.toString() || '',
-        fakeIsland: (privacySettings as any).fakeIsland || '',
-        fakeAtoll: (privacySettings as any).fakeAtoll || ''
+        fakeFullName: privacySettings.fakeFullName || '',
+        fakeAge: privacySettings.fakeAge?.toString() || '',
+        fakeIsland: privacySettings.fakeIsland || '',
+        fakeAtoll: privacySettings.fakeAtoll || ''
       });
     }
   }, [privacySettings]);

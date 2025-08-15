@@ -23,6 +23,14 @@ import {
   ChatReport,
   Visitor,
   InsertVisitor,
+  UserPrivacySettings,
+  PostFilters,
+  CreateConversationData,
+  AddParticipantData,
+  CreateMessageData,
+  CreateMessageReceiptData,
+  CreateChatBlockData,
+  CreateChatReportData,
   PostLike,
   Banner,
   InsertBanner
@@ -62,12 +70,12 @@ export interface IStorage {
   getUserByPhone(phone: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, user: Partial<User>): Promise<User | undefined>;
-  updateUserPrivacy(id: number, privacy: any): Promise<User | undefined>;
+  updateUserPrivacy(id: number, privacy: UserPrivacySettings): Promise<User | undefined>;
   getUsersForAdmin(status?: string, limit?: number, offset?: number): Promise<{ users: User[], total: number }>;
   
   // Posts  
   getPost(id: number): Promise<Post | undefined>;
-  getApprovedPosts(limit?: number, offset?: number, filters?: any): Promise<{ posts: Post[], total: number }>;
+  getApprovedPosts(limit?: number, offset?: number, filters?: PostFilters): Promise<{ posts: Post[], total: number }>;
   getUserPosts(userId: number): Promise<Post[]>;
   createPost(post: InsertPost & { userId: number }): Promise<Post>;
   updatePost(id: number, post: Partial<Post>): Promise<Post | undefined>;
@@ -82,7 +90,7 @@ export interface IStorage {
   // Post Management
   pinPost(postId: number, days?: number): Promise<Post | undefined>;
   unpinPost(postId: number): Promise<Post | undefined>;
-  searchPosts(query: string, filters?: any, limit?: number, offset?: number): Promise<{ posts: Post[], total: number }>;
+  searchPosts(query: string, filters?: PostFilters, limit?: number, offset?: number): Promise<{ posts: Post[], total: number }>;
   
   // Banners
   getBanners(): Promise<Banner[]>;
@@ -138,31 +146,31 @@ export interface IStorage {
   getAudits(limit?: number, offset?: number): Promise<{ audits: Audit[], total: number }>;
 
   // Chat methods
-  createConversation(data: any): Promise<any>;
-  getConversation(id: number): Promise<any>;
-  getConversationByParticipants(userId1: number, userId2: number): Promise<any>;
-  getConversationParticipants(conversationId: number): Promise<any[]>;
-  getUserConversations(userId: number): Promise<any[]>;
-  addConversationParticipant(data: any): Promise<any>;
+  createConversation(data: CreateConversationData): Promise<Conversation>;
+  getConversation(id: number): Promise<Conversation | undefined>;
+  getConversationByParticipants(userId1: number, userId2: number): Promise<Conversation | undefined>;
+  getConversationParticipants(conversationId: number): Promise<ConversationParticipant[]>;
+  getUserConversations(userId: number): Promise<Conversation[]>;
+  addConversationParticipant(data: AddParticipantData): Promise<ConversationParticipant>;
   isConversationParticipant(conversationId: number, userId: number): Promise<boolean>;
   
-  createMessage(data: any): Promise<any>;
-  getMessages(conversationId: number, beforeId?: number, limit?: number): Promise<any[]>;
-  getMessageById(id: number): Promise<any>;
+  createMessage(data: CreateMessageData): Promise<Message>;
+  getMessages(conversationId: number, beforeId?: number, limit?: number): Promise<Message[]>;
+  getMessageById(id: number): Promise<Message | undefined>;
   updateMessageReadStatus(conversationId: number, userId: number, messageId: number): Promise<void>;
   
-  createMessageReceipt(data: any): Promise<any>;
-  createChatBlock(data: any): Promise<any>;
+  createMessageReceipt(data: CreateMessageReceiptData): Promise<MessageReceipt>;
+  createChatBlock(data: CreateChatBlockData): Promise<ChatBlock>;
   removeChatBlock(blockerId: number, blockedId: number): Promise<void>;
   isChatBlocked(userId1: number, userId2: number): Promise<boolean>;
   
-  createChatReport(data: any): Promise<any>;
-  getChatReports(status?: string, limit?: number, offset?: number): Promise<{ reports: any[]; total: number }>;
-  updateChatReportStatus(id: number, status: string): Promise<any>;
+  createChatReport(data: CreateChatReportData): Promise<ChatReport>;
+  getChatReports(status?: string, limit?: number, offset?: number): Promise<{ reports: ChatReport[]; total: number }>;
+  updateChatReportStatus(id: number, status: string): Promise<ChatReport | undefined>;
   
   // Admin chat methods
-  getAllConversations(limit?: number, offset?: number): Promise<{ conversations: any[]; total: number }>;
-  getConversationMessages(conversationId: number, limit?: number, offset?: number): Promise<any[]>;
+  getAllConversations(limit?: number, offset?: number): Promise<{ conversations: Conversation[]; total: number }>;
+  getConversationMessages(conversationId: number, limit?: number, offset?: number): Promise<Message[]>;
   
   // Visitor tracking
   createVisitor(visitor: InsertVisitor): Promise<Visitor>;
@@ -221,7 +229,7 @@ export class DatabaseStorage implements IStorage {
     return user || undefined;
   }
 
-  async updateUserPrivacy(id: number, privacy: any): Promise<User | undefined> {
+  async updateUserPrivacy(id: number, privacy: UserPrivacySettings): Promise<User | undefined> {
     const [user] = await db
       .update(users)
       .set({
@@ -264,7 +272,7 @@ export class DatabaseStorage implements IStorage {
     return post || undefined;
   }
 
-  async getApprovedPosts(limit = 20, offset = 0, filters?: any): Promise<{ posts: Post[], total: number }> {
+  async getApprovedPosts(limit = 20, offset = 0, filters?: PostFilters): Promise<{ posts: Post[], total: number }> {
     let conditions = [eq(posts.status, 'APPROVED'), isNull(posts.deletedAt)];
     
     // If showOnlyPinned filter is true, only show pinned posts
@@ -507,21 +515,6 @@ export class DatabaseStorage implements IStorage {
       .update(users)
       .set({ coins: sql`${users.coins} - ${amount}` })
       .where(eq(users.id, userId));
-  }
-
-  // Connection Request methods
-  async getConnectionRequest(id: number): Promise<ConnectionRequest | undefined> {
-    const [request] = await db.select().from(connectionRequests).where(eq(connectionRequests.id, id));
-    return request || undefined;
-  }
-
-  async updateConnectionRequest(id: number, data: Partial<ConnectionRequest>): Promise<ConnectionRequest | undefined> {
-    const [updated] = await db
-      .update(connectionRequests)
-      .set(data)
-      .where(eq(connectionRequests.id, id))
-      .returning();
-    return updated || undefined;
   }
 
   // Conversation methods

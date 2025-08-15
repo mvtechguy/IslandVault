@@ -24,20 +24,6 @@
     }
   ],
   "categories": ["social", "lifestyle", "dating"],
-  "screenshots": [
-    {
-      "src": "/screenshot-wide.jpg",
-      "type": "image/jpeg",
-      "sizes": "1280x720",
-      "form_factor": "wide"
-    },
-    {
-      "src": "/screenshot-narrow.jpg", 
-      "type": "image/jpeg",
-      "sizes": "750x1334",
-      "form_factor": "narrow"
-    }
-  ],
   "shortcuts": [
     {
       "name": "Browse Partners",

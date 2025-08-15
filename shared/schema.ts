@@ -418,6 +418,62 @@ export const insertConnectionRequestSchema = createInsertSchema(connectionReques
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
+
+// Privacy settings type
+export type UserPrivacySettings = {
+  useRealIdentity: boolean;
+  fakeFullName?: string | null;
+  fakeAge?: number | null;
+  fakeIsland?: string | null;
+  fakeAtoll?: string | null;
+  fakeProfilePhotoPath?: string | null;
+};
+
+// Post filters type
+export type PostFilters = {
+  atoll?: string;
+  island?: string;
+  gender?: string;
+  ageMin?: number;
+  ageMax?: number;
+  relationshipType?: string;
+};
+
+// Chat types
+export type CreateConversationData = {
+  participantIds: number[];
+  type?: 'direct' | 'group';
+};
+
+export type AddParticipantData = {
+  conversationId: number;
+  userId: number;
+};
+
+export type CreateMessageData = {
+  conversationId: number;
+  senderId: number;
+  content: string;
+  messageType?: 'text' | 'image' | 'file';
+};
+
+export type CreateMessageReceiptData = {
+  messageId: number;
+  userId: number;
+  status: 'DELIVERED' | 'READ';
+};
+
+export type CreateChatBlockData = {
+  blockerId: number;
+  blockedId: number;
+};
+
+export type CreateChatReportData = {
+  reporterId: number;
+  messageId?: number;
+  targetUserId?: number;
+  reason: string;
+};
 export type Post = typeof posts.$inferSelect;
 export type InsertPost = z.infer<typeof insertPostSchema>;
 export type PostLike = typeof postLikes.$inferSelect;

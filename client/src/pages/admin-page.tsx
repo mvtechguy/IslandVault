@@ -54,6 +54,7 @@ export default function AdminPage() {
     bankName: "",
     accountNumber: "",
     accountName: "",
+    branchName: "",
     swiftCode: "",
     isActive: true,
     isPrimary: false
@@ -83,6 +84,57 @@ export default function AdminPage() {
   const [isEditingBanner, setIsEditingBanner] = useState(false);
   const [showAddBanner, setShowAddBanner] = useState(false);
 
+  // User Management State
+  const [selectedUserForManagement, setSelectedUserForManagement] = useState<any>(null);
+  const [showUserManagement, setShowUserManagement] = useState(false);
+  const [userSearchQuery, setUserSearchQuery] = useState("");
+  const [userStatusFilter, setUserStatusFilter] = useState("ALL");
+  const [userManagementPage, setUserManagementPage] = useState(0);
+  const [showUserEdit, setShowUserEdit] = useState(false);
+  const [showChangePassword, setShowChangePassword] = useState(false);
+  const [showDeleteUser, setShowDeleteUser] = useState(false);
+  const [userEditForm, setUserEditForm] = useState({
+    username: "",
+    fullName: "",
+    email: "",
+    phone: "",
+    dateOfBirth: "",
+    gender: "",
+    island: "",
+    atoll: "",
+    bio: "",
+    interests: [] as string[],
+    relationshipType: "",
+    status: "",
+    role: "",
+    coins: 0,
+    isVerified: false
+  });
+  const [passwordForm, setPasswordForm] = useState({
+    newPassword: "",
+    confirmPassword: ""
+  });
+  const [deleteReason, setDeleteReason] = useState("");
+
+  // Post Management State
+  const [selectedPostForManagement, setSelectedPostForManagement] = useState<any>(null);
+  const [showPostManagement, setShowPostManagement] = useState(false);
+  const [postSearchQuery, setPostSearchQuery] = useState("");
+  const [postStatusFilter, setPostStatusFilter] = useState("ALL");
+  const [postManagementPage, setPostManagementPage] = useState(0);
+  const [showPostEdit, setShowPostEdit] = useState(false);
+  const [showDeletePost, setShowDeletePost] = useState(false);
+  const [showHidePost, setShowHidePost] = useState(false);
+  const [postEditForm, setPostEditForm] = useState({
+    title: "",
+    description: "",
+    preferences: {} as any,
+    status: "",
+    images: [] as string[]
+  });
+  const [deletePostReason, setDeletePostReason] = useState("");
+  const [hidePostReason, setHidePostReason] = useState("");
+
   // Pagination states
   const [usersPage, setUsersPage] = useState(0);
   const [postsPage, setPostsPage] = useState(0);
@@ -106,7 +158,7 @@ export default function AdminPage() {
       on401: "throw"
     }),
     enabled: !!user && (user.role === "ADMIN" || user.role === "SUPERADMIN"),
-    refetchInterval: 3000, // Auto-refresh every 3 seconds
+    refetchInterval: 15000, // Auto-refresh every 15 seconds
   });
 
   // Fetch pending posts
@@ -116,7 +168,7 @@ export default function AdminPage() {
       on401: "throw"
     }),
     enabled: !!user && (user.role === "ADMIN" || user.role === "SUPERADMIN"),
-    refetchInterval: 4000, // Auto-refresh every 4 seconds
+    refetchInterval: 20000, // Auto-refresh every 20 seconds
   });
 
   // Fetch pending topups
@@ -126,7 +178,7 @@ export default function AdminPage() {
       on401: "throw"
     }),
     enabled: !!user && (user.role === "ADMIN" || user.role === "SUPERADMIN"),
-    refetchInterval: 6000, // Auto-refresh every 6 seconds
+    refetchInterval: 30000, // Auto-refresh every 30 seconds
   });
 
   // Fetch pending connection requests
@@ -136,7 +188,7 @@ export default function AdminPage() {
       on401: "throw"
     }),
     enabled: !!user && (user.role === "ADMIN" || user.role === "SUPERADMIN"),
-    refetchInterval: 5000, // Auto-refresh every 5 seconds
+    refetchInterval: 25000, // Auto-refresh every 25 seconds
   });
 
   // Fetch admin chat inbox
@@ -178,7 +230,7 @@ export default function AdminPage() {
   });
 
   // Fetch bank accounts for admin
-  const { data: banksData } = useQuery({
+  const { data: banksData } = useQuery<any[]>({
     queryKey: ["/api/admin/bank-accounts"],
     queryFn: getQueryFn({ on401: "throw" }),
     enabled: !!user && (user.role === "ADMIN" || user.role === "SUPERADMIN"),
@@ -189,6 +241,41 @@ export default function AdminPage() {
     queryKey: ["/api/admin/banners"],
     queryFn: getQueryFn({ on401: "throw" }),
     enabled: !!user && (user.role === "ADMIN" || user.role === "SUPERADMIN"),
+  });
+
+  // Fetch all users for management
+  const { data: allUsersData, refetch: refetchAllUsers } = useQuery<{users: any[], total: number}>({
+    queryKey: ["/api/admin/users", userStatusFilter === "ALL" ? undefined : userStatusFilter, userManagementPage],
+    queryFn: getQueryFn({ on401: "throw" }),
+    enabled: !!user && (user.role === "ADMIN" || user.role === "SUPERADMIN"),
+  });
+
+  // Fetch specific user for management
+  const { data: selectedUserData } = useQuery<any>({
+    queryKey: ["/api/admin/users", selectedUserForManagement?.id],
+    queryFn: getQueryFn({ on401: "throw" }),
+    enabled: !!selectedUserForManagement && !!user && (user.role === "ADMIN" || user.role === "SUPERADMIN"),
+  });
+
+  // Fetch user connections
+  const { data: userConnectionsData } = useQuery<{sent: any[], received: any[]}>({
+    queryKey: ["/api/admin/users", selectedUserForManagement?.id, "connections"],
+    queryFn: getQueryFn({ on401: "throw" }),
+    enabled: !!selectedUserForManagement && !!user && (user.role === "ADMIN" || user.role === "SUPERADMIN"),
+  });
+
+  // Fetch all posts for management
+  const { data: allPostsData, refetch: refetchAllPosts } = useQuery<{posts: any[], total: number}>({
+    queryKey: ["/api/admin/posts", postStatusFilter === "ALL" ? undefined : postStatusFilter, postManagementPage],
+    queryFn: getQueryFn({ on401: "throw" }),
+    enabled: !!user && (user.role === "ADMIN" || user.role === "SUPERADMIN"),
+  });
+
+  // Fetch specific post for management
+  const { data: selectedPostData } = useQuery<any>({
+    queryKey: ["/api/admin/posts", selectedPostForManagement?.id],
+    queryFn: getQueryFn({ on401: "throw" }),
+    enabled: !!selectedPostForManagement && !!user && (user.role === "ADMIN" || user.role === "SUPERADMIN"),
   });
 
   // Fetch visitor statistics
@@ -311,6 +398,184 @@ export default function AdminPage() {
     onError: (error: Error) => {
       toast({
         title: "Failed to update telegram settings",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // User Management Mutations
+  const updateUserMutation = useMutation({
+    mutationFn: async ({ id, userData }: { id: number; userData: any }) => {
+      const res = await apiRequest("PUT", `/api/admin/users/${id}`, userData);
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: "User updated successfully" });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      setShowUserEdit(false);
+      setSelectedUserForManagement(null);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to update user",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const changePasswordMutation = useMutation({
+    mutationFn: async ({ id, password }: { id: number; password: string }) => {
+      const res = await apiRequest("POST", `/api/admin/users/${id}/change-password`, { newPassword: password });
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Password changed successfully" });
+      setShowChangePassword(false);
+      setPasswordForm({ newPassword: "", confirmPassword: "" });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to change password",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteUserMutation = useMutation({
+    mutationFn: async ({ id, reason }: { id: number; reason: string }) => {
+      const res = await apiRequest("DELETE", `/api/admin/users/${id}`, { reason });
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: "User deleted successfully" });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      setShowDeleteUser(false);
+      setSelectedUserForManagement(null);
+      setDeleteReason("");
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to delete user",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const addCoinsMutation = useMutation({
+    mutationFn: async ({ id, coins }: { id: number; coins: number }) => {
+      const res = await apiRequest("POST", `/api/admin/users/${id}/add-coins`, { amount: coins });
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Coins added successfully" });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to add coins",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const removeCoinsMutation = useMutation({
+    mutationFn: async ({ id, coins }: { id: number; coins: number }) => {
+      const res = await apiRequest("POST", `/api/admin/users/${id}/remove-coins`, { amount: coins });
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Coins removed successfully" });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to remove coins",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Post Management Mutations
+  const updatePostMutation = useMutation({
+    mutationFn: async ({ id, postData }: { id: number; postData: any }) => {
+      const res = await apiRequest("PUT", `/api/admin/posts/${id}`, postData);
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Post updated successfully" });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/posts"] });
+      setShowPostEdit(false);
+      setSelectedPostForManagement(null);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to update post",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deletePostMutation = useMutation({
+    mutationFn: async ({ id, reason }: { id: number; reason: string }) => {
+      const res = await apiRequest("DELETE", `/api/admin/posts/${id}`, { reason });
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Post deleted successfully" });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/posts"] });
+      setShowDeletePost(false);
+      setSelectedPostForManagement(null);
+      setDeletePostReason("");
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to delete post",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const hidePostMutation = useMutation({
+    mutationFn: async ({ id, reason }: { id: number; reason: string }) => {
+      const res = await apiRequest("POST", `/api/admin/posts/${id}/hide`, { reason });
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Post hidden successfully" });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/posts"] });
+      setShowHidePost(false);
+      setSelectedPostForManagement(null);
+      setHidePostReason("");
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to hide post",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const showPostMutation = useMutation({
+    mutationFn: async ({ id }: { id: number }) => {
+      const res = await apiRequest("POST", `/api/admin/posts/${id}/show`);
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Post shown successfully" });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/posts"] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to show post",
         description: error.message,
         variant: "destructive",
       });
@@ -573,7 +838,7 @@ export default function AdminPage() {
   const handleDeleteBank = async (bankId: number) => {
     if (confirm("Are you sure you want to delete this bank account?")) {
       try {
-        await apiRequest("/api/admin/bank-accounts/" + bankId, { method: "DELETE" });
+        await apiRequest("DELETE", "/api/admin/bank-accounts/" + bankId);
         queryClient.invalidateQueries({ queryKey: ["/api/admin/bank-accounts"] });
         toast({ title: "Bank account deleted successfully" });
       } catch (error) {
@@ -659,7 +924,7 @@ export default function AdminPage() {
           <Tabs defaultValue="users" className="w-full">
             {/* Mobile-friendly scrollable tabs */}
             <div className="w-full overflow-x-auto">
-              <TabsList className="inline-flex h-auto p-1 space-x-1 md:grid md:grid-cols-11 md:w-full">
+              <TabsList className="inline-flex h-auto p-1 space-x-1 md:grid md:grid-cols-13 md:w-full">
                 <TabsTrigger value="users" className="relative whitespace-nowrap px-3 py-2 text-xs md:text-sm">
                   Users
                   {pendingCounts.users > 0 && (
@@ -668,6 +933,9 @@ export default function AdminPage() {
                     </Badge>
                   )}
                 </TabsTrigger>
+                <TabsTrigger value="user-management" className="whitespace-nowrap px-3 py-2 text-xs md:text-sm">
+                  Manage
+                </TabsTrigger>
                 <TabsTrigger value="posts" className="relative whitespace-nowrap px-3 py-2 text-xs md:text-sm">
                   Posts
                   {pendingCounts.posts > 0 && (
@@ -675,6 +943,9 @@ export default function AdminPage() {
                       {pendingCounts.posts}
                     </Badge>
                   )}
+                </TabsTrigger>
+                <TabsTrigger value="post-management" className="whitespace-nowrap px-3 py-2 text-xs md:text-sm">
+                  Posts Mgmt
                 </TabsTrigger>
                 <TabsTrigger value="topups" className="relative whitespace-nowrap px-3 py-2 text-xs md:text-sm">
                   Topups
@@ -834,8 +1105,405 @@ export default function AdminPage() {
               )}
             </TabsContent>
 
+            {/* Comprehensive User Management Tab */}
+            <TabsContent value="user-management" className="space-y-4">
+              <div className="flex flex-col md:flex-row gap-4 mb-6">
+                <div className="flex-1">
+                  <Input
+                    placeholder="Search users by name, username, or phone..."
+                    value={userSearchQuery}
+                    onChange={(e) => setUserSearchQuery(e.target.value)}
+                    className="w-full"
+                  />
+                </div>
+                <Select value={userStatusFilter} onValueChange={setUserStatusFilter}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL">All Users</SelectItem>
+                    <SelectItem value="PENDING">Pending</SelectItem>
+                    <SelectItem value="APPROVED">Approved</SelectItem>
+                    <SelectItem value="REJECTED">Rejected</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {allUsersData?.users && allUsersData.users.length > 0 ? (
+                <>
+                  <div className="space-y-3">
+                    {allUsersData.users
+                      .filter(user => 
+                        userSearchQuery === "" || 
+                        user.fullName?.toLowerCase().includes(userSearchQuery.toLowerCase()) ||
+                        user.username?.toLowerCase().includes(userSearchQuery.toLowerCase()) ||
+                        user.phone?.includes(userSearchQuery)
+                      )
+                      .slice(userManagementPage * itemsPerPage, (userManagementPage + 1) * itemsPerPage)
+                      .map((user: any) => (
+                        <Card key={user.id}>
+                          <CardContent className="pt-4">
+                            <div className="flex items-start space-x-4">
+                              <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-mint to-soft-blue flex items-center justify-center">
+                                <span className="text-white font-semibold text-lg">
+                                  {user.fullName?.charAt(0) || 'U'}
+                                </span>
+                              </div>
+                              <div className="flex-1">
+                                <div className="flex items-start justify-between">
+                                  <div className="flex-1">
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <h3 className="font-semibold text-lg">{user.fullName}</h3>
+                                      <Badge className={getStatusColor(user.status)}>
+                                        {user.status}
+                                      </Badge>
+                                      <Badge variant="outline" className="text-xs">
+                                        {user.role}
+                                      </Badge>
+                                    </div>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+                                      @{user.username} • {user.phone}
+                                    </p>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+                                      {user.email && `${user.email} • `}
+                                      {user.dateOfBirth && `${calculateAge(user.dateOfBirth)} years old`}
+                                    </p>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                                      {user.island}, {user.atoll} • Coins: {user.coins || 0}
+                                    </p>
+                                    {user.bio && (
+                                      <p className="text-sm text-gray-700 dark:text-gray-300 mb-2 max-w-2xl">
+                                        {user.bio}
+                                      </p>
+                                    )}
+                                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                                      Joined: {formatDistanceToNow(new Date(user.createdAt), { addSuffix: true })}
+                                    </p>
+                                  </div>
+                                </div>
+                                <div className="flex flex-wrap gap-2 mt-4">
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      setSelectedUserForManagement(user);
+                                      setUserEditForm({
+                                        username: user.username || "",
+                                        fullName: user.fullName || "",
+                                        email: user.email || "",
+                                        phone: user.phone || "",
+                                        dateOfBirth: user.dateOfBirth ? new Date(user.dateOfBirth).toISOString().split('T')[0] : "",
+                                        gender: user.gender || "",
+                                        island: user.island || "",
+                                        atoll: user.atoll || "",
+                                        bio: user.bio || "",
+                                        interests: user.interests || [],
+                                        relationshipType: user.relationshipType || "",
+                                        status: user.status || "",
+                                        role: user.role || "",
+                                        coins: user.coins || 0,
+                                        isVerified: user.isVerified || false
+                                      });
+                                      setShowUserEdit(true);
+                                    }}
+                                    className="text-blue-600 hover:text-blue-700"
+                                  >
+                                    <Edit className="w-3 h-3 mr-1" />
+                                    Edit Profile
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      setSelectedUserForManagement(user);
+                                      setShowChangePassword(true);
+                                    }}
+                                    className="text-amber-600 hover:text-amber-700"
+                                  >
+                                    🔑 Password
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      setSelectedUserForManagement(user);
+                                    }}
+                                    className="text-green-600 hover:text-green-700"
+                                  >
+                                    <MessageSquare className="w-3 h-3 mr-1" />
+                                    Connections
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      const coins = prompt("Enter coins to add:");
+                                      if (coins && !isNaN(Number(coins))) {
+                                        addCoinsMutation.mutate({ id: user.id, coins: Number(coins) });
+                                      }
+                                    }}
+                                    className="text-green-600 hover:text-green-700"
+                                  >
+                                    💰 Add Coins
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      const coins = prompt("Enter coins to remove:");
+                                      if (coins && !isNaN(Number(coins))) {
+                                        removeCoinsMutation.mutate({ id: user.id, coins: Number(coins) });
+                                      }
+                                    }}
+                                    className="text-red-600 hover:text-red-700"
+                                  >
+                                    💸 Remove Coins
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      setSelectedUserForManagement(user);
+                                      setShowDeleteUser(true);
+                                    }}
+                                    className="text-red-600 hover:text-red-700"
+                                  >
+                                    <Trash2 className="w-3 h-3 mr-1" />
+                                    Delete
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                  </div>
+                  
+                  {/* Pagination Controls */}
+                  <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <div className="text-sm text-gray-600 dark:text-gray-400">
+                      Showing {userManagementPage * itemsPerPage + 1}-{Math.min((userManagementPage + 1) * itemsPerPage, allUsersData?.total || 0)} of {allUsersData?.total || 0} users
+                    </div>
+                    <div className="flex space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setUserManagementPage(Math.max(0, userManagementPage - 1))}
+                        disabled={userManagementPage === 0}
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                        Previous
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setUserManagementPage(userManagementPage + 1)}
+                        disabled={(userManagementPage + 1) * itemsPerPage >= (allUsersData?.total || 0)}
+                      >
+                        Next
+                        <ChevronRight className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="text-center py-8">
+                  <Users className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                  <p className="text-gray-600 dark:text-gray-400">No users found</p>
+                </div>
+              )}
+            </TabsContent>
+
+            {/* Comprehensive Post Management Tab */}
+            <TabsContent value="post-management" className="space-y-4">
+              <div className="flex flex-col md:flex-row gap-4 mb-6">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Input
+                    placeholder="Search posts by title, description, or user..."
+                    value={postSearchQuery}
+                    onChange={(e) => setPostSearchQuery(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                <Select
+                  value={postStatusFilter}
+                  onValueChange={(value) => {
+                    setPostStatusFilter(value);
+                    setPostManagementPage(0);
+                  }}
+                >
+                  <SelectTrigger className="w-full md:w-48">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL">All Posts</SelectItem>
+                    <SelectItem value="PENDING">Pending</SelectItem>
+                    <SelectItem value="APPROVED">Approved</SelectItem>
+                    <SelectItem value="REJECTED">Rejected</SelectItem>
+                    <SelectItem value="HIDDEN">Hidden</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {allPostsData?.posts && allPostsData.posts.length > 0 ? (
+                <>
+                  <div className="space-y-3">
+                    {allPostsData.posts
+                      .filter((post: any) => {
+                        const matchesSearch = !postSearchQuery || 
+                          post.title?.toLowerCase().includes(postSearchQuery.toLowerCase()) ||
+                          post.description?.toLowerCase().includes(postSearchQuery.toLowerCase()) ||
+                          post.user?.username?.toLowerCase().includes(postSearchQuery.toLowerCase());
+                        const matchesStatus = postStatusFilter === "ALL" || post.status === postStatusFilter;
+                        return matchesSearch && matchesStatus;
+                      })
+                      .slice(postManagementPage * itemsPerPage, (postManagementPage + 1) * itemsPerPage)
+                      .map((post: any) => (
+                        <Card key={post.id}>
+                          <CardContent className="pt-4">
+                            <div className="flex items-start justify-between mb-3">
+                              <div className="flex-1">
+                                {post.title && (
+                                  <h3 className="font-semibold text-lg">{post.title}</h3>
+                                )}
+                                <p className="text-sm text-gray-700 dark:text-gray-300 mt-1">
+                                  {post.description}
+                                </p>
+                                <div className="flex flex-wrap gap-2 mt-2 text-xs text-gray-500 dark:text-gray-400">
+                                  <span>By: {post.user?.username}</span>
+                                  <span>•</span>
+                                  <span>{formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}</span>
+                                  {post.preferences && (
+                                    <>
+                                      <span>•</span>
+                                      <span>Preferences: {JSON.stringify(post.preferences)}</span>
+                                    </>
+                                  )}
+                                </div>
+                                {post.images && post.images.length > 0 && (
+                                  <div className="flex flex-wrap gap-1 mt-2">
+                                    <Badge variant="secondary" className="text-xs">
+                                      {post.images.length} image(s)
+                                    </Badge>
+                                  </div>
+                                )}
+                              </div>
+                              <div className="flex flex-col items-end gap-2">
+                                <Badge className={getStatusColor(post.status)}>
+                                  {post.status}
+                                </Badge>
+                                {post.status === "HIDDEN" && (
+                                  <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
+                                    Hidden
+                                  </Badge>
+                                )}
+                                {post.deletedAt && (
+                                  <Badge variant="secondary" className="bg-red-100 text-red-800">
+                                    Deleted
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+                            
+                            <div className="flex flex-wrap gap-2 mt-3">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  setSelectedPostForManagement(post);
+                                  setPostEditForm({
+                                    title: post.title || "",
+                                    description: post.description || "",
+                                    preferences: post.preferences || {},
+                                    status: post.status || "",
+                                    images: post.images || []
+                                  });
+                                  setShowPostEdit(true);
+                                }}
+                                className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                              >
+                                <Edit className="w-3 h-3 mr-1" />
+                                Edit
+                              </Button>
+                              
+                              {post.status !== "HIDDEN" ? (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    setSelectedPostForManagement(post);
+                                    setShowHidePost(true);
+                                  }}
+                                  className="text-orange-600 border-orange-200 hover:bg-orange-50"
+                                >
+                                  <EyeOff className="w-3 h-3 mr-1" />
+                                  Hide
+                                </Button>
+                              ) : (
+                                <Button
+                                  size="sm"
+                                  onClick={() => showPostMutation.mutate({ id: post.id })}
+                                  disabled={showPostMutation.isPending}
+                                  className="bg-green-100 text-green-700 hover:bg-green-200"
+                                >
+                                  <Eye className="w-3 h-3 mr-1" />
+                                  Show
+                                </Button>
+                              )}
+                              
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  setSelectedPostForManagement(post);
+                                  setShowDeletePost(true);
+                                }}
+                                className="text-red-600 border-red-200 hover:bg-red-50"
+                              >
+                                <Trash2 className="w-3 h-3 mr-1" />
+                                Delete
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                  </div>
+                  
+                  {/* Pagination */}
+                  <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <div className="text-sm text-gray-600 dark:text-gray-400">
+                      Showing {postManagementPage * itemsPerPage + 1}-{Math.min((postManagementPage + 1) * itemsPerPage, (allPostsData?.posts || []).length)} of {(allPostsData?.posts || []).length}
+                    </div>
+                    <div className="flex space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPostManagementPage(Math.max(0, postManagementPage - 1))}
+                        disabled={postManagementPage === 0}
+                      >
+                        Previous
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPostManagementPage(postManagementPage + 1)}
+                        disabled={(postManagementPage + 1) * itemsPerPage >= (allPostsData?.posts?.length || 0)}
+                      >
+                        Next
+                      </Button>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                  No posts found.
+                </div>
+              )}
+            </TabsContent>
+
             <TabsContent value="posts" className="space-y-4">
-              {postsData?.posts?.length > 0 ? (
+              {(postsData?.posts || []).length > 0 ? (
                 <>
                   <div className="space-y-3">
                     {postsData?.posts
@@ -888,7 +1556,7 @@ export default function AdminPage() {
                   {/* Pagination Controls */}
                   <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
                     <div className="text-sm text-gray-600 dark:text-gray-400">
-                      Showing {postsPage * itemsPerPage + 1}-{Math.min((postsPage + 1) * itemsPerPage, postsData?.posts?.length || 0)} of {postsData?.posts?.length || 0}
+                      Showing {postsPage * itemsPerPage + 1}-{Math.min((postsPage + 1) * itemsPerPage, (postsData?.posts || []).length)} of {(postsData?.posts || []).length}
                     </div>
                     <div className="flex space-x-2">
                       <Button
@@ -919,7 +1587,7 @@ export default function AdminPage() {
             </TabsContent>
 
             <TabsContent value="topups" className="space-y-4">
-              {topupsData?.topups?.length > 0 ? (
+              {(topupsData?.topups || []).length > 0 ? (
                 <>
                   <div className="space-y-3">
                     {topupsData?.topups
@@ -981,7 +1649,7 @@ export default function AdminPage() {
                   {/* Pagination Controls */}
                   <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
                     <div className="text-sm text-gray-600 dark:text-gray-400">
-                      Showing {topupsPage * itemsPerPage + 1}-{Math.min((topupsPage + 1) * itemsPerPage, topupsData?.topups?.length || 0)} of {topupsData?.topups?.length || 0}
+                      Showing {topupsPage * itemsPerPage + 1}-{Math.min((topupsPage + 1) * itemsPerPage, (topupsData?.topups || []).length)} of {(topupsData?.topups || []).length}
                     </div>
                     <div className="flex space-x-2">
                       <Button
@@ -1034,7 +1702,7 @@ export default function AdminPage() {
                 </Button>
               </div>
 
-              {packagesData?.length > 0 ? (
+              {Array.isArray(packagesData) && packagesData.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {packagesData.map((pkg: any) => (
                     <Card key={pkg.id} className={`relative ${pkg.isPopular ? 'border-mint' : ''}`}>
@@ -1417,7 +2085,7 @@ export default function AdminPage() {
                     </Button>
                   </div>
                   
-                  {banksData && banksData.length > 0 ? (
+                  {Array.isArray(banksData) && banksData.length > 0 ? (
                     <div className="space-y-3">
                       {banksData.map((bank) => (
                         <Card key={bank.id} className="p-4">
@@ -2317,7 +2985,14 @@ export default function AdminPage() {
                           if (!e.currentTarget.parentNode?.querySelector('.fallback-message')) {
                             const fallback = document.createElement('div');
                             fallback.className = 'mt-2 p-4 border-2 border-dashed border-red-300 rounded-lg text-center fallback-message';
-                            fallback.innerHTML = '<p class="text-sm text-red-600">Unable to load slip image</p><p class="text-xs text-gray-500">Path: ' + selectedTopup.slipPath + '</p>';
+                            const p1 = document.createElement('p');
+                            p1.className = 'text-sm text-red-600';
+                            p1.textContent = 'Unable to load slip image';
+                            const p2 = document.createElement('p');
+                            p2.className = 'text-xs text-gray-500';
+                            p2.textContent = 'Path: ' + selectedTopup.slipPath;
+                            fallback.appendChild(p1);
+                            fallback.appendChild(p2);
                             e.currentTarget.parentNode?.appendChild(fallback);
                           }
                         }}
@@ -2415,9 +3090,9 @@ export default function AdminPage() {
                 </div>
 
                 <div className="border rounded-lg max-h-96 overflow-y-auto bg-gray-50 dark:bg-gray-900/50">
-                  {conversationMessagesData?.messages?.length > 0 ? (
+                  {(conversationMessagesData?.messages || []).length > 0 ? (
                     <div className="p-4 space-y-3">
-                      {conversationMessagesData.messages
+                      {(conversationMessagesData?.messages || [])
                         .slice()
                         .reverse()
                         .map((msgData: any) => (
@@ -2653,7 +3328,15 @@ export default function AdminPage() {
               {bankAccountErrors.accountNumber && <p className="text-sm text-red-500 mt-1">{bankAccountErrors.accountNumber}</p>}
             </div>
 
-
+            <div>
+              <Label htmlFor="branchName">Branch Name</Label>
+              <Input
+                id="branchName"
+                value={bankAccountForm.branchName}
+                onChange={(e) => setBankAccountForm({ ...bankAccountForm, branchName: e.target.value })}
+                placeholder="Branch name"
+              />
+            </div>
 
             <div>
               <Label htmlFor="swiftCode">SWIFT Code (Optional)</Label>
@@ -2700,6 +3383,7 @@ export default function AdminPage() {
                   bankName: "",
                   accountNumber: "",
                   accountName: "",
+                  branchName: "",
                   swiftCode: "",
                   isActive: true,
                   isPrimary: false
@@ -2737,16 +3421,7 @@ export default function AdminPage() {
                     : "/api/admin/bank-accounts";
                   const method = isEditingBankAccount ? "PUT" : "POST";
                   
-                  // WHY: Network logging for debugging bank account creation
-                  if (process.env.NODE_ENV === 'development') {
-                    console.log(`[DEBUG] ${method} ${endpoint}`, bankAccountForm);
-                  }
-                  
                   const response = await apiRequest(method, endpoint, bankAccountForm);
-                  
-                  if (process.env.NODE_ENV === 'development') {
-                    console.log('[DEBUG] Bank account response:', response);
-                  }
                   
                   queryClient.invalidateQueries({ queryKey: ["/api/admin/bank-accounts"] });
                   toast({ 
@@ -2760,17 +3435,13 @@ export default function AdminPage() {
                     bankName: "",
                     accountNumber: "",
                     accountName: "",
+                    branchName: "",
                     swiftCode: "",
                     isActive: true,
                     isPrimary: false
                   });
                   setBankAccountErrors({ bankName: "", accountNumber: "", accountName: "" });
                 } catch (error: any) {
-                  // WHY: Enhanced error logging for debugging
-                  if (process.env.NODE_ENV === 'development') {
-                    console.error('[DEBUG] Bank account error:', error);
-                  }
-                  
                   const errorMessage = error?.message || "Unknown error occurred";
                   toast({ 
                     title: isEditingBankAccount ? "Failed to update bank account" : "Failed to add bank account", 
@@ -2786,6 +3457,450 @@ export default function AdminPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* User Edit Dialog */}
+      <Dialog open={showUserEdit} onOpenChange={setShowUserEdit}>
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit User Profile</DialogTitle>
+            <DialogDescription>
+              Update user information and settings
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="edit-username">Username</Label>
+                <Input
+                  id="edit-username"
+                  value={userEditForm.username}
+                  onChange={(e) => setUserEditForm(prev => ({ ...prev, username: e.target.value }))}
+                  placeholder="Username"
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-fullName">Full Name</Label>
+                <Input
+                  id="edit-fullName"
+                  value={userEditForm.fullName}
+                  onChange={(e) => setUserEditForm(prev => ({ ...prev, fullName: e.target.value }))}
+                  placeholder="Full Name"
+                />
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="edit-email">Email</Label>
+                <Input
+                  id="edit-email"
+                  type="email"
+                  value={userEditForm.email}
+                  onChange={(e) => setUserEditForm(prev => ({ ...prev, email: e.target.value }))}
+                  placeholder="Email"
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-phone">Phone</Label>
+                <Input
+                  id="edit-phone"
+                  value={userEditForm.phone}
+                  onChange={(e) => setUserEditForm(prev => ({ ...prev, phone: e.target.value }))}
+                  placeholder="Phone"
+                />
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <Label htmlFor="edit-status">Status</Label>
+                <Select value={userEditForm.status} onValueChange={(value) => setUserEditForm(prev => ({ ...prev, status: value }))}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="PENDING">Pending</SelectItem>
+                    <SelectItem value="APPROVED">Approved</SelectItem>
+                    <SelectItem value="REJECTED">Rejected</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="edit-role">Role</Label>
+                <Select value={userEditForm.role} onValueChange={(value) => setUserEditForm(prev => ({ ...prev, role: value }))}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="USER">User</SelectItem>
+                    <SelectItem value="ADMIN">Admin</SelectItem>
+                    <SelectItem value="SUPERADMIN">Super Admin</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="edit-coins">Coins</Label>
+                <Input
+                  id="edit-coins"
+                  type="number"
+                  value={userEditForm.coins}
+                  onChange={(e) => setUserEditForm(prev => ({ ...prev, coins: Number(e.target.value) }))}
+                  placeholder="Coins"
+                />
+              </div>
+            </div>
+            
+            <div>
+              <Label htmlFor="edit-bio">Bio</Label>
+              <Textarea
+                id="edit-bio"
+                value={userEditForm.bio}
+                onChange={(e) => setUserEditForm(prev => ({ ...prev, bio: e.target.value }))}
+                placeholder="Bio"
+                rows={3}
+              />
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="edit-verified"
+                checked={userEditForm.isVerified}
+                onChange={(e) => setUserEditForm(prev => ({ ...prev, isVerified: e.target.checked }))}
+                className="rounded"
+              />
+              <Label htmlFor="edit-verified">Verified Account</Label>
+            </div>
+          </div>
+
+          <div className="flex justify-end space-x-2 pt-4">
+            <Button variant="outline" onClick={() => setShowUserEdit(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={() => {
+                if (selectedUserForManagement) {
+                  updateUserMutation.mutate({ 
+                    id: selectedUserForManagement.id, 
+                    userData: userEditForm 
+                  });
+                }
+              }}
+            >
+              Update User
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Change Password Dialog */}
+      <Dialog open={showChangePassword} onOpenChange={setShowChangePassword}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Change User Password</DialogTitle>
+            <DialogDescription>
+              Set a new password for {selectedUserForManagement?.fullName}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="new-password">New Password</Label>
+              <Input
+                id="new-password"
+                type="password"
+                value={passwordForm.newPassword}
+                onChange={(e) => setPasswordForm(prev => ({ ...prev, newPassword: e.target.value }))}
+                placeholder="Enter new password"
+              />
+            </div>
+            <div>
+              <Label htmlFor="confirm-password">Confirm Password</Label>
+              <Input
+                id="confirm-password"
+                type="password"
+                value={passwordForm.confirmPassword}
+                onChange={(e) => setPasswordForm(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                placeholder="Confirm new password"
+              />
+            </div>
+            {passwordForm.newPassword !== passwordForm.confirmPassword && passwordForm.confirmPassword && (
+              <p className="text-sm text-red-500">Passwords do not match</p>
+            )}
+          </div>
+
+          <div className="flex justify-end space-x-2 pt-4">
+            <Button variant="outline" onClick={() => setShowChangePassword(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={() => {
+                if (selectedUserForManagement && passwordForm.newPassword === passwordForm.confirmPassword) {
+                  changePasswordMutation.mutate({ 
+                    id: selectedUserForManagement.id, 
+                    password: passwordForm.newPassword 
+                  });
+                }
+              }}
+              disabled={!passwordForm.newPassword || passwordForm.newPassword !== passwordForm.confirmPassword}
+            >
+              Change Password
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete User Dialog */}
+      <Dialog open={showDeleteUser} onOpenChange={setShowDeleteUser}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Delete User</DialogTitle>
+            <DialogDescription>
+              This action cannot be undone. This will permanently delete {selectedUserForManagement?.fullName}'s account and all associated data.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="delete-reason">Reason for deletion</Label>
+              <Textarea
+                id="delete-reason"
+                value={deleteReason}
+                onChange={(e) => setDeleteReason(e.target.value)}
+                placeholder="Enter reason for deleting this user..."
+                rows={3}
+              />
+            </div>
+            <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg">
+              <p className="text-sm text-red-600 dark:text-red-400">
+                ⚠️ Warning: This will permanently delete:
+              </p>
+              <ul className="list-disc list-inside text-sm text-red-600 dark:text-red-400 mt-1">
+                <li>User profile and account data</li>
+                <li>All posts and content</li>
+                <li>Connection requests and conversations</li>
+                <li>Transaction history</li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="flex justify-end space-x-2 pt-4">
+            <Button variant="outline" onClick={() => setShowDeleteUser(false)}>
+              Cancel
+            </Button>
+            <Button 
+              variant="destructive"
+              onClick={() => {
+                if (selectedUserForManagement && deleteReason.trim()) {
+                  deleteUserMutation.mutate({ 
+                    id: selectedUserForManagement.id, 
+                    reason: deleteReason 
+                  });
+                }
+              }}
+              disabled={!deleteReason.trim()}
+            >
+              Delete User
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Post Edit Dialog */}
+      {showPostEdit && selectedPostForManagement && (
+        <Dialog open={showPostEdit} onOpenChange={setShowPostEdit}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Edit Post</DialogTitle>
+              <DialogDescription>
+                Update post details and settings
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="post-title">Title</Label>
+                <Input
+                  id="post-title"
+                  value={postEditForm.title}
+                  onChange={(e) => setPostEditForm(prev => ({ ...prev, title: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Label htmlFor="post-description">Description</Label>
+                <Textarea
+                  id="post-description"
+                  value={postEditForm.description}
+                  onChange={(e) => setPostEditForm(prev => ({ ...prev, description: e.target.value }))}
+                  rows={4}
+                />
+              </div>
+              <div>
+                <Label htmlFor="preferences">Preferences (JSON)</Label>
+                <Textarea
+                  id="preferences"
+                  value={JSON.stringify(postEditForm.preferences, null, 2)}
+                  onChange={(e) => {
+                    try {
+                      const parsed = JSON.parse(e.target.value);
+                      setPostEditForm(prev => ({ ...prev, preferences: parsed }));
+                    } catch (error) {
+                      // Keep the current value for now, user might be editing
+                    }
+                  }}
+                  rows={6}
+                  placeholder='{"ageMin": 18, "ageMax": 65, "gender": "ANY"}'
+                />
+              </div>
+              <div>
+                <Label htmlFor="images">Images (JSON Array)</Label>
+                <Textarea
+                  id="images"
+                  value={JSON.stringify(postEditForm.images, null, 2)}
+                  onChange={(e) => {
+                    try {
+                      const parsed = JSON.parse(e.target.value);
+                      if (Array.isArray(parsed)) {
+                        setPostEditForm(prev => ({ ...prev, images: parsed }));
+                      }
+                    } catch (error) {
+                      // Keep the current value for now, user might be editing
+                    }
+                  }}
+                  rows={3}
+                  placeholder='["image1.jpg", "image2.jpg"]'
+                />
+              </div>
+              <div>
+                <Label htmlFor="status">Status</Label>
+                <Select
+                  value={postEditForm.status}
+                  onValueChange={(value) => setPostEditForm(prev => ({ ...prev, status: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="PENDING">Pending</SelectItem>
+                    <SelectItem value="APPROVED">Approved</SelectItem>
+                    <SelectItem value="REJECTED">Rejected</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex justify-end space-x-2 pt-4">
+                <Button variant="outline" onClick={() => setShowPostEdit(false)}>
+                  Cancel
+                </Button>
+                <Button
+                  onClick={() => {
+                    updatePostMutation.mutate({
+                      id: selectedPostForManagement.id,
+                      postData: postEditForm
+                    });
+                  }}
+                  disabled={updatePostMutation.isPending}
+                >
+                  {updatePostMutation.isPending ? "Saving..." : "Save Changes"}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Delete Post Dialog */}
+      {showDeletePost && selectedPostForManagement && (
+        <AlertDialog open={showDeletePost} onOpenChange={setShowDeletePost}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Post</AlertDialogTitle>
+              <AlertDialogDescription>
+                This action cannot be undone. This will permanently delete the post.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="my-4">
+              <Label htmlFor="deletePostReason">Reason for deletion</Label>
+              <Textarea
+                id="deletePostReason"
+                value={deletePostReason}
+                onChange={(e) => setDeletePostReason(e.target.value)}
+                placeholder="Enter reason for deleting this post..."
+                className="mt-1"
+              />
+            </div>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => {
+                  if (deletePostReason.trim()) {
+                    deletePostMutation.mutate({
+                      id: selectedPostForManagement.id,
+                      reason: deletePostReason
+                    });
+                  } else {
+                    toast({
+                      title: "Reason required",
+                      description: "Please provide a reason for deletion",
+                      variant: "destructive",
+                    });
+                  }
+                }}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                Delete Post
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
+
+      {/* Hide Post Dialog */}
+      {showHidePost && selectedPostForManagement && (
+        <AlertDialog open={showHidePost} onOpenChange={setShowHidePost}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Hide Post</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will hide the post from users while keeping it in the system.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="my-4">
+              <Label htmlFor="hidePostReason">Reason for hiding</Label>
+              <Textarea
+                id="hidePostReason"
+                value={hidePostReason}
+                onChange={(e) => setHidePostReason(e.target.value)}
+                placeholder="Enter reason for hiding this post..."
+                className="mt-1"
+              />
+            </div>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => {
+                  if (hidePostReason.trim()) {
+                    hidePostMutation.mutate({
+                      id: selectedPostForManagement.id,
+                      reason: hidePostReason
+                    });
+                  } else {
+                    toast({
+                      title: "Reason required",
+                      description: "Please provide a reason for hiding",
+                      variant: "destructive",
+                    });
+                  }
+                }}
+                className="bg-orange-600 hover:bg-orange-700"
+              >
+                Hide Post
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
+
     </div>
   );
 }
