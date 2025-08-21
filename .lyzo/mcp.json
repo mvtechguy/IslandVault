@@ -1,0 +1,23 @@
+{
+  "mcpServers": {
+    "TestSprite": {
+      "command": "node",
+      "args": [
+        "--no-deprecation",
+        "./node_modules/@testsprite/testsprite-mcp/dist/index.js"
+      ],
+      "env": {
+        "API_KEY": "sk-user-o0tP2XI0751yYI9gIq179xUQfds8_-0nR86vXcLAw3MUxEpJQQRfPkYCTMI684wL2m-PDeW9RSCdkMiUqkANpTEFurIXNEeu-GLVC1YZonbKqwHO76c7bBfwnJA3zCghv4k"
+      },
+      "alwaysAllow": [
+        "testsprite_generate_backend_test_plan",
+        "testsprite_generate_frontend_test_plan",
+        "testsprite_generate_standardized_prd",
+        "testsprite_generate_code_summary",
+        "testsprite_bootstrap_tests",
+        "testsprite_generate_code_and_execute",
+        "test"
+      ]
+    }
+  }
+}
