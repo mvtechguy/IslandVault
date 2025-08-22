@@ -343,12 +343,18 @@ export default function ProfilePage() {
                 <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-mint to-soft-blue flex items-center justify-center">
                   {user.profilePhotoPath ? (
                     <img
-                      src={`/api/image-proxy/${user.profilePhotoPath.split('/').pop()}`}
+                      src={user.profilePhotoPath}
                       alt="Profile"
                       className="w-full h-full rounded-2xl object-cover"
                       onError={(e) => {
                         console.log("Image failed to load:", e.currentTarget.src);
-                        e.currentTarget.style.display = 'none';
+                        // Fallback to image proxy if direct path fails
+                        const filename = user.profilePhotoPath?.split('/').pop();
+                        if (filename && !e.currentTarget.src.includes('/api/image-proxy/')) {
+                          e.currentTarget.src = `/api/image-proxy/${filename}`;
+                        } else {
+                          e.currentTarget.style.display = 'none';
+                        }
                       }}
                     />
                   ) : (

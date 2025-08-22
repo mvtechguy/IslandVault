@@ -3,8 +3,7 @@ import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { setupAuth, isAuthenticated, isAdmin } from "./auth";
 import { storage } from "./storage";
-import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
-import { ObjectPermission } from "./objectAcl";
+// Removed object storage imports - using local storage instead
 import { localFileStorage } from "./localFileStorage";
 import { telegramService } from "./telegram";
 import multer from "multer";
@@ -87,113 +86,125 @@ export async function registerRoutes(app: Express): Promise<Server> {
     next(error);
   });
 
-  // Object storage endpoints
-  app.get("/objects/:objectPath(*)", isAuthenticated, async (req, res) => {
-    const userId = req.user?.id?.toString();
-    const objectStorageService = new ObjectStorageService();
-    try {
-      console.log("Object request path:", req.path);
-      console.log("Object request params:", req.params);
-      console.log("User authenticated:", !!req.user, "User ID:", userId);
-      console.log("Full URL:", req.url);
-      
-      const objectFile = await objectStorageService.getObjectEntityFile(req.path);
-      const canAccess = await objectStorageService.canAccessObjectEntity({
-        objectFile,
-        userId: userId,
-        requestedPermission: ObjectPermission.READ,
-      });
-      if (!canAccess) {
-        console.log("Access denied for user:", userId, "to object:", req.path);
-        return res.sendStatus(403);
-      }
-      console.log("Serving object file:", objectFile);
-      await objectStorageService.downloadObject(objectFile, res);
-    } catch (error) {
-      console.error("Error checking object access:", error);
-      if (error instanceof ObjectNotFoundError) {
-        console.log("Object not found:", req.path);
-        return res.sendStatus(404);
-      }
-      return res.sendStatus(500);
-    }
-  });
+  // Object storage endpoints - DISABLED (using local storage instead)
+  // app.get("/objects/:objectPath(*)", isAuthenticated, async (req, res) => {
+  //   const userId = req.user?.id?.toString();
+  //   const objectStorageService = new ObjectStorageService();
+  //   try {
+  //     console.log("Object request path:", req.path);
+  //     console.log("Object request params:", req.params);
+  //     console.log("User authenticated:", !!req.user, "User ID:", userId);
+  //     console.log("Full URL:", req.url);
+  //     
+  //     const objectFile = await objectStorageService.getObjectEntityFile(req.path);
+  //     const canAccess = await objectStorageService.canAccessObjectEntity({
+  //       objectFile,
+  //       userId: userId,
+  //       requestedPermission: ObjectPermission.READ,
+  //     });
+  //     if (!canAccess) {
+  //       console.log("Access denied for user:", userId, "to object:", req.path);
+  //       return res.sendStatus(403);
+  //     }
+  //     console.log("Serving object file:", objectFile);
+  //     await objectStorageService.downloadObject(objectFile, res);
+  //   } catch (error) {
+  //     console.error("Error checking object access:", error);
+  //     if (error instanceof ObjectNotFoundError) {
+  //       console.log("Object not found:", req.path);
+  //       return res.sendStatus(404);
+  //     }
+  //     return res.sendStatus(500);
+  //   }
+  // });
 
-  app.post("/api/objects/upload", isAuthenticated, async (req, res) => {
-    try {
-      const objectStorageService = new ObjectStorageService();
-      const uploadURL = await objectStorageService.getObjectEntityUploadURL();
-      
-      // Return both upload URL and object path for later access
-      const objectPath = objectStorageService.normalizeObjectEntityPath(uploadURL);
-      
-      res.json({ uploadURL, objectPath });
-    } catch (error) {
-      console.error("Error getting upload URL:", error);
-      res.status(500).json({ message: "Failed to get upload URL" });
-    }
-  });
+  // DISABLED - Use /api/upload instead for local storage
+  // app.post("/api/objects/upload", isAuthenticated, async (req, res) => {
+  //   try {
+  //     const objectStorageService = new ObjectStorageService();
+  //     const uploadURL = await objectStorageService.getObjectEntityUploadURL();
+  //     
+  //     // Return both upload URL and object path for later access
+  //     const objectPath = objectStorageService.normalizeObjectEntityPath(uploadURL);
+  //     
+  //     res.json({ uploadURL, objectPath });
+  //   } catch (error) {
+  //     console.error("Error getting upload URL:", error);
+  //     res.status(500).json({ message: "Failed to get upload URL" });
+  //   }
+  // });
   
-  // Add new endpoint to set ACL policy after upload
-  app.post("/api/objects/:objectId/acl", isAuthenticated, async (req, res) => {
-    try {
-      const objectId = req.params.objectId;
-      const { visibility = "private" } = req.body;
-      
-      const objectStorageService = new ObjectStorageService();
-      const objectPath = `/objects/${objectId}`;
-      
-      await objectStorageService.trySetObjectEntityAclPolicy(objectPath, {
-        owner: req.user!.id.toString(),
-        visibility: visibility as "public" | "private",
-                  aclRules: [
-            {
-              group: {
-                type: ObjectAccessGroupType.ADMIN_ONLY,
-                id: "admins"
-              },
-              permission: ObjectPermission.READ
-            }
-          ]
-      });
-      
-      res.json({ success: true, objectPath });
-    } catch (error) {
-      console.error("Error setting ACL policy:", error);
-      res.status(500).json({ message: "Failed to set ACL policy" });
-    }
-  });
+  // DISABLED - Not needed for local storage
+  // app.post("/api/objects/:objectId/acl", isAuthenticated, async (req, res) => {
+  //   try {
+  //     const objectId = req.params.objectId;
+  //     const { visibility = "private" } = req.body;
+  //     
+  //     const objectStorageService = new ObjectStorageService();
+  //     const objectPath = `/objects/${objectId}`;
+  //     
+  //     await objectStorageService.trySetObjectEntityAclPolicy(objectPath, {
+  //       owner: req.user!.id.toString(),
+  //       visibility: visibility as "public" | "private",
+  //                   aclRules: [
+  //             {
+  //               group: {
+  //                 type: ObjectAccessGroupType.ADMIN_ONLY,
+  //                 id: "admins"
+  //               },
+  //               permission: ObjectPermission.READ
+  //             }
+  //           ]
+  //     });
+  //     
+  //     res.json({ success: true, objectPath });
+  //   } catch (error) {
+  //     console.error("Error setting ACL policy:", error);
+  //     res.status(500).json({ message: "Failed to set ACL policy" });
+  //   }
+  // });
 
-  // Image proxy endpoint for serving uploaded images
+  // Image proxy endpoint for serving uploaded images from local storage
   app.get("/api/image-proxy/:filename", isAuthenticated, async (req, res) => {
     try {
       const filename = req.params.filename;
       
-      // Since Google Cloud Storage private URLs aren't directly accessible,
-      // we'll serve a data URL placeholder for development
-      // In production, this would use signed URLs or proper cloud storage authentication
+      // Try to find the image in different categories
+      const categories = ['profiles', 'posts', 'slips'];
+      let found = false;
       
-      // For now, return a simple SVG placeholder that shows the user's initials
-      const user = await storage.getUser(req.user!.id);
-      const initials = user?.fullName?.split(' ').map(n => n[0]).join('').toUpperCase() || 'U';
+      for (const category of categories) {
+        const filePath = `/uploads/${category}/${filename}`;
+        if (await localFileStorage.fileExists(filePath)) {
+          await localFileStorage.serveFile(filePath, res);
+          found = true;
+          break;
+        }
+      }
       
-      const svgPlaceholder = `
-        <svg width="100" height="100" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" style="stop-color:#A8E6CF;stop-opacity:1" />
-              <stop offset="100%" style="stop-color:#88D8F4;stop-opacity:1" />
-            </linearGradient>
-          </defs>
-          <rect width="100" height="100" fill="url(#grad1)" />
-          <text x="50" y="60" font-family="Arial, sans-serif" font-size="40" font-weight="bold" 
-                fill="white" text-anchor="middle">${initials}</text>
-        </svg>
-      `;
-      
-      res.setHeader('Content-Type', 'image/svg+xml');
-      res.setHeader('Cache-Control', 'public, max-age=3600');
-      res.send(svgPlaceholder);
+      if (!found) {
+        // Return a user initials placeholder if image not found
+        const user = await storage.getUser(req.user!.id);
+        const initials = user?.fullName?.split(' ').map(n => n[0]).join('').toUpperCase() || 'U';
+        
+        const svgPlaceholder = `
+          <svg width="100" height="100" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#A8E6CF;stop-opacity:1" />
+                <stop offset="100%" style="stop-color:#88D8F4;stop-opacity:1" />
+              </linearGradient>
+            </defs>
+            <rect width="100" height="100" fill="url(#grad1)" />
+            <text x="50" y="60" font-family="Arial, sans-serif" font-size="40" font-weight="bold" 
+                  fill="white" text-anchor="middle">${initials}</text>
+          </svg>
+        `;
+        
+        res.setHeader('Content-Type', 'image/svg+xml');
+        res.setHeader('Cache-Control', 'public, max-age=3600');
+        res.send(svgPlaceholder);
+      }
       
     } catch (error) {
       console.error("Error serving image:", error);

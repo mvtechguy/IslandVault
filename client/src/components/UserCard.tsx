@@ -147,7 +147,7 @@ export function UserCard({ post }: UserCardProps) {
           <div className="relative">
             <div className="absolute inset-0 bg-gradient-to-br from-mint to-soft-blue rounded-full p-0.5">
               <img
-                src={post.user.profilePhotoPath || "https://via.placeholder.com/150"}
+                src={post.user.profilePhotoPath || "/api/image-proxy/placeholder"}
                 alt={post.user.fullName}
                 className="w-16 h-16 rounded-full object-cover bg-white"
               />

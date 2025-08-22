@@ -2638,9 +2638,7 @@ export default function AdminPage() {
                 <div className="flex justify-center mb-4">
                   {selectedUser.profilePhotoPath ? (
                     <img
-                      src={selectedUser.profilePhotoPath.startsWith('http') 
-                        ? selectedUser.profilePhotoPath 
-                        : `/uploads/profiles/${selectedUser.profilePhotoPath}`}
+                      src={selectedUser.profilePhotoPath}
                       alt={`${selectedUser.fullName}'s profile`}
                       className="w-24 h-24 object-cover rounded-full border-2 border-gray-200 dark:border-gray-600"
                       onError={(e) => {
